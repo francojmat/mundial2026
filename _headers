@@ -1,0 +1,12 @@
+/data.json
+  Cache-Control: public, max-age=30, s-maxage=30
+  Access-Control-Allow-Origin: *
+
+/mundial2026.html
+  Cache-Control: public, max-age=300, s-maxage=300
+
+/flags/*
+  Cache-Control: public, max-age=86400, s-maxage=86400
+
+/copa.avif
+  Cache-Control: public, max-age=86400, s-maxage=86400

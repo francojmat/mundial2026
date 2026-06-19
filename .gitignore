@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.tmp
+
+# PDF fuente de reglamento FIFA (172KB, no se necesita en producción)
+fifa_regs_full.txt
+
+# Scripts de utilidad que no corren en Actions
+extract_fifa_pdf.py
+download_flags.py
+test_api.py
+
+# Wrangler (Cloudflare Worker CLI) — contiene account ID y cache local
+cloudflare-worker/.wrangler/

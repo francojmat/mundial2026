@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Admin — Mundial 2026</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --T:#c2410c; --TEL:#0d9488; --OK:#16a34a; --WRN:#d97706;
+      --BG:#faf8f4; --WHT:#ffffff; --BDR:#e8ddd0; --TXT:#211c14;
+      --MUT:#7c6a58; --DIM:#b09880; --GRY:#f0ebe4;
+      --DARK:#211c14; --DARK2:#2e2620; --DARK3:#3d3028;
+    }
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--BG);color:var(--TXT);display:flex;min-height:100vh}
+
+    /* ── Password gate ── */
+    .pw-gate{position:fixed;inset:0;background:var(--DARK);z-index:9999;display:flex;align-items:center;justify-content:center}
+    .pw-box{background:#2e2620;border:1px solid #3d3028;padding:36px 40px;width:320px;text-align:center}
+    .pw-logo{font-size:.68rem;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px}
+    .pw-title{font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:4px}
+    .pw-sub{font-size:.73rem;color:rgba(255,255,255,.4);margin-bottom:24px}
+    .pw-input{width:100%;background:#211c14;border:1px solid #3d3028;color:#fff;padding:10px 12px;font-size:.85rem;text-align:center;letter-spacing:.1em;margin-bottom:10px;font-family:inherit}
+    .pw-input:focus{outline:1px solid var(--T)}
+    .pw-btn{width:100%;background:var(--T);color:#fff;border:none;padding:10px;font-size:.78rem;font-weight:700;cursor:pointer;letter-spacing:.08em;text-transform:uppercase}
+    .pw-btn:hover{background:#a83509}
+    .pw-err{color:#ef4444;font-size:.72rem;margin-top:8px;min-height:18px}
+
+    /* ── Sidebar ── */
+    .sidebar{width:220px;flex-shrink:0;background:var(--DARK);display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0}
+    .sb-logo{padding:22px 20px 16px;border-bottom:1px solid var(--DARK3)}
+    .sb-logo .wordmark{font-size:.75rem;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px}
+    .sb-logo .title{font-size:1rem;font-weight:700;color:#fff}
+    .sb-logo .subtitle{font-size:.68rem;color:rgba(255,255,255,.4);margin-top:2px}
+    .sb-nav{padding:14px 0;flex:1}
+    .sb-section{font-size:.58rem;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.14em;text-transform:uppercase;padding:12px 20px 6px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:.79rem;color:rgba(255,255,255,.55);cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+    .nav-item:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05)}
+    .nav-item.active{color:#fff;background:rgba(194,65,12,.2);border-left-color:var(--T)}
+    .nav-item .ico{font-size:1rem;width:20px;text-align:center;flex-shrink:0}
+    .nav-badge{margin-left:auto;background:var(--T);color:#fff;font-size:.58rem;font-weight:700;padding:2px 6px;min-width:18px;text-align:center}
+    .sb-footer{padding:16px 20px;border-top:1px solid var(--DARK3)}
+    .sb-footer a{font-size:.72rem;color:rgba(255,255,255,.3);text-decoration:none}
+    .sb-footer a:hover{color:rgba(255,255,255,.6)}
+
+    /* ── Content ── */
+    .content{flex:1;padding:32px 36px;overflow-y:auto}
+    .page{display:none}
+    .page.active{display:block}
+    .page-title{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+    .page-sub{font-size:.8rem;color:var(--MUT);margin-bottom:28px}
+
+    /* ── Cards ── */
+    .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+    .stat-card{background:var(--WHT);border:1px solid var(--BDR);padding:18px 20px}
+    .stat-card .label{font-size:.63rem;font-weight:700;color:var(--DIM);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+    .stat-card .value{font-size:1.8rem;font-weight:700;color:var(--TXT);line-height:1}
+    .stat-card .delta{font-size:.72rem;color:var(--OK);margin-top:4px}
+    .stat-card .ico-big{font-size:1.5rem;margin-bottom:8px}
+
+    /* ── Tablas ── */
+    .panel{background:var(--WHT);border:1px solid var(--BDR);overflow:hidden;margin-bottom:20px}
+    .panel-h{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--BDR)}
+    .panel-title{font-size:.72rem;font-weight:700;color:var(--TXT);letter-spacing:.05em;text-transform:uppercase}
+    .panel-body{padding:0}
+    table{width:100%;border-collapse:collapse}
+    th{font-size:.6rem;font-weight:700;color:var(--DIM);letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;text-align:left;border-bottom:1px solid var(--BDR);background:var(--GRY)}
+    td{font-size:.79rem;padding:9px 14px;border-bottom:1px solid var(--BG);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:rgba(194,65,12,.025)}
+
+    /* ── Badges ── */
+    .badge-nueva{background:rgba(194,65,12,.1);color:var(--T);border:1px solid rgba(194,65,12,.3);font-size:.58rem;font-weight:700;padding:2px 7px;text-transform:uppercase;letter-spacing:.05em}
+    .badge-leida{background:var(--GRY);color:var(--DIM);border:1px solid var(--BDR);font-size:.58rem;font-weight:700;padding:2px 7px;text-transform:uppercase;letter-spacing:.05em}
+
+    /* ── Botones ── */
+    .btn{font-size:.72rem;font-weight:700;padding:6px 14px;cursor:pointer;font-family:inherit;letter-spacing:.04em;text-transform:uppercase;transition:all .15s}
+    .btn-primary{background:var(--T);color:#fff;border:none}
+    .btn-primary:hover{background:#a83509}
+    .btn-ghost{background:none;color:var(--MUT);border:1px solid var(--BDR)}
+    .btn-ghost:hover{border-color:var(--T);color:var(--T)}
+    .btn-danger{background:none;color:#dc2626;border:1px solid rgba(220,38,38,.3);font-size:.65rem;padding:3px 8px}
+    .btn-danger:hover{background:#dc2626;color:#fff}
+    .btn-sm{padding:3px 10px;font-size:.65rem}
+
+    /* ── Gráfico de barras ── */
+    .chart-wrap{padding:16px}
+    .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .bar-label{font-size:.68rem;color:var(--MUT);width:65px;flex-shrink:0;text-align:right}
+    .bar-track{flex:1;background:var(--GRY);height:22px;position:relative}
+    .bar-fill{height:100%;background:var(--T);transition:width .4s ease;display:flex;align-items:center;padding-left:6px}
+    .bar-fill.teal{background:var(--TEL)}
+    .bar-count{font-size:.65rem;font-weight:700;color:#fff;white-space:nowrap}
+
+    /* ── Empty state ── */
+    .empty{text-align:center;padding:48px 24px;color:var(--DIM)}
+    .empty-icon{font-size:2.5rem;margin-bottom:12px;opacity:.4}
+    .empty-msg{font-size:.82rem}
+
+    /* ── Actividad log ── */
+    .log-line{font-size:.73rem;font-family:monospace;padding:5px 14px;border-bottom:1px solid var(--BG);display:flex;gap:12px}
+    .log-time{color:var(--DIM);flex-shrink:0;width:160px}
+    .log-msg{color:var(--TXT)}
+    .log-tz{color:var(--MUT);font-size:.68rem}
+
+    /* ── Config ── */
+    .cfg-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--BDR)}
+    .cfg-row:last-child{border-bottom:none}
+    .cfg-label{font-size:.82rem;font-weight:600}
+    .cfg-sub{font-size:.72rem;color:var(--MUT);margin-top:2px}
+    .cfg-body{padding:4px 20px}
+
+    /* ── Bracket overview ── */
+    .brk-team{display:flex;align-items:center;gap:8px;font-size:.78rem}
+    .brk-stage{font-size:.6rem;font-weight:700;color:var(--T);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+    .brk-card{background:var(--GRY);border:1px solid var(--BDR);padding:10px 14px;margin-bottom:8px}
+    .brk-vs{color:var(--DIM);font-size:.68rem;margin:3px 0 3px 0}
+
+    .divider{height:1px;background:var(--BDR);margin:20px 0}
+    .nota-admin{font-size:.72rem;color:var(--DIM);padding:8px 12px;background:rgba(215,119,6,.05);border-left:3px solid var(--WRN);margin-bottom:16px}
+  </style>
+</head>
+<body>
+
+<!-- ── PASSWORD GATE ────────────────────────────────────────────────────── -->
+<div class="pw-gate" id="pwGate">
+  <div class="pw-box">
+    <div class="pw-logo">Mundial 2026</div>
+    <div class="pw-title">Panel de administración</div>
+    <div class="pw-sub">Ingresá la contraseña para continuar</div>
+    <input class="pw-input" id="pwInput" type="password" placeholder="••••••••"
+      onkeydown="if(event.key==='Enter')checkPw()">
+    <button class="pw-btn" onclick="checkPw()">Entrar</button>
+    <div class="pw-err" id="pwErr"></div>
+  </div>
+</div>
+
+
+<!-- ── SIDEBAR ────────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="wordmark">Mundial 2026</div>
+    <div class="title">Panel Admin</div>
+    <div class="subtitle">Gestión y analíticas</div>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="sb-section">Analytics</div>
+    <div class="nav-item active" onclick="goto('metricas',this)">
+      <span class="ico">📊</span> Métricas
+    </div>
+    <div class="nav-item" onclick="goto('actividad',this)">
+      <span class="ico">📋</span> Actividad
+    </div>
+
+    <div class="sb-section">Contenido</div>
+    <div class="nav-item" onclick="goto('sugerencias',this)">
+      <span class="ico">💬</span> Sugerencias
+      <span class="nav-badge" id="sb-badge">0</span>
+    </div>
+    <div class="nav-item" onclick="goto('bracket',this)">
+      <span class="ico">🏆</span> Bracket sim.
+    </div>
+
+    <div class="sb-section">Sistema</div>
+    <div class="nav-item" onclick="goto('config',this)">
+      <span class="ico">⚙️</span> Configuración
+    </div>
+  </nav>
+
+  <div class="sb-footer">
+    <a href="mundial2026.html" target="_blank">← Ver tracker</a>
+  </div>
+</aside>
+
+<!-- ── CONTENT ────────────────────────────────────────────────────────── -->
+<main class="content">
+
+  <!-- MÉTRICAS -->
+  <div class="page active" id="page-metricas">
+    <div class="page-title">Métricas</div>
+    <div class="page-sub">Visitas y actividad del tracker</div>
+
+    <div class="nota-admin">Los datos se almacenan localmente en este navegador. Cuando suba a producción, conectá un servicio real de analíticas (PostHog, Plausible, etc.).</div>
+
+    <div class="cards-grid" id="stat-cards">
+      <!-- Se llena con JS -->
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">
+        <span class="panel-title">Visitas por día (últimos 14 días)</span>
+        <button class="btn btn-ghost btn-sm" onclick="exportVisits()">↓ Exportar CSV</button>
+      </div>
+      <div class="chart-wrap" id="chart-dias"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="panel">
+        <div class="panel-h"><span class="panel-title">Zonas horarias</span></div>
+        <div class="chart-wrap" id="chart-tz"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><span class="panel-title">Navegadores</span></div>
+        <div class="chart-wrap" id="chart-ua"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVIDAD -->
+  <div class="page" id="page-actividad">
+    <div class="page-title">Actividad</div>
+    <div class="page-sub">Log de visitas recientes</div>
+    <div class="panel">
+      <div class="panel-h">
+        <span class="panel-title">Últimas 50 visitas</span>
+        <button class="btn btn-danger" onclick="clearVisits()">Borrar todo</button>
+      </div>
+      <div class="panel-body" id="log-container"></div>
+    </div>
+  </div>
+
+  <!-- SUGERENCIAS -->
+  <div class="page" id="page-sugerencias">
+    <div class="page-title">Sugerencias</div>
+    <div class="page-sub">Mensajes enviados desde el botón del tracker</div>
+    <div class="panel">
+      <div class="panel-h">
+        <span class="panel-title">Bandeja de entrada</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="markAllRead()">Marcar todas como leídas</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportSugs()">↓ Exportar CSV</button>
+        </div>
+      </div>
+      <div id="sug-container">
+        <!-- Se llena con JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- BRACKET SIM -->
+  <div class="page" id="page-bracket">
+    <div class="page-title">Simulación del bracket</div>
+    <div class="page-sub">Estado actual de la simulación guardada en este navegador</div>
+    <div id="brk-container"></div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="page" id="page-config">
+    <div class="page-title">Configuración</div>
+    <div class="page-sub">Gestión de datos y opciones del sistema</div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-title">Almacenamiento local</span></div>
+      <div class="cfg-body">
+        <div class="cfg-row">
+          <div>
+            <div class="cfg-label">Visitas guardadas</div>
+            <div class="cfg-sub" id="cfg-visits-count">—</div>
+          </div>
+          <button class="btn btn-danger" onclick="clearVisits()">Borrar visitas</button>
+        </div>
+        <div class="cfg-row">
+          <div>
+            <div class="cfg-label">Sugerencias guardadas</div>
+            <div class="cfg-sub" id="cfg-sug-count">—</div>
+          </div>
+          <button class="btn btn-danger" onclick="clearSugs()">Borrar sugerencias</button>
+        </div>
+        <div class="cfg-row">
+          <div>
+            <div class="cfg-label">Simulación del bracket</div>
+            <div class="cfg-sub" id="cfg-brk-count">—</div>
+          </div>
+          <button class="btn btn-danger" onclick="clearBracket()">Resetear bracket</button>
+        </div>
+        <div class="cfg-row">
+          <div>
+            <div class="cfg-label">Borrar TODO</div>
+            <div class="cfg-sub">Elimina todos los datos almacenados en este navegador</div>
+          </div>
+          <button class="btn btn-danger" onclick="clearAll()">Borrar todo</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><span class="panel-title">Exportar datos completos</span></div>
+      <div class="cfg-body">
+        <div class="cfg-row">
+          <div>
+            <div class="cfg-label">Exportar todo como JSON</div>
+            <div class="cfg-sub">Descarga un archivo con visitas, sugerencias y estado del bracket</div>
+          </div>
+          <button class="btn btn-primary" onclick="exportAll()">↓ Exportar JSON</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── Datos ──────────────────────────────────────────────────────────────────
+function getVisits()  { return JSON.parse(localStorage.getItem('wc26_visits') || '[]'); }
+function getSugs()    { return JSON.parse(localStorage.getItem('wc26_sugerencias') || '[]'); }
+function getBracket() { return JSON.parse(localStorage.getItem('wc26') || '{}'); }
+
+// ── Nav ────────────────────────────────────────────────────────────────────
+function goto(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  renderPage(id);
+}
+
+function renderPage(id) {
+  if (id === 'metricas')    renderMetricas();
+  if (id === 'actividad')   renderActividad();
+  if (id === 'sugerencias') renderSugerencias();
+  if (id === 'bracket')     renderBracket();
+  if (id === 'config')      renderConfig();
+}
+
+// ── Formato de fecha ───────────────────────────────────────────────────────
+function fmt(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return new Intl.DateTimeFormat('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    day:'2-digit', month:'2-digit', year:'2-digit',
+    hour:'2-digit', minute:'2-digit'
+  }).format(d);
+}
+
+// ── MÉTRICAS ───────────────────────────────────────────────────────────────
+function renderMetricas() {
+  const visits = getVisits();
+  const sugs   = getSugs();
+  const today  = new Date().toDateString();
+  const todayV = visits.filter(v => new Date(v.ts).toDateString() === today).length;
+
+  // Stat cards
+  const unread = sugs.filter(s => !s.read).length;
+  const brk    = getBracket();
+  const brkPicks = Object.keys(brk).filter(k => brk[k]?.winner).length;
+
+  document.getElementById('stat-cards').innerHTML = `
+    <div class="stat-card"><div class="ico-big">👁</div><div class="label">Visitas totales</div><div class="value">${visits.length}</div></div>
+    <div class="stat-card"><div class="ico-big">📅</div><div class="label">Visitas hoy</div><div class="value">${todayV}</div></div>
+    <div class="stat-card"><div class="ico-big">💬</div><div class="label">Sugerencias</div><div class="value">${sugs.length}<span style="font-size:.9rem;color:var(--T)"> (${unread} sin leer)</span></div></div>
+    <div class="stat-card"><div class="ico-big">🏆</div><div class="label">Picks del bracket</div><div class="value">${brkPicks}</div></div>
+  `;
+
+  // Gráfico por día
+  const byDay = {};
+  const days14 = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0,10);
+    days14.push(key);
+    byDay[key] = 0;
+  }
+  visits.forEach(v => { const k = v.ts.slice(0,10); if (byDay[k] !== undefined) byDay[k]++; });
+  const maxD = Math.max(...Object.values(byDay), 1);
+  let barHtml = '';
+  days14.forEach(d => {
+    const pct = Math.round(byDay[d] / maxD * 100);
+    const lbl = d.slice(5); // MM-DD
+    barHtml += `<div class="bar-row">
+      <div class="bar-label">${lbl}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.max(pct,2)}%"><span class="bar-count">${byDay[d] > 0 ? byDay[d] : ''}</span></div></div>
+    </div>`;
+  });
+  document.getElementById('chart-dias').innerHTML = barHtml || '<div class="empty"><div class="empty-icon">📊</div><div class="empty-msg">Sin datos aún</div></div>';
+
+  // TZ chart
+  const tzCount = {};
+  visits.forEach(v => { const tz = (v.tz||'Desconocida').split('/').pop().replace(/_/g,' '); tzCount[tz] = (tzCount[tz]||0)+1; });
+  const tzSorted = Object.entries(tzCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxTz = Math.max(...tzSorted.map(([,c])=>c), 1);
+  document.getElementById('chart-tz').innerHTML = tzSorted.map(([tz,c]) =>
+    `<div class="bar-row"><div class="bar-label" style="font-size:.62rem">${tz.slice(0,10)}</div><div class="bar-track"><div class="bar-fill teal" style="width:${Math.round(c/maxTz*100)}%"><span class="bar-count">${c}</span></div></div></div>`
+  ).join('') || '<div class="empty"><div class="empty-msg" style="padding:20px">Sin datos</div></div>';
+
+  // Browser chart
+  const uaCount = {};
+  visits.forEach(v => {
+    const ua = v.ua||'';
+    const b = ua.includes('Chrome') ? 'Chrome' : ua.includes('Firefox') ? 'Firefox' : ua.includes('Safari') ? 'Safari' : ua.includes('Edge') ? 'Edge' : 'Otro';
+    uaCount[b] = (uaCount[b]||0)+1;
+  });
+  const uaSorted = Object.entries(uaCount).sort((a,b)=>b[1]-a[1]);
+  const maxUA = Math.max(...uaSorted.map(([,c])=>c), 1);
+  document.getElementById('chart-ua').innerHTML = uaSorted.map(([b,c]) =>
+    `<div class="bar-row"><div class="bar-label">${b}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(c/maxUA*100)}%;background:var(--WRN)"><span class="bar-count">${c}</span></div></div></div>`
+  ).join('') || '<div class="empty"><div class="empty-msg" style="padding:20px">Sin datos</div></div>';
+}
+
+// ── ACTIVIDAD ──────────────────────────────────────────────────────────────
+function renderActividad() {
+  const visits = getVisits().slice().reverse().slice(0,50);
+  if (!visits.length) {
+    document.getElementById('log-container').innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-msg">Sin actividad registrada</div></div>';
+    return;
+  }
+  document.getElementById('log-container').innerHTML =
+    visits.map(v => `<div class="log-line">
+      <span class="log-time">${fmt(v.ts)}</span>
+      <span class="log-tz">${(v.tz||'').replace('America/Argentina/','ARG/')}</span>
+    </div>`).join('');
+}
+
+// ── SUGERENCIAS ────────────────────────────────────────────────────────────
+function renderSugerencias() {
+  const sugs = getSugs().slice().reverse();
+  const unread = sugs.filter(s => !s.read).length;
+  document.getElementById('sb-badge').textContent = unread;
+
+  if (!sugs.length) {
+    document.getElementById('sug-container').innerHTML = '<div class="empty"><div class="empty-icon">💬</div><div class="empty-msg">No hay sugerencias todavía</div></div>';
+    return;
+  }
+
+  let html = '<table><thead><tr><th>Fecha</th><th>Nombre</th><th>Mensaje</th><th>Estado</th><th></th></tr></thead><tbody>';
+  sugs.forEach(s => {
+    const badge = s.read
+      ? `<span class="badge-leida">Leída</span>`
+      : `<span class="badge-nueva">Nueva</span>`;
+    html += `<tr id="sug-${s.id}">
+      <td style="white-space:nowrap">${fmt(s.ts)}</td>
+      <td>${escHtml(s.name||'Anónimo')}</td>
+      <td>${escHtml(s.msg)}</td>
+      <td>${badge}</td>
+      <td style="display:flex;gap:6px">
+        ${!s.read ? `<button class="btn btn-ghost btn-sm" onclick="markRead(${s.id})">✓ Leer</button>` : ''}
+        <button class="btn btn-danger" onclick="deleteSug(${s.id})">✕</button>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('sug-container').innerHTML = html;
+}
+
+function markRead(id) {
+  const sugs = getSugs().map(s => s.id === id ? {...s, read:true} : s);
+  localStorage.setItem('wc26_sugerencias', JSON.stringify(sugs));
+  renderSugerencias();
+}
+
+function markAllRead() {
+  const sugs = getSugs().map(s => ({...s, read:true}));
+  localStorage.setItem('wc26_sugerencias', JSON.stringify(sugs));
+  renderSugerencias();
+}
+
+function deleteSug(id) {
+  const sugs = getSugs().filter(s => s.id !== id);
+  localStorage.setItem('wc26_sugerencias', JSON.stringify(sugs));
+  renderSugerencias();
+}
+
+// ── BRACKET ────────────────────────────────────────────────────────────────
+function renderBracket() {
+  const brk = getBracket();
+  const stages = [
+    {label:'Round of 32', keys: Array.from({length:16},(_,i)=>String(i+1))},
+    {label:'Octavos de final', keys:['r16-L-0','r16-L-1','r16-L-2','r16-L-3','r16-R-0','r16-R-1','r16-R-2','r16-R-3']},
+    {label:'Cuartos de final', keys:['qf-L-0','qf-L-1','qf-R-0','qf-R-1']},
+    {label:'Semifinales', keys:['sf-L-0','sf-R-0']},
+    {label:'Gran Final', keys:['slot-final']},
+    {label:'3er y 4to puesto', keys:['slot-tercer']},
+  ];
+
+  const picks = stages.filter(st => st.keys.some(k => brk[k]?.winner));
+  if (!picks.length) {
+    document.getElementById('brk-container').innerHTML = '<div class="empty"><div class="empty-icon">🏆</div><div class="empty-msg">No hay picks guardados en la simulación</div></div>';
+    return;
+  }
+
+  let html = '';
+  picks.forEach(st => {
+    const filled = st.keys.filter(k => brk[k]?.winner);
+    if (!filled.length) return;
+    html += `<div class="panel" style="margin-bottom:12px"><div class="panel-h"><span class="panel-title">${st.label}</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;padding:12px">`;
+    filled.forEach(k => {
+      const w = brk[k].winner;
+      html += `<div class="brk-card"><div class="brk-stage">${k.replace(/-/g,' ').toUpperCase()}</div><div class="brk-team">🏅 ${escHtml(w.name)}</div></div>`;
+    });
+    html += '</div></div>';
+  });
+  document.getElementById('brk-container').innerHTML = html;
+}
+
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+function renderConfig() {
+  const visits = getVisits();
+  const sugs   = getSugs();
+  const brk    = getBracket();
+  document.getElementById('cfg-visits-count').textContent = `${visits.length} registros · ${(JSON.stringify(visits).length/1024).toFixed(1)} KB`;
+  document.getElementById('cfg-sug-count').textContent    = `${sugs.length} sugerencias`;
+  document.getElementById('cfg-brk-count').textContent    = `${Object.keys(brk).length} picks guardados`;
+}
+
+function clearVisits()  { if(!confirm('¿Borrar todas las visitas?')) return; localStorage.removeItem('wc26_visits');       renderPage(currentPage()); }
+function clearSugs()    { if(!confirm('¿Borrar todas las sugerencias?')) return; localStorage.removeItem('wc26_sugerencias'); renderPage(currentPage()); }
+function clearBracket() { if(!confirm('¿Resetear simulación del bracket?')) return; localStorage.removeItem('wc26');          renderPage(currentPage()); }
+function clearAll()     { if(!confirm('¿Borrar TODO? No se puede deshacer.')) return; localStorage.removeItem('wc26_visits'); localStorage.removeItem('wc26_sugerencias'); localStorage.removeItem('wc26'); renderPage(currentPage()); }
+function currentPage()  { return document.querySelector('.page.active')?.id.replace('page-','') || 'metricas'; }
+
+// ── Exports ────────────────────────────────────────────────────────────────
+function exportVisits() {
+  const v = getVisits();
+  const csv = 'Fecha,Zona horaria,Navegador\n' + v.map(r => `"${r.ts}","${r.tz||''}","${(r.ua||'').replace(/"/g,"'")}"`).join('\n');
+  dl(csv, 'visitas_mundial2026.csv', 'text/csv');
+}
+function exportSugs() {
+  const s = getSugs();
+  const csv = 'ID,Fecha,Nombre,Mensaje,Leída\n' + s.map(r => `${r.id},"${r.ts}","${escCsv(r.name)}","${escCsv(r.msg)}",${r.read}`).join('\n');
+  dl(csv, 'sugerencias_mundial2026.csv', 'text/csv');
+}
+function exportAll() {
+  const data = { visits: getVisits(), sugerencias: getSugs(), bracket: getBracket(), exported_at: new Date().toISOString() };
+  dl(JSON.stringify(data, null, 2), 'mundial2026_data.json', 'application/json');
+}
+function dl(content, filename, mime) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type:mime}));
+  a.download = filename;
+  a.click();
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escCsv(s)  { return String(s||'').replace(/"/g,'""'); }
+
+// ── Auth config ────────────────────────────────────────────────────────────
+// SHA-256("1991") — no hay contraseña en texto plano en el fuente
+const PW_HASH      = '8e9b669109df89620b94f2387dc53206a82ddc71d658f8f7a2b3a9b417370d3e';
+const SESSION_TTL  = 60 * 1000;        // 60 s de sesión
+const RATE_DELAY   = 30 * 1000;        // 30 s entre intentos fallidos
+const MAX_FAILS    = 3;                 // intentos antes del lockout
+const LOCKOUT_TTL  = 10 * 60 * 1000;  // 10 min de lockout
+
+// ── Hash via Web Crypto API ────────────────────────────────────────────────
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256',
+    new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf))
+    .map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Rate-limit state (localStorage) ───────────────────────────────────────
+function getRL() {
+  return JSON.parse(localStorage.getItem('wc26_rl') || '{"fails":0,"last":0,"locked":0}');
+}
+function setRL(data) { localStorage.setItem('wc26_rl', JSON.stringify(data)); }
+
+function rateStatus() {
+  const r = getRL(), now = Date.now();
+  if (r.locked && now < r.locked) {
+    return { blocked: true, reason: 'locked', secs: Math.ceil((r.locked - now) / 1000) };
+  }
+  if (r.last && now - r.last < RATE_DELAY) {
+    return { blocked: true, reason: 'cooldown', secs: Math.ceil((r.last + RATE_DELAY - now) / 1000) };
+  }
+  return { blocked: false };
+}
+
+function recordFail() {
+  const r = getRL(), now = Date.now();
+  const fails = r.fails + 1;
+  setRL({ fails, last: now, locked: fails >= MAX_FAILS ? now + LOCKOUT_TTL : 0 });
+  if (fails >= MAX_FAILS) setRL({ fails: 0, last: now, locked: now + LOCKOUT_TTL });
+}
+function clearRL() { localStorage.removeItem('wc26_rl'); }
+
+// ── Countdown UI ───────────────────────────────────────────────────────────
+let _countdownInterval = null;
+function showCountdown(secs, reason) {
+  const el = document.getElementById('pwErr');
+  const inp = document.getElementById('pwInput');
+  const btn = document.querySelector('.pw-btn');
+  inp.disabled = true; btn.disabled = true;
+  clearInterval(_countdownInterval);
+  let remaining = secs;
+  const msg = reason === 'locked'
+    ? `Demasiados intentos. Bloqueado por`
+    : `Esperá`;
+  el.textContent = `${msg} ${remaining}s`;
+  _countdownInterval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(_countdownInterval);
+      el.textContent = '';
+      inp.disabled = false; btn.disabled = false;
+      inp.focus();
+    } else {
+      el.textContent = `${msg} ${remaining}s`;
+    }
+  }, 1000);
+}
+
+// ── Verificación de contraseña ─────────────────────────────────────────────
+async function checkPw() {
+  const s = rateStatus();
+  if (s.blocked) { showCountdown(s.secs, s.reason); return; }
+
+  const val = document.getElementById('pwInput').value;
+  document.getElementById('pwInput').value = '';
+
+  // Pequeño delay fijo para evitar timing attacks
+  await new Promise(r => setTimeout(r, 300 + Math.random() * 200));
+
+  const hash = await sha256(val);
+  if (hash === PW_HASH) {
+    clearRL();
+    localStorage.setItem('wc26_auth', Date.now().toString());
+    document.getElementById('pwGate').style.display = 'none';
+    document.getElementById('pwErr').textContent = '';
+    initAdmin();
+  } else {
+    recordFail();
+    const s2 = rateStatus();
+    if (s2.blocked) {
+      showCountdown(s2.secs, s2.reason);
+    } else {
+      document.getElementById('pwErr').textContent = 'Contraseña incorrecta';
+      document.getElementById('pwInput').focus();
+    }
+  }
+}
+
+// ── Sesión (timeout 60s) ───────────────────────────────────────────────────
+function isAuthed() {
+  const t = parseInt(localStorage.getItem('wc26_auth') || '0');
+  return Date.now() - t < SESSION_TTL;
+}
+
+function startSessionTimer() {
+  const interval = setInterval(() => {
+    if (!isAuthed()) {
+      clearInterval(interval);
+      localStorage.removeItem('wc26_auth');
+      document.getElementById('pwGate').style.display = 'flex';
+      document.getElementById('pwInput').value = '';
+      document.getElementById('pwErr').textContent = 'Sesión expirada. Volvé a ingresar.';
+      document.getElementById('pwInput').disabled = false;
+      document.querySelector('.pw-btn').disabled = false;
+      document.getElementById('pwInput').focus();
+    }
+  }, 5000);
+}
+
+function initAdmin() {
+  renderMetricas();
+  const unread = getSugs().filter(s => !s.read).length;
+  document.getElementById('sb-badge').textContent = unread;
+  startSessionTimer();
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Bloquear Enter en el input
+  document.getElementById('pwInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkPw();
+  });
+
+  if (isAuthed()) {
+    document.getElementById('pwGate').style.display = 'none';
+    initAdmin();
+  } else {
+    // Si hay cooldown activo al cargar la página, mostrar contador
+    const s = rateStatus();
+    if (s.blocked) showCountdown(s.secs, s.reason);
+    else document.getElementById('pwInput').focus();
+  }
+});
+</script>
+</body>
+</html>

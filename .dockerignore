@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.tmp
+.git/
+mundial2026.html
+data.json
