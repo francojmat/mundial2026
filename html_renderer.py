@@ -212,7 +212,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .hoy-nav-btn:disabled{{opacity:.3;cursor:default}}
     .hoy-lista{{display:flex;flex-direction:column;gap:6px;max-width:600px;margin:0 auto}}
     .hoy-fila{{background:{WHT};border:1px solid {BDR};padding:7px 12px}}
-    .hoy-etiqueta{{font-size:.6rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:5px}}
+    .hoy-etiqueta{{font-size:.6rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:5px;text-align:center}}
     .hoy-match{{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%}}
     .hoy-home{{display:flex;align-items:center;justify-content:flex-start;flex-direction:row-reverse;gap:6px;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden}}
     .hoy-away{{display:flex;align-items:center;justify-content:flex-start;gap:6px;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden}}
