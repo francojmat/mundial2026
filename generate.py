@@ -45,25 +45,22 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
         outputs.append(("planteles.json", json.dumps(planteles, ensure_ascii=False)))
         outputs.append(("plantel.html", render_plantel_shell()))
 
-    # Páginas de partido (partidos con detalle cacheado)
+    # Páginas de partido — TODOS los partidos tienen su página (con detalle si está disponible,
+    # header + posiciones siempre; "sin datos aún" cuando todavía no hay alineaciones/stats)
     details = standings.get("_match_details", {})
-    if details:
-        by_id = {}
-        for matches in standings.get("_matches_by_date", {}).values():
-            for m in matches:
-                by_id[str(m.get("match_id"))] = m
+    all_matches = [m for ms in standings.get("_matches_by_date", {}).values() for m in ms]
+    if all_matches:
         partidos = {}
-        for mid, det in details.items():
-            m = by_id.get(mid)
-            if not m:
+        for m in all_matches:
+            mid = str(m.get("match_id") or "")
+            if not mid or mid == "None":
                 continue
             grp = (m.get("group") or "").replace("GROUP_", "")
             stage_label = f"Grupo {grp}" if grp else (m.get("stage", "") or "").replace("_", " ").title()
             group_data = standings.get(m.get("group")) if m.get("group") else None
-            partidos[mid] = render_match_fragment(m, det, group_data, stage_label)
-        if partidos:
-            outputs.append(("partidos.json", json.dumps(partidos, ensure_ascii=False)))
-            outputs.append(("partido.html", render_partido_shell()))
+            partidos[mid] = render_match_fragment(m, details.get(mid), group_data, stage_label)
+        outputs.append(("partidos.json", json.dumps(partidos, ensure_ascii=False)))
+        outputs.append(("partido.html", render_partido_shell()))
 
     for path, content in outputs:
         tmp = path + ".tmp"

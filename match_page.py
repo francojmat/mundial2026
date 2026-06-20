@@ -215,13 +215,21 @@ def render_match_fragment(match, detail, group_data, stage_label):
     ref = match.get("referee", "")
     ref_html = f'<div class="mt-ref">Árbitro: {ref}</div>' if ref else ""
 
-    body = (
+    detail = detail or {}
+    detail_body = (
         _mt_lineups(detail, home, away)
         + _mt_statistics(detail, home, away)
         + _mt_players(detail, home, away)
-        + _mt_standings(group_data, (match.get("group") or "").replace("GROUP_", ""))
     )
-    return f'<div class="mt-head">{header}{ref_html}</div>{body}'
+    if not detail_body:
+        if status == "TIMED" or not status:
+            msg = "Alineaciones y estadísticas todavía no disponibles. Aparecen cuando arranca el partido."
+        else:
+            msg = "Detalle del partido todavía no disponible. Actualizá en unos minutos."
+        detail_body = f'<div class="mt-sec"><p class="mt-nodata">{msg}</p></div>'
+
+    standings_html = _mt_standings(group_data, (match.get("group") or "").replace("GROUP_", ""))
+    return f'<div class="mt-head">{header}{ref_html}</div>{detail_body}{standings_html}'
 
 
 def render_partido_shell():
@@ -284,6 +292,7 @@ def render_partido_shell():
     .mt-rating{{background:{T};color:{WHT};border-radius:6px;padding:1px 6px;font-weight:700;font-size:.72rem}}
     .mt-cap{{font-size:.55rem;background:{MUT};color:{WHT};border-radius:3px;padding:0 3px;font-weight:700;vertical-align:middle}}
     .mt-stand .mt-cls{{background:rgba(13,148,136,.08)}}
+    .mt-nodata{{text-align:center;color:{MUT};font-size:.8rem;background:{WHT};border:1px dashed {BDR2};border-radius:10px;padding:20px 16px}}
     .loading{{text-align:center;color:{MUT};font-size:.85rem;margin-top:40px}}
     @media(max-width:560px){{
       .mt-ln-grid,.mt-pl-grid{{grid-template-columns:1fr}}

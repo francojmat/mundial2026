@@ -1539,12 +1539,10 @@ def _hoy_detail_html(m: dict) -> str:
         sections.append(f'<div class="hoy-dsec"><p class="hoy-dsec-t">Árbitro</p>'
                         f'<p style="font-size:.75rem;color:{MUT};margin:0">{ref}</p></div>')
 
-    # Botón VER PARTIDO arriba de todo (solo si hay detalle cacheado)
-    vermatch = ""
-    if m.get("has_detail"):
-        mid = m.get("match_id")
-        vermatch = (f'<a class="hoy-vermatch" href="/partido.html?id={mid}" '
-                    f'onclick="event.stopPropagation()">VER PARTIDO &#8594;</a>')
+    # Botón VER PARTIDO arriba de todo — SIEMPRE (todos los partidos tienen su página)
+    mid = m.get("match_id")
+    vermatch = (f'<a class="hoy-vermatch" href="/partido.html?id={mid}" '
+                f'onclick="event.stopPropagation()">VER PARTIDO &#8594;</a>') if mid else ""
 
     if not sections and not vermatch:
         return ""
