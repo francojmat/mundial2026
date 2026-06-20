@@ -28,8 +28,8 @@ class WorldCupClient:
 
     def get_matches_for_display(self) -> dict:
         """
-        Fetches yesterday, today and tomorrow in Argentine time (UTC-3).
-        Returns {"dates": {"2026-06-19": [match, ...]}, "today": "2026-06-19"}.
+        Returns all World Cup matches grouped by local date (Argentine time, UTC-3).
+        Returns {"dates": {"2026-06-11": [match, ...]}, "today": "2026-06-20"}.
         """
         from datetime import datetime, timezone, timedelta
 
@@ -37,17 +37,8 @@ class WorldCupClient:
         now_arg = datetime.now(ARGENTINA)
         today_local = now_arg.date()
 
-        start_utc = (today_local - timedelta(days=1)).isoformat()
-        end_utc   = (today_local + timedelta(days=2)).isoformat()
+        raw = self._get(f"/competitions/{COMPETITION}/matches", params={})
 
-        raw = self._get(f"/competitions/{COMPETITION}/matches",
-                        params={"dateFrom": start_utc, "dateTo": end_utc})
-
-        window = {
-            today_local - timedelta(days=1),
-            today_local,
-            today_local + timedelta(days=1),
-        }
         by_date: dict = {}
 
         for m in raw.get("matches", []):
@@ -56,8 +47,6 @@ class WorldCupClient:
                 continue
             utc_dt = datetime.fromisoformat(utc_str.replace("Z", "+00:00"))
             local_date = utc_dt.astimezone(ARGENTINA).date()
-            if local_date not in window:
-                continue
 
             home = m["homeTeam"].get("shortName") or m["homeTeam"].get("name", "TBD")
             away = m["awayTeam"].get("shortName") or m["awayTeam"].get("name", "TBD")
