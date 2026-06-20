@@ -56,7 +56,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Mundial 2026</title>
+  <title>Mejor Tercero · Mundial 2026</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
   <script>!function(t,e){{var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){{function g(t,e){{var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){{t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){{var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}},u.people.toString=function(){{return u.toString(1)+" (stub)"}},n="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep".split(" "),o=0;o<n.length;o++)g(u,n[o]);e._i.push([i,s,a])}},(e.__SV=1))}}(document,window.posthog||[]);posthog.init('phc_oJ2GTZXyfDHXr3dmKGnEww3n3bNSQ4SRAvbQa43eVZZ5',{{api_host:'https://us.i.posthog.com',person_profiles:'identified_only'}})</script>
   <style>
@@ -210,7 +210,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .hoy-nav-btn{{background:none;border:1px solid {BDR};border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:1.1rem;line-height:1;display:flex;align-items:center;justify-content:center;color:{DIM};padding:0;flex-shrink:0}}
     .hoy-nav-btn:hover{{background:{GRY}}}
     .hoy-nav-btn:disabled{{opacity:.3;cursor:default}}
-    .hoy-lista{{display:flex;flex-direction:column;gap:6px}}
+    .hoy-lista{{display:flex;flex-direction:column;gap:6px;max-width:600px;margin:0 auto}}
     .hoy-fila{{background:{WHT};border:1px solid {BDR};padding:7px 12px}}
     .hoy-etiqueta{{font-size:.6rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:5px}}
     .hoy-match{{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%}}
