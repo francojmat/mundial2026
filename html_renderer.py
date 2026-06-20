@@ -326,7 +326,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <!-- Botón flotante sugerencias -->
-<button class="fab-sug" onclick="openSug()" title="Enviar sugerencia">✉ Sugerencias</button>
+<button class="fab-sug" onclick="openSug()" title="Enviar sugerencia">Sugerencias</button>
 
 <!-- Modal sugerencias -->
 <div class="sug-overlay" id="sugOverlay" onclick="if(event.target===this)closeSug()">
