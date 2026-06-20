@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Dict, List, Set
-from countries import traducir
+from countries import traducir, nombre_es
 
 T   = "#c2410c"
 TEL = "#0d9488"
@@ -1330,7 +1330,7 @@ def _hoy_detail_html(m: dict) -> str:
         for g in goals:
             minute = g.get("minute", "")
             scorer = g.get("scorer", "")
-            team   = traducir(g.get("team", ""))
+            team   = nombre_es(g.get("team", ""))
             assist = g.get("assist", "")
             g_type = g.get("type", "NORMAL")
             suffix = " (PP)" if g_type == "PENALTY" else (" (PC)" if g_type == "OWN" else "")
@@ -1350,7 +1350,7 @@ def _hoy_detail_html(m: dict) -> str:
         for b in bookings:
             card   = b.get("card", "YELLOW")
             player = b.get("player", "")
-            team   = traducir(b.get("team", ""))
+            team   = nombre_es(b.get("team", ""))
             minute = b.get("minute", "")
             icon   = "hoy-ev-yc" if card == "YELLOW" else "hoy-ev-rc"
             rows += (f'<div class="hoy-ev">'
@@ -1368,7 +1368,7 @@ def _hoy_detail_html(m: dict) -> str:
             minute     = s.get("minute", "")
             player_in  = s.get("player_in", "")
             player_out = s.get("player_out", "")
-            team       = traducir(s.get("team", ""))
+            team       = nombre_es(s.get("team", ""))
             rows += (f'<div class="hoy-ev">'
                      f'<span class="hoy-ev-min">{minute}\'</span>'
                      f'<span class="hoy-ev-sw">&#x21C4;</span>'
