@@ -500,6 +500,14 @@ function toggleScorers() {{
   extra.style.display = hidden ? '' : 'none';
   if (btn) btn.textContent = hidden ? 'Ver menos' : 'Ver todos los goleadores';
 }}
+function toggleList(key) {{
+  var extra = document.getElementById(key + '-extra');
+  var btn   = document.getElementById(key + '-btn');
+  if (!extra) return;
+  var hidden = extra.style.display === 'none';
+  extra.style.display = hidden ? '' : 'none';
+  if (btn) btn.textContent = hidden ? 'Ver menos' : (btn.getAttribute('data-more') || 'Ver todos');
+}}
 
 // ── Sugerencias → Worker ──────────────────────────────────────────────────
 const SUG_API = 'https://mejortercero.online/api/suggest';
@@ -1442,9 +1450,9 @@ def _render_scorers(standings: Dict) -> str:
     </div>"""
 
 
-def _render_ranking(items: list, value_header: str,
+def _render_ranking(items: list, value_header: str, key: str,
                     empty: str = "Disponible próximamente.") -> str:
-    """Tabla de ranking de jugadores (asistencias, amarillas, rojas)."""
+    """Tabla de ranking de jugadores (asistencias, amarillas, rojas). Top 10 + ver todos."""
     if not items:
         return f'<p style="font-size:.75rem;color:{MUT};margin-top:4px">{empty}</p>'
 
@@ -1457,7 +1465,17 @@ def _render_ranking(items: list, value_header: str,
                 f'<td><span class="pts">{it.get("value", 0)}</span></td>'
                 f'</tr>')
 
-    rows = "".join(_row(i, it) for i, it in enumerate(items[:10], 1))
+    top = "".join(_row(i, it) for i, it in enumerate(items[:10], 1))
+    rest = items[10:]
+    extra = ""
+    btn = ""
+    if rest:
+        extra_rows = "".join(_row(i, it) for i, it in enumerate(rest, 11))
+        extra = f'<tbody id="{key}-extra" style="display:none">{extra_rows}</tbody>'
+        btn = (f'<div style="text-align:center;margin-top:8px">'
+               f'<button class="reset-btn" id="{key}-btn" data-more="Ver todos" '
+               f'onclick="toggleList(\'{key}\')">Ver todos</button></div>')
+
     return f"""
     <div style="max-width:500px;margin:0 auto">
       <div class="grupo">
@@ -1468,22 +1486,24 @@ def _render_ranking(items: list, value_header: str,
             <th style="text-align:left">País</th>
             <th>{value_header}</th>
           </tr></thead>
-          <tbody>{rows}</tbody>
+          <tbody>{top}</tbody>
+          {extra}
         </table>
       </div>
+      {btn}
     </div>"""
 
 
 def _render_assists(standings: Dict) -> str:
-    return _render_ranking(standings.get("_assists", []), "Asist.")
+    return _render_ranking(standings.get("_assists", []), "Asist.", "assists")
 
 
 def _render_yellows(standings: Dict) -> str:
-    return _render_ranking(standings.get("_yellows", []), "Amar.")
+    return _render_ranking(standings.get("_yellows", []), "Amar.", "yellows")
 
 
 def _render_reds(standings: Dict) -> str:
-    return _render_ranking(standings.get("_reds", []), "Rojas")
+    return _render_ranking(standings.get("_reds", []), "Rojas", "reds")
 
 
 def _venue_date(iso: str) -> str:

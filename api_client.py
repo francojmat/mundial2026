@@ -216,7 +216,7 @@ def build_standings(client: WorldCupClient, fifa_rankings: Dict[str, int] = None
     result["_today_date"]      = display["today"]
     result["_today_matches"]   = display["dates"].get(display["today"], [])
     try:
-        result["_scorers"] = client.get_scorers(limit=50)
+        result["_scorers"] = client.get_scorers(limit=200)
     except Exception:
         result["_scorers"] = []
 
