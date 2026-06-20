@@ -19,8 +19,30 @@ SQUADS_REFRESH = 604800   # segundos: planteles 1 vez por semana (los rosters no
 SQUADS_PER_RUN = 10       # tope de equipos a refrescar por corrida (evita ráfaga de llamadas)
 MATCH_LIVE_REFRESH = 120  # segundos: detalle de partido en vivo cada 2 min
 MATCH_DETAILS_PER_RUN = 5 # tope de partidos a enriquecer por corrida (3 llamadas c/u)
-VENUE_DETAILS_REFRESH = 604800  # detalles de estadio (capacidad, foto) 1 vez por semana
+VENUE_DETAILS_REFRESH = 604800  # detalles de estadio (foto/superficie) 1 vez por semana
 VENUE_IMG_MIN_BYTES = 35000     # debajo de esto la imagen es un placeholder de la API
+
+# Capacidades oficiales de configuración Mundial 2026 (fuente: Wikipedia/FIFA).
+# La API solo tiene 8 de 16 y con capacidades generales, no de torneo → usamos estas para los 16.
+# Clave = nombre del estadio como viene en los fixtures de API-Football.
+_VENUE_CAPACITY = {
+    "Estadio Azteca":          80824,
+    "MetLife Stadium":         80663,
+    "AT&T Stadium":            70649,
+    "SoFi Stadium":            70492,
+    "Arrowhead Stadium":       69045,
+    "Levi's Stadium":          68827,
+    "NRG Stadium":             68777,
+    "Lincoln Financial Field": 68324,
+    "Mercedes-Benz Stadium":   68239,
+    "Lumen Field":             66925,
+    "Hard Rock Stadium":       64478,
+    "Gillette Stadium":        64146,
+    "BC Place":                52497,
+    "Estadio BBVA":            51243,
+    "Estadio Akron":           45664,
+    "BMO Field":               43036,
+}
 
 
 def _now():
@@ -109,7 +131,8 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
         vdetails = cache.get("venue_details") or {}
         for v in vlist:
             d = vdetails.get(v.get("name")) or {}
-            v["capacity"] = d.get("capacity")
+            # Capacidad oficial WC para los 16 (curada); superficie/foto solo donde la API la tiene
+            v["capacity"] = _VENUE_CAPACITY.get(v.get("name"))
             v["surface"]  = d.get("surface")
             v["image_url"] = d.get("image")
     standings["_venues"] = vlist
