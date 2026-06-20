@@ -67,6 +67,9 @@ class WorldCupClient:
             full  = score.get("fullTime", {}) or {}
             status = m.get("status", "TIMED")
 
+            referees = m.get("referees") or []
+            referee  = referees[0].get("name", "") if referees else ""
+
             by_date.setdefault(local_date.isoformat(), []).append({
                 "home": home,
                 "away": away,
@@ -77,6 +80,7 @@ class WorldCupClient:
                 "stage": m.get("stage", ""),
                 "group": m.get("group") or "",
                 "matchday": m.get("matchday") or 0,
+                "referee": referee,
             })
 
         return {"dates": by_date, "today": today_local.isoformat()}
@@ -166,7 +170,7 @@ def build_standings(client: WorldCupClient, fifa_rankings: Dict[str, int] = None
     result["_today_date"]      = display["today"]
     result["_today_matches"]   = display["dates"].get(display["today"], [])
     try:
-        result["_scorers"] = client.get_scorers(limit=10)
+        result["_scorers"] = client.get_scorers(limit=50)
     except Exception:
         result["_scorers"] = []
 

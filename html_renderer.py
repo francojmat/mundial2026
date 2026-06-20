@@ -265,7 +265,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
       <p class="sec-t" id="hoy-nav-label" style="margin:0;border:none;padding-bottom:0">Partidos de hoy</p>
       <button class="hoy-nav-btn" id="hoy-next" onclick="navDay(+1)">&#8250;</button>
     </div>
-    <button class="sec-toggle" id="st-hoy" onclick="toggleSec('hoy')" style="position:absolute;right:0;top:50%;transform:translateY(-50%)">▲</button>
+    <button class="sec-toggle" id="st-hoy" onclick="toggleSec('hoy')" style="position:absolute;right:0;top:50%;transform:translateY(-50%)">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-hoy">
     <div id="today-body">{_render_today_matches(standings.get("_today_matches", []))}</div>
@@ -277,7 +277,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 <div class="sec">
   <div class="sec-hdr" onclick="toggleSec('grupos')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Posiciones — Fase de grupos</p>
-    <button class="sec-toggle" id="st-grupos">▲</button>
+    <button class="sec-toggle" id="st-grupos">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-grupos">
     <div class="leyenda">
@@ -292,7 +292,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 <div class="sec">
   <div class="sec-hdr" onclick="toggleSec('terceros')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Mejor Tercero — Mundial 2026</p>
-    <button class="sec-toggle" id="st-terceros">▲</button>
+    <button class="sec-toggle" id="st-terceros">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-terceros">
     <div id="thirds-inner">{_render_thirds(standings)}</div>
@@ -303,7 +303,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 <div class="sec">
   <div class="sec-hdr" onclick="toggleSec('bracket')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Bracket — Hacé clic para simular el avance</p>
-    <button class="sec-toggle" id="st-bracket">▲</button>
+    <button class="sec-toggle" id="st-bracket">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-bracket">
     <div class="llaves-wrap">
@@ -318,7 +318,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 <div class="sec">
   <div class="sec-hdr" onclick="toggleSec('goleadores')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Goleadores — Mundial 2026</p>
-    <button class="sec-toggle" id="st-goleadores">▲</button>
+    <button class="sec-toggle" id="st-goleadores">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-goleadores">
     <div id="scorers-inner">{_render_scorers(standings)}</div>
@@ -365,6 +365,16 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </style>
 
 <script>
+// ── Goleadores expandibles ────────────────────────────────────────────────
+function toggleScorers() {{
+  var extra = document.getElementById('scorers-extra');
+  var btn   = document.getElementById('scorers-btn');
+  if (!extra) return;
+  var hidden = extra.style.display === 'none';
+  extra.style.display = hidden ? '' : 'none';
+  if (btn) btn.textContent = hidden ? 'Ver menos' : 'Ver todos los goleadores';
+}}
+
 // ── Sugerencias → Worker ──────────────────────────────────────────────────
 const SUG_API = 'https://mejortercero.online/api/suggest';
 function openSug(){{ document.getElementById('sugOverlay').classList.add('open'); }}
@@ -799,7 +809,7 @@ function toggleSec(id) {{
   var btn  = document.getElementById('st-' + id);
   if (!body) return;
   var collapsed = body.classList.toggle('sec-collapsed');
-  if (btn) btn.textContent = collapsed ? '▼' : '▲';
+  if (btn) btn.textContent = collapsed ? '▼ ABRIR' : '▲ CERRAR';
   SEC[id] = collapsed;
   saveSecs();
 }}
@@ -810,7 +820,7 @@ function restoreSecs() {{
       var body = document.getElementById('sb-' + id);
       var btn  = document.getElementById('st-' + id);
       if (body) body.classList.add('sec-collapsed');
-      if (btn) btn.textContent = '▼';
+      if (btn) btn.textContent = '▼ ABRIR';
     }}
   }});
 }}
@@ -1200,18 +1210,27 @@ def _stage_label(stage: str, group: str, matchday: int) -> str:
     }.get(stage, stage)
 
 
+def _hoy_badge(m: dict) -> str:
+    """Badge de estado (FIN / EN VIVO) para mostrar encima de la fila de equipos."""
+    status = m["status"]
+    if status == "FINISHED":
+        return f'<div style="text-align:center;margin-bottom:3px"><span class="hoy-badge-fin">FIN</span></div>'
+    if status in ("IN_PLAY", "PAUSED"):
+        return f'<div style="text-align:center;margin-bottom:3px"><span class="hoy-badge-live"><span class="dot"></span>EN VIVO</span></div>'
+    return ''
+
+
 def _hoy_centro(m: dict) -> str:
+    """Solo el marcador / hora para el centro de la grilla, sin badge."""
     status = m["status"]
     hg = m.get("home_goals")
     ag = m.get("away_goals")
     if status == "FINISHED":
         score = f"{hg} - {ag}" if hg is not None else "- -"
-        return (f'<span class="hoy-badge-fin">FIN</span>'
-                f'<span class="hoy-score">{score}</span>')
+        return f'<span class="hoy-score">{score}</span>'
     if status in ("IN_PLAY", "PAUSED"):
         score = f"{hg} - {ag}" if hg is not None else "0 - 0"
-        return (f'<span class="hoy-badge-live"><span class="dot"></span>EN VIVO</span>'
-                f'<span class="hoy-score">{score}</span>')
+        return f'<span class="hoy-score">{score}</span>'
     utc = m.get("utc_date", "")
     if utc:
         return f'<span class="hoy-hora" data-utc="{utc}" data-format="time"></span>'
@@ -1222,17 +1241,29 @@ def _render_scorers(standings: Dict) -> str:
     scorers = standings.get("_scorers", [])
     if not scorers:
         return f'<p style="font-size:.75rem;color:{MUT};margin-top:4px">Disponible próximamente.</p>'
-    filas = ""
-    for i, s in enumerate(scorers, 1):
-        filas += f"""
-    <tr>
-      <td>{i}</td>
-      <td style="text-align:left;white-space:nowrap">{s["name"]}</td>
-      <td style="text-align:left;white-space:nowrap">{traducir(s["team"])}</td>
-      <td><span class="pts">{s["goals"]}</span></td>
-    </tr>"""
+
+    def _row(i: int, s: dict) -> str:
+        bg = f'style="background:{GRY}"' if i % 2 == 0 else ''
+        return (f'<tr {bg}>'
+                f'<td>{i}</td>'
+                f'<td style="text-align:left;white-space:nowrap">{s["name"]}</td>'
+                f'<td style="text-align:left;white-space:nowrap">{traducir(s["team"])}</td>'
+                f'<td><span class="pts">{s["goals"]}</span></td>'
+                f'</tr>')
+
+    top   = "".join(_row(i, s) for i, s in enumerate(scorers[:10], 1))
+    rest  = scorers[10:]
+    extra = ""
+    btn   = ""
+    if rest:
+        extra_rows = "".join(_row(i, s) for i, s in enumerate(rest, 11))
+        extra = f'<tbody id="scorers-extra" style="display:none">{extra_rows}</tbody>'
+        btn   = (f'<div style="text-align:center;margin-top:8px">'
+                 f'<button class="reset-btn" id="scorers-btn" onclick="toggleScorers()">'
+                 f'Ver todos los goleadores</button></div>')
+
     return f"""
-    <div style="max-width:500px">
+    <div style="max-width:500px;margin:0 auto">
       <div class="grupo">
         <table>
           <thead><tr>
@@ -1241,9 +1272,11 @@ def _render_scorers(standings: Dict) -> str:
             <th style="text-align:left">País</th>
             <th>Goles</th>
           </tr></thead>
-          <tbody>{filas}</tbody>
+          <tbody>{top}</tbody>
+          {extra}
         </table>
       </div>
+      {btn}
     </div>"""
 
 
@@ -1257,12 +1290,19 @@ def _render_today_matches(matches: list) -> str:
         lbl = _stage_label(m["stage"], m["group"], m.get("matchday", 0))
         home_html = traducir(m["home"])
         away_html = traducir(m["away"])
+        badge  = _hoy_badge(m)
         centro = _hoy_centro(m)
+        ref = m.get("referee", "")
+        ref_line = (f'<div style="text-align:center;font-size:.57rem;color:{DIM};margin-top:4px">'
+                    f'Árbitro: {ref}</div>') if ref else ""
         rows += (f'<div class="hoy-fila">'
                  f'<span class="hoy-etiqueta">{lbl}</span>'
+                 f'{badge}'
                  f'<div class="hoy-match">'
                  f'<div class="hoy-home">{home_html}</div>'
                  f'<div class="hoy-centro">{centro}</div>'
                  f'<div class="hoy-away">{away_html}</div>'
-                 f'</div></div>')
+                 f'</div>'
+                 f'{ref_line}'
+                 f'</div>')
     return f'<div class="hoy-lista">{rows}</div>'
