@@ -129,13 +129,8 @@ async function handleMarkRead(request, env) {
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-async function sha256(str) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function validToken(token, env) {
+function validToken(token, env) {
   if (!token || !env.ADMIN_TOKEN_HASH) return false;
-  const hash = await sha256(token);
-  return hash === env.ADMIN_TOKEN_HASH;
+  const stored = env.ADMIN_TOKEN_HASH.replace(/^﻿/, '').trim();
+  return token === stored;
 }
