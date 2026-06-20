@@ -258,7 +258,17 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .hoy-badge-live{{color:{T};font-size:.6rem;font-weight:700;text-transform:uppercase;display:inline-flex;align-items:center;gap:2px;letter-spacing:.04em}}
     .hoy-badge-live .dot{{width:5px;height:5px}}
     .hoy-badge-fin{{color:{MUT};font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}}
+    .ven-count{{color:{MUT};font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}}
+    .ven-city{{font-size:.72rem;color:{MUT};margin-top:3px}}
+    .ven-m{{display:grid;grid-template-columns:34px 1fr auto 1fr;align-items:center;gap:6px;padding:3px 0;font-size:.74rem}}
+    .ven-m-date{{color:{DIM};font-size:.66rem}}
+    .ven-m-team{{display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden}}
+    .ven-m-h{{flex-direction:row-reverse;justify-content:flex-start}}
+    .ven-m-a{{justify-content:flex-start}}
+    .ven-m-h img,.ven-m-a img{{margin-right:0;flex-shrink:0}}
+    .ven-m-mid{{font-weight:700;color:{MUT};font-size:.72rem;text-align:center;min-width:38px}}
     @media(max-width:480px){{
+      .ven-m{{font-size:.68rem;grid-template-columns:28px 1fr auto 1fr}}
       .hoy-home,.hoy-away{{font-size:.72rem}}
       .hoy-score{{font-size:.9rem}}
       .hoy-match{{gap:6px}}
@@ -389,6 +399,17 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   </div>
   <div class="sec-body" id="sb-rojas">
     <div id="reds-inner">{_render_reds(standings)}</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+<div class="sec">
+  <div class="sec-hdr" onclick="toggleSec('estadios')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Estadios — Mundial 2026</p>
+    <button class="sec-toggle" id="st-estadios">▲ CERRAR</button>
+  </div>
+  <div class="sec-body" id="sb-estadios">
+    <div id="venues-inner">{_render_venues(standings)}</div>
   </div>
 </div>
 
@@ -1404,6 +1425,49 @@ def _render_yellows(standings: Dict) -> str:
 
 def _render_reds(standings: Dict) -> str:
     return _render_ranking(standings.get("_reds", []), "Rojas")
+
+
+def _venue_date(iso: str) -> str:
+    try:
+        return datetime.fromisoformat(iso.replace("Z", "+00:00")).strftime("%d/%m")
+    except Exception:
+        return ""
+
+
+def _render_venues(standings: Dict) -> str:
+    """Módulo de estadios, cada uno expandible con sus partidos."""
+    venues = standings.get("_venues", [])
+    if not venues:
+        return f'<p style="font-size:.75rem;color:{MUT};margin-top:4px">Disponible próximamente.</p>'
+
+    cards = ""
+    for v in venues:
+        rows = ""
+        for m in v.get("matches", []):
+            home = traducir(m.get("home", ""))
+            away = traducir(m.get("away", ""))
+            if m.get("status") == "FT" and m.get("gh") is not None:
+                mid = f'<span class="pts">{m.get("gh")} - {m.get("ga")}</span>'
+            else:
+                mid = '<span style="color:{0}">vs</span>'.format(DIM)
+            fecha = _venue_date(m.get("date", ""))
+            rows += (f'<div class="ven-m">'
+                     f'<span class="ven-m-date">{fecha}</span>'
+                     f'<span class="ven-m-team ven-m-h">{home}</span>'
+                     f'<span class="ven-m-mid">{mid}</span>'
+                     f'<span class="ven-m-team ven-m-a">{away}</span>'
+                     f'</div>')
+        detail = f'<div class="hoy-detail"><div class="hoy-dsec">{rows}</div></div>'
+        cards += (f'<div class="hoy-fila" onclick="toggleMatch(this)">'
+                  f'<div class="hoy-head">'
+                  f'<span class="hoy-etiqueta">{v.get("name", "")}</span>'
+                  f'<span class="ven-count">{v.get("count", 0)} {"partido" if v.get("count")==1 else "partidos"}</span>'
+                  f'<span class="hoy-chev">&#9662;</span>'
+                  f'</div>'
+                  f'<div class="ven-city">{v.get("city", "")}</div>'
+                  f'{detail}'
+                  f'</div>')
+    return f'<div style="max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:8px">{cards}</div>'
 
 
 def _hoy_detail_html(m: dict) -> str:
