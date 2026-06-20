@@ -157,19 +157,17 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
 
 
 def _enrich_match_details(matches_by_date: dict, fx_map: dict, details: dict, client) -> bool:
-    """Trae alineaciones/stats/jugadores de partidos jugados o en vivo. Cache por partido."""
-    dirty = False
-    budget = MATCH_DETAILS_PER_RUN
+    """Trae alineaciones/stats/jugadores de partidos jugados o en vivo. Cache por partido.
+    Prioriza partidos en vivo y los más recientes (que son los que la gente mira)."""
+    # Candidatos que necesitan fetch (no cacheados, o en vivo desactualizados)
+    candidates = []
     for matches in matches_by_date.values():
         for m in matches:
-            if budget <= 0:
-                return dirty
             status = m.get("status", "")
             if status not in ("FINISHED", "IN_PLAY", "PAUSED"):
                 continue
             key = str(m.get("match_id"))
-            fixture_id = fx_map.get(key)
-            if not fixture_id:
+            if not fx_map.get(key):
                 continue
             cached = details.get(key)
             if cached:
@@ -177,18 +175,27 @@ def _enrich_match_details(matches_by_date: dict, fx_map: dict, details: dict, cl
                     continue  # terminado y cacheado → no cambia
                 if not _stale(cached, MATCH_LIVE_REFRESH):
                     continue  # en vivo pero refrescado hace poco
-            lineups = client.get_fixture_lineups(fixture_id)
-            if not lineups:
-                continue  # todavía sin alineaciones (no arrancó)
-            details[key] = {
-                "lineups":    lineups,
-                "statistics": client.get_fixture_statistics(fixture_id),
-                "players":    client.get_fixture_players(fixture_id),
-                "status":     status,
-                "last_fetch": _now().isoformat(),
-            }
-            budget -= 1
-            dirty = True
+            candidates.append(m)
+
+    # Prioridad: en vivo primero, luego los más recientes (dos sorts estables)
+    candidates.sort(key=lambda m: m.get("utc_date", ""), reverse=True)
+    candidates.sort(key=lambda m: 0 if m.get("status") in ("IN_PLAY", "PAUSED") else 1)
+
+    dirty = False
+    for m in candidates[:MATCH_DETAILS_PER_RUN]:
+        key = str(m.get("match_id"))
+        fixture_id = fx_map.get(key)
+        lineups = client.get_fixture_lineups(fixture_id)
+        if not lineups:
+            continue  # todavía sin alineaciones (no arrancó)
+        details[key] = {
+            "lineups":    lineups,
+            "statistics": client.get_fixture_statistics(fixture_id),
+            "players":    client.get_fixture_players(fixture_id),
+            "status":     m.get("status", ""),
+            "last_fetch": _now().isoformat(),
+        }
+        dirty = True
     return dirty
 
 
