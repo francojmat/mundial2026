@@ -35,12 +35,20 @@
     .sug-msg{font-size:.85rem;margin-top:5px;line-height:1.5;color:#211c14}
     .sug-empty{font-size:.8rem;color:#b09880;padding:24px 0;text-align:center}
     .loading{text-align:center;padding:40px;color:#b09880;font-size:.8rem}
-    .m-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
-    .m-card{background:#fff;border:1px solid #e8ddd0;padding:16px 20px}
+    .m-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+    .m-card{background:#fff;border:1px solid #e8ddd0;padding:14px 16px}
     .m-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#b09880;margin-bottom:6px}
-    .m-val{font-size:2rem;font-weight:700;color:#c2410c;line-height:1}
-    .m-chart-wrap{background:#fff;border:1px solid #e8ddd0;padding:16px 20px}
+    .m-val{font-size:1.8rem;font-weight:700;color:#c2410c;line-height:1}
+    .m-chart-wrap{background:#fff;border:1px solid #e8ddd0;padding:16px 20px;margin-bottom:16px}
     .m-chart-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#b09880;margin-bottom:12px}
+    .m-two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    .m-two-col .m-chart-wrap{margin-bottom:0}
+    .m-list{display:flex;flex-direction:column;gap:0}
+    .m-list-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0ebe4;font-size:.82rem}
+    .m-list-item:last-child{border-bottom:none}
+    .m-list-bar{height:6px;background:#c2410c;border-radius:3px;flex-shrink:0;min-width:2px}
+    .m-list-label{flex:1;color:#211c14;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .m-list-count{font-size:.75rem;color:#7c6a58;flex-shrink:0;font-weight:700}
 
     /* ── Chat ── */
     #chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 230px);min-height:380px}
@@ -78,7 +86,8 @@
     .chat-hint{font-size:.7rem;color:#b09880;margin-top:8px}
 
     @media(max-width:600px){
-      .m-cards{grid-template-columns:1fr}
+      .m-cards{grid-template-columns:repeat(2,1fr)}
+      .m-two-col{grid-template-columns:1fr}
       body{padding:20px 16px}
       #chat-wrap{height:calc(100vh - 210px)}
     }
@@ -121,12 +130,33 @@
     <div id="metrics-content" style="display:none">
       <div class="m-cards">
         <div class="m-card"><div class="m-label">Visitas hoy</div><div class="m-val" id="m-today">—</div></div>
+        <div class="m-card"><div class="m-label">Únicos hoy</div><div class="m-val" id="m-today-users">—</div></div>
         <div class="m-card"><div class="m-label">Últimos 7 días</div><div class="m-val" id="m-week">—</div></div>
         <div class="m-card"><div class="m-label">Últimos 30 días</div><div class="m-val" id="m-month">—</div></div>
       </div>
       <div class="m-chart-wrap">
         <p class="m-chart-title">Visitas por día — últimos 30 días</p>
         <div id="m-chart"></div>
+      </div>
+      <div class="m-two-col">
+        <div class="m-chart-wrap">
+          <p class="m-chart-title">Países — últimos 30 días</p>
+          <div id="m-countries"></div>
+        </div>
+        <div class="m-chart-wrap">
+          <p class="m-chart-title">Dispositivos — últimos 30 días</p>
+          <div id="m-devices"></div>
+        </div>
+      </div>
+      <div class="m-two-col">
+        <div class="m-chart-wrap">
+          <p class="m-chart-title">Referentes — últimos 7 días</p>
+          <div id="m-referrers"></div>
+        </div>
+        <div class="m-chart-wrap">
+          <p class="m-chart-title">Horas pico — últimos 7 días (hora ARG)</p>
+          <div id="m-hours"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -246,10 +276,15 @@ async function loadMetrics() {
     const d = await res.json();
     document.getElementById('metrics-loading').style.display = 'none';
     document.getElementById('metrics-content').style.display = 'block';
-    document.getElementById('m-today').textContent = d.today_views.toLocaleString('es-AR');
-    document.getElementById('m-week').textContent  = d.week_views.toLocaleString('es-AR');
-    document.getElementById('m-month').textContent = d.month_views.toLocaleString('es-AR');
-    document.getElementById('m-chart').innerHTML   = renderChart(d.daily);
+    document.getElementById('m-today').textContent       = d.today_views.toLocaleString('es-AR');
+    document.getElementById('m-today-users').textContent = d.today_users.toLocaleString('es-AR');
+    document.getElementById('m-week').textContent        = d.week_views.toLocaleString('es-AR');
+    document.getElementById('m-month').textContent       = d.month_views.toLocaleString('es-AR');
+    document.getElementById('m-chart').innerHTML         = renderChart(d.daily);
+    document.getElementById('m-countries').innerHTML     = renderBarList(d.countries || [], 'country', 'views');
+    document.getElementById('m-devices').innerHTML       = renderBarList(d.devices   || [], 'device',  'views');
+    document.getElementById('m-referrers').innerHTML     = renderBarList(d.referrers || [], 'ref',     'views');
+    document.getElementById('m-hours').innerHTML         = renderHoursChart(d.hours  || []);
   } catch(e) {
     document.getElementById('metrics-loading').textContent = 'Error al cargar métricas: ' + e.message;
   }
@@ -285,6 +320,39 @@ function renderChart(daily) {
     ${dots.join('')}
     ${labels}
   </svg>`;
+}
+
+function renderBarList(items, labelKey, valueKey) {
+  if (!items || !items.length) return '<p style="color:#b09880;font-size:.8rem;padding:4px 0">Sin datos.</p>';
+  const maxV = Math.max(...items.map(i => i[valueKey]), 1);
+  return '<div class="m-list">' + items.map(item => {
+    const pct   = Math.round((item[valueKey] / maxV) * 70);
+    const label = String(item[labelKey] || 'Desconocido');
+    return `<div class="m-list-item">
+      <span class="m-list-label">${esc(label)}</span>
+      <span class="m-list-bar" style="width:${pct}px"></span>
+      <span class="m-list-count">${Number(item[valueKey]).toLocaleString('es-AR')}</span>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function renderHoursChart(hours) {
+  if (!hours || !hours.length) return '<p style="color:#b09880;font-size:.8rem;padding:4px 0">Sin datos.</p>';
+  const maxV = Math.max(...hours.map(h => h.views), 1);
+  const bars = Array.from({length:24}, (_, h) => {
+    const entry = hours.find(x => x.hour === h);
+    const v     = entry ? entry.views : 0;
+    const barH  = Math.round((v / maxV) * 52);
+    return `<div title="${h}:00 — ${v}" style="flex:1;display:flex;flex-direction:column;align-items:stretch">
+      <div style="flex:1;display:flex;align-items:flex-end">
+        <div style="width:100%;height:${barH}px;background:#c2410c;border-radius:1px 1px 0 0"></div>
+      </div>
+      <div style="height:14px;display:flex;align-items:center;justify-content:center">
+        <span style="font-size:7px;color:#b09880">${h % 6 === 0 ? h + 'h' : ''}</span>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div style="display:flex;height:66px;gap:1px">${bars}</div>`;
 }
 
 // ── Sugerencias ───────────────────────────────────────────────────────────────

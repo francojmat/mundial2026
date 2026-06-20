@@ -59,40 +59,40 @@ async function handleMetrics(request, env) {
     return json({ error: "No autorizado" }, 401);
   }
 
-  const phKey = (env.POSTHOG_KEY || '').replace(/^﻿/, '').trim();
-  const res = await fetch("https://us.posthog.com/api/projects/478313/query", {
+  const phKey  = (env.POSTHOG_KEY || '').replace(/^﻿/, '').trim();
+  const phUrl  = "https://us.posthog.com/api/projects/478313/query";
+  const phHdrs = { "Authorization": `Bearer ${phKey}`, "Content-Type": "application/json" };
+
+  const phQuery = (q) => fetch(phUrl, {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${phKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      query: {
-        kind: "HogQLQuery",
-        query: `SELECT toDate(timestamp) AS day,
-                       count() AS pageviews,
-                       count(distinct person_id) AS users
-                FROM events
-                WHERE event = '$pageview'
-                  AND timestamp >= now() - interval 30 day
-                GROUP BY day
-                ORDER BY day`,
-      },
-    }),
-  });
+    headers: phHdrs,
+    body: JSON.stringify({ query: { kind: "HogQLQuery", query: q } }),
+  }).then(r => r.ok ? r.json() : null).catch(() => null);
 
-  if (!res.ok) {
-    return json({ error: "Error PostHog", status: res.status }, 502);
-  }
+  const [dailyRes, countriesRes, devicesRes, referrersRes, hoursRes] = await Promise.all([
+    phQuery(`SELECT toDate(timestamp) AS day, count() AS pageviews, count(distinct person_id) AS users
+             FROM events WHERE event = '$pageview' AND timestamp >= now() - interval 30 day
+             GROUP BY day ORDER BY day`),
+    phQuery(`SELECT properties.$geoip_country_name AS country, count() AS views
+             FROM events WHERE event = '$pageview' AND timestamp >= now() - interval 30 day
+               AND properties.$geoip_country_name IS NOT NULL AND properties.$geoip_country_name != ''
+             GROUP BY country ORDER BY views DESC LIMIT 8`),
+    phQuery(`SELECT properties.$device_type AS device, count() AS views
+             FROM events WHERE event = '$pageview' AND timestamp >= now() - interval 30 day
+               AND properties.$device_type IS NOT NULL AND properties.$device_type != ''
+             GROUP BY device ORDER BY views DESC`),
+    phQuery(`SELECT properties.$referring_domain AS ref, count() AS views
+             FROM events WHERE event = '$pageview' AND timestamp >= now() - interval 7 day
+               AND properties.$referring_domain IS NOT NULL
+               AND properties.$referring_domain != '' AND properties.$referring_domain != '$direct'
+             GROUP BY ref ORDER BY views DESC LIMIT 6`),
+    phQuery(`SELECT toHour(toTimezone(timestamp, 'America/Argentina/Buenos_Aires')) AS hour, count() AS views
+             FROM events WHERE event = '$pageview' AND timestamp >= now() - interval 7 day
+             GROUP BY hour ORDER BY hour`),
+  ]);
 
-  const data = await res.json();
-  const rows = (data.results || []).map(r => ({
-    day: r[0],
-    views: Number(r[1]),
-    users: Number(r[2]),
-  }));
-
-  const today  = new Date().toISOString().split("T")[0];
+  const rows    = (dailyRes?.results || []).map(r => ({ day: r[0], views: Number(r[1]), users: Number(r[2]) }));
+  const today   = new Date().toISOString().split("T")[0];
   const weekAgo = new Date(Date.now() - 6 * 86400000).toISOString().split("T")[0];
 
   return json({
@@ -101,6 +101,10 @@ async function handleMetrics(request, env) {
     today_users: rows.find(r => r.day === today)?.users ?? 0,
     week_views:  rows.filter(r => r.day >= weekAgo).reduce((s, r) => s + r.views, 0),
     month_views: rows.reduce((s, r) => s + r.views, 0),
+    countries:   (countriesRes?.results  || []).map(r => ({ country: r[0], views: Number(r[1]) })),
+    devices:     (devicesRes?.results    || []).map(r => ({ device:  r[0], views: Number(r[1]) })),
+    referrers:   (referrersRes?.results  || []).map(r => ({ ref:     r[0], views: Number(r[1]) })),
+    hours:       (hoursRes?.results      || []).map(r => ({ hour: Number(r[0]), views: Number(r[1]) })),
   });
 }
 
