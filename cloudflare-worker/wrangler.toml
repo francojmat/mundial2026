@@ -11,7 +11,7 @@ routes = [
 # wrangler kv namespace create SUGGESTIONS
 [[kv_namespaces]]
 binding = "SUGGESTIONS"
-id = "PLACEHOLDER_KV_ID"
+id = "4fb1c47b1d2842429dfe026e1eed7b70"
 
 # El hash de la contraseña admin se guarda como secret:
 # wrangler secret put ADMIN_TOKEN_HASH
