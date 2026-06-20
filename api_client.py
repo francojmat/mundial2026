@@ -39,8 +39,13 @@ class WorldCupClient:
         obtiene goles, tarjetas y cambios desde el endpoint individual.
         Modifica matches_by_date in-place. Respeta el rate limit de 10 req/min.
         """
+        import sys
         from datetime import datetime, timezone, timedelta
         cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+
+        all_matches = [m for ms in matches_by_date.values() for m in ms]
+        statuses = [m.get("status", "") for m in all_matches]
+        print(f"[DEBUG enrich] llamada con {len(all_matches)} partidos. Statuses: {set(statuses)}", flush=True)
 
         for matches in matches_by_date.values():
             for m in matches:
@@ -50,6 +55,7 @@ class WorldCupClient:
 
                 utc_str = m.get("utc_date", "")
                 if not utc_str:
+                    print(f"[DEBUG enrich] sin utc_date para {m.get('home')} vs {m.get('away')} status={status}", flush=True)
                     continue
 
                 try:
@@ -61,19 +67,19 @@ class WorldCupClient:
 
                 match_id = m.get("match_id")
                 if not match_id:
-                    print(f"[DEBUG enrich] sin match_id para {m.get('home')} vs {m.get('away')}")
+                    print(f"[DEBUG enrich] sin match_id para {m.get('home')} vs {m.get('away')}", flush=True)
                     continue
 
                 time.sleep(6.2)  # 10 req/min → 1 cada 6s
                 detail = self.get_match_details(match_id)
                 if not detail:
-                    print(f"[DEBUG enrich] sin detalle para match_id={match_id}")
+                    print(f"[DEBUG enrich] sin detalle para match_id={match_id}", flush=True)
                     continue
 
-                print(f"[DEBUG enrich] {m.get('home')} vs {m.get('away')} id={match_id} | goals={len(detail.get('goals') or [])} bookings={len(detail.get('bookings') or [])} subs={len(detail.get('substitutions') or [])}")
+                print(f"[DEBUG enrich] {m.get('home')} vs {m.get('away')} id={match_id} | goals={len(detail.get('goals') or [])} bookings={len(detail.get('bookings') or [])} subs={len(detail.get('substitutions') or [])}", flush=True)
                 if detail.get("goals"):
                     import json as _json
-                    print(f"[DEBUG goals raw] {_json.dumps(detail['goals'][:2], ensure_ascii=False)}")
+                    print(f"[DEBUG goals raw] {_json.dumps(detail['goals'][:2], ensure_ascii=False)}", flush=True)
 
                 goals_detail = []
                 for g in (detail.get("goals") or []):
