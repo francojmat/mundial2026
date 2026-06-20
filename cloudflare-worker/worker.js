@@ -30,7 +30,7 @@ function json(data, status = 200) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url  = new URL(request.url);
     const path = url.pathname;
 
@@ -42,7 +42,8 @@ export default {
     if (path === "/api/suggest"     && request.method === "POST") return handleSuggest(request, env);
     if (path === "/api/suggestions" && request.method === "GET")  return handleList(request, env);
     if (path === "/api/mark-read"   && request.method === "POST") return handleMarkRead(request, env);
-    if (path === "/api/chat"        && request.method === "POST") return handleChat(request, env);
+    if (path === "/api/chat"        && request.method === "POST") return handleChat(request, env, ctx);
+    if (path === "/api/chat-poll"   && request.method === "GET")  return handleChatPoll(request, env);
     if (path === "/api/apply"       && request.method === "POST") return handleApply(request, env);
     if (path === "/api/discard"     && request.method === "POST") return handleDiscard(request, env);
 
@@ -177,9 +178,10 @@ async function handleMarkRead(request, env) {
   return json({ ok: true });
 }
 
-// ── POST /api/chat ────────────────────────────────────────────────────────────
+// ── POST /api/chat ─────────────────────────────────────────────────────────────
+// Responde inmediatamente con un jobId y procesa en background para evitar timeout 524.
 
-async function handleChat(request, env) {
+async function handleChat(request, env, ctx) {
   let body;
   try { body = await request.json(); }
   catch { return json({ error: "JSON inválido" }, 400); }
@@ -189,90 +191,104 @@ async function handleChat(request, env) {
   const userMessage = String(body.message || "").trim().slice(0, 3000);
   if (!userMessage) return json({ error: "Mensaje vacío" }, 400);
 
-  const history = Array.isArray(body.history) ? body.history.slice(-12) : [];
+  const jobId = `job:${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  await env.SUGGESTIONS.put(jobId, JSON.stringify({ status: "pending" }), { expirationTtl: 600 });
 
-  // Fetch current html_renderer.py and persistent change log
-  const rendererContent = await fetchGitHubFile(env, "html_renderer.py", "main");
-  const changeLog       = await loadChangeLog(env);
+  ctx.waitUntil(processChatJob(jobId, body, env));
 
-  const messages = [
-    ...history,
-    { role: "user", content: userMessage },
-  ];
+  return json({ jobId, status: "pending" });
+}
 
-  const claudeResp = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key":         env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-      "content-type":      "application/json",
-    },
-    body: JSON.stringify({
-      model:      "claude-sonnet-4-6",
-      max_tokens: 16000,
-      system:     buildSystemPrompt(rendererContent, changeLog),
-      messages,
-    }),
-  });
+// ── GET /api/chat-poll?jobId=&token= ──────────────────────────────────────────
 
-  if (!claudeResp.ok) {
-    const err = await claudeResp.text();
-    return json({ error: `Error Claude: ${err}` }, 502);
-  }
+async function handleChatPoll(request, env) {
+  const url   = new URL(request.url);
+  const jobId = url.searchParams.get("jobId") || "";
+  const token = url.searchParams.get("token") || "";
 
-  const claudeData = await claudeResp.json();
-  const rawReply   = claudeData.content?.[0]?.text || "";
+  if (!validToken(token, env))  return json({ error: "No autorizado" }, 401);
+  if (!jobId)                   return json({ error: "Falta jobId" }, 400);
 
-  // Claude should respond with raw JSON (no markdown fences)
-  let parsed;
+  const raw = await env.SUGGESTIONS.get(jobId);
+  if (!raw) return json({ status: "not_found" }, 404);
+
+  return json(JSON.parse(raw));
+}
+
+// ── processChatJob (background) ───────────────────────────────────────────────
+
+async function processChatJob(jobId, body, env) {
+  const saveResult = (data) =>
+    env.SUGGESTIONS.put(jobId, JSON.stringify(data), { expirationTtl: 600 });
+
   try {
-    const cleaned = rawReply.replace(/^```json\s*/i, "").replace(/\s*```$/, "").trim();
-    parsed = JSON.parse(cleaned);
-  } catch {
-    parsed = { type: "message", text: rawReply };
-  }
+    const history         = Array.isArray(body.history) ? body.history.slice(-12) : [];
+    const rendererContent = await fetchGitHubFile(env, "html_renderer.py", "main");
+    const changeLog       = await loadChangeLog(env);
 
-  // Single file change
-  if (parsed.type === "change" && parsed.file && parsed.content) {
-    const committed = await commitToPreview(env, parsed.file, parsed.content, parsed.description || "cambio AI");
-    if (committed) {
-      return json({
-        reply:             `✅ Listo. ${parsed.description || "Cambio aplicado al preview."}`,
-        previewUrl:        PREVIEW_URL,
-        hasPendingChange:  true,
-        changeFile:        parsed.file,
-        changeDescription: parsed.description || "",
+    const messages = [...history, { role: "user", content: body.message }];
+
+    const claudeResp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key":         env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type":      "application/json",
+      },
+      body: JSON.stringify({
+        model:      "claude-sonnet-4-6",
+        max_tokens: 16000,
+        system:     buildSystemPrompt(rendererContent, changeLog),
+        messages,
+      }),
+    });
+
+    if (!claudeResp.ok) {
+      const err = await claudeResp.text();
+      return saveResult({ status: "done", result: { reply: `⚠️ Error Claude: ${err}`, previewUrl: null, hasPendingChange: false } });
+    }
+
+    const claudeData = await claudeResp.json();
+    const rawReply   = claudeData.content?.[0]?.text || "";
+
+    let parsed;
+    try {
+      const cleaned = rawReply.replace(/^```json\s*/i, "").replace(/\s*```$/, "").trim();
+      parsed = JSON.parse(cleaned);
+    } catch {
+      parsed = { type: "message", text: rawReply };
+    }
+
+    // Single file change
+    if (parsed.type === "change" && parsed.file && parsed.content) {
+      const committed = await commitToPreview(env, parsed.file, parsed.content, parsed.description || "cambio AI");
+      return saveResult({ status: "done", result: committed
+        ? { reply: `✅ Listo. ${parsed.description || "Cambio aplicado al preview."}`, previewUrl: PREVIEW_URL, hasPendingChange: true, changeFile: parsed.file, changeDescription: parsed.description || "" }
+        : { reply: "⚠️ No se pudo escribir el preview.", previewUrl: null, hasPendingChange: false }
       });
     }
-    return json({ reply: "⚠️ No se pudo escribir el preview. Revisá los logs del Worker.", previewUrl: null, hasPendingChange: false });
-  }
 
-  // Multi-file change
-  if (parsed.type === "changes" && Array.isArray(parsed.changes) && parsed.changes.length) {
-    let allOk = true;
-    for (const change of parsed.changes) {
-      if (!change.file || !change.content) continue;
-      const ok = await commitToPreview(env, change.file, change.content, parsed.description || "cambio AI");
-      if (!ok) { allOk = false; break; }
-    }
-    const fileList = parsed.changes.map(c => c.file).join(", ");
-    if (allOk) {
-      return json({
-        reply:             `✅ Listo. ${parsed.description || "Cambios aplicados al preview."} (${fileList})`,
-        previewUrl:        PREVIEW_URL,
-        hasPendingChange:  true,
-        changeFile:        fileList,
-        changeDescription: parsed.description || "",
+    // Multi-file change
+    if (parsed.type === "changes" && Array.isArray(parsed.changes) && parsed.changes.length) {
+      let allOk = true;
+      for (const change of parsed.changes) {
+        if (!change.file || !change.content) continue;
+        const ok = await commitToPreview(env, change.file, change.content, parsed.description || "cambio AI");
+        if (!ok) { allOk = false; break; }
+      }
+      const fileList = parsed.changes.map(c => c.file).join(", ");
+      return saveResult({ status: "done", result: allOk
+        ? { reply: `✅ Listo. ${parsed.description || "Cambios aplicados."} (${fileList})`, previewUrl: PREVIEW_URL, hasPendingChange: true, changeFile: fileList, changeDescription: parsed.description || "" }
+        : { reply: "⚠️ No se pudieron escribir todos los archivos al preview.", previewUrl: null, hasPendingChange: false }
       });
     }
-    return json({ reply: "⚠️ No se pudieron escribir todos los archivos al preview.", previewUrl: null, hasPendingChange: false });
-  }
 
-  return json({
-    reply:            parsed.text || rawReply,
-    previewUrl:       null,
-    hasPendingChange: false,
-  });
+    // Conversation
+    return saveResult({ status: "done", result: { reply: parsed.text || rawReply, previewUrl: null, hasPendingChange: false } });
+
+  } catch (e) {
+    return saveResult({ status: "done", result: { reply: `⚠️ Error interno: ${e.message}`, previewUrl: null, hasPendingChange: false } });
+  }
 }
 
 // ── POST /api/apply ───────────────────────────────────────────────────────────

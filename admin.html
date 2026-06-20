@@ -397,25 +397,33 @@ async function sendMessage() {
   appendThinking();
 
   try {
+    // 1. Kick off the job — returns immediately with a jobId
     const res = await fetch(`${API}/chat`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ token: _token, message: text, history: _chatHistory.slice(-12) }),
     });
-    const data = await res.json();
+    const kick = await res.json();
 
+    if (kick.error) { removeThinking(); appendMsg('bot', '⚠️ ' + kick.error); return; }
+
+    // 2. Poll until done (max 120 s)
+    const data = await pollUntilDone(kick.jobId, 120);
     removeThinking();
 
-    if (data.error) {
-      appendMsg('bot', '⚠️ Error: ' + data.error);
-    } else {
-      appendMsg('bot', data.reply);
-      _chatHistory.push({ role: 'assistant', content: data.reply });
+    if (!data) {
+      appendMsg('bot', '⚠️ Tiempo de espera agotado. Claude tardó demasiado. Intentá de nuevo.');
+      return;
+    }
+    if (data.error) { appendMsg('bot', '⚠️ ' + data.error); return; }
 
-      if (data.hasPendingChange && data.previewUrl) {
-        _pendingChange = { file: data.changeFile, description: data.changeDescription, previewUrl: data.previewUrl };
-        showPreviewCard(data.previewUrl, data.changeDescription || 'Cambio generado por IA');
-      }
+    const r = data.result || data;
+    appendMsg('bot', r.reply || '');
+    _chatHistory.push({ role: 'assistant', content: r.reply || '' });
+
+    if (r.hasPendingChange && r.previewUrl) {
+      _pendingChange = { file: r.changeFile, description: r.changeDescription, previewUrl: r.previewUrl };
+      showPreviewCard(r.previewUrl, r.changeDescription || 'Cambio generado por IA');
     }
   } catch (e) {
     removeThinking();
@@ -424,6 +432,21 @@ async function sendMessage() {
     _chatBusy = false;
     document.getElementById('send-btn').disabled = false;
   }
+}
+
+async function pollUntilDone(jobId, maxSeconds) {
+  const deadline = Date.now() + maxSeconds * 1000;
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      const res  = await fetch(`${API}/chat-poll?jobId=${encodeURIComponent(jobId)}&token=${encodeURIComponent(_token)}`);
+      const data = await res.json();
+      if (data.status === 'done') return data;
+      if (data.status === 'not_found') return null;
+      // status === "pending" → keep polling
+    } catch { /* network blip, retry */ }
+  }
+  return null; // timed out
 }
 
 async function applyChange() {
