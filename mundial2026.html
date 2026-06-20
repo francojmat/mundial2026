@@ -231,6 +231,21 @@
     .sec-body.sec-collapsed{display:none}
     .sec-toggle{background:none;border:none;color:#b09880;font-size:.7rem;cursor:pointer;padding:0;line-height:1;font-family:inherit}
 
+    /* ── Sidebar de navegación ── */
+    [id^="sec-"]{scroll-margin-top:16px}
+    .navfab{position:fixed;bottom:20px;left:20px;z-index:55;background:#c2410c;color:#ffffff;border:none;border-radius:12px;width:46px;height:46px;font-size:1.3rem;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;line-height:1}
+    .navfab:hover{opacity:.92}
+    .nav-overlay{position:fixed;inset:0;background:rgba(33,28,20,.42);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+    .nav-overlay.open{opacity:1;pointer-events:auto}
+    .nav-drawer{position:fixed;top:0;left:0;height:100%;width:262px;max-width:82%;background:#ffffff;z-index:65;transform:translateX(-100%);transition:transform .25s ease;box-shadow:2px 0 20px rgba(0,0,0,.14);display:flex;flex-direction:column;padding:18px 0;overflow-y:auto}
+    .nav-drawer.open{transform:translateX(0)}
+    .nav-dh{display:flex;justify-content:space-between;align-items:center;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#b09880;padding:0 20px 14px;margin-bottom:6px;border-bottom:1px solid #e8ddd0}
+    .nav-close{background:none;border:none;font-size:1.1rem;color:#7c6a58;cursor:pointer;line-height:1;padding:0}
+    .nav-link{display:flex;align-items:center;gap:11px;padding:11px 20px;font-size:.9rem;font-weight:600;color:#211c14;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit;border-left:3px solid transparent}
+    .nav-link:hover{background:#f0ebe4;color:#c2410c;border-left-color:#c2410c}
+    .nav-dot{width:7px;height:7px;border-radius:50%;background:#c8b8a8;flex-shrink:0}
+    .nav-link:hover .nav-dot{background:#c2410c}
+
     /* ── Mobile bracket ── */
     .mobile-bracket{display:none}
     @media(max-width:900px){
@@ -246,14 +261,29 @@
 </head>
 <body>
 
+<button class="navfab" onclick="toggleNav()" aria-label="Ir a sección" title="Ir a sección">&#9776;</button>
+<div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
+<nav class="nav-drawer" id="navDrawer">
+  <div class="nav-dh"><span>Ir a sección</span><button class="nav-close" onclick="closeNav()" aria-label="Cerrar">&#10005;</button></div>
+  <button class="nav-link" onclick="navGo('hoy')"><span class="nav-dot"></span>Partidos</button>
+  <button class="nav-link" onclick="navGo('grupos')"><span class="nav-dot"></span>Posiciones</button>
+  <button class="nav-link" onclick="navGo('terceros')"><span class="nav-dot"></span>Mejor Tercero</button>
+  <button class="nav-link" onclick="navGo('bracket')"><span class="nav-dot"></span>Bracket</button>
+  <button class="nav-link" onclick="navGo('goleadores')"><span class="nav-dot"></span>Goleadores</button>
+  <button class="nav-link" onclick="navGo('asistencias')"><span class="nav-dot"></span>Asistencias</button>
+  <button class="nav-link" onclick="navGo('amarillas')"><span class="nav-dot"></span>Tarjetas amarillas</button>
+  <button class="nav-link" onclick="navGo('rojas')"><span class="nav-dot"></span>Tarjetas rojas</button>
+  <button class="nav-link" onclick="navGo('estadios')"><span class="nav-dot"></span>Estadios</button>
+</nav>
+
 <div class="hdr">
   <h1>Mundial 2026</h1>
   <span class="pill"><span class="dot"></span>En vivo</span>
 </div>
-<p class="upd">Última actualización: <span id="upd">20/06/2026 16:08:28</span></p>
+<p class="upd">Última actualización: <span id="upd">20/06/2026 16:09:09</span></p>
 
 <div id="today-container">
-<div class="sec">
+<div class="sec" id="sec-hoy">
   <div style="position:relative">
     <div class="hoy-nav">
       <button class="hoy-nav-btn" id="hoy-prev" onclick="navDay(-1)">&#8249;</button>
@@ -269,7 +299,7 @@
 <div class="divider"></div>
 </div>
 
-<div class="sec">
+<div class="sec" id="sec-grupos">
   <div class="sec-hdr" onclick="toggleSec('grupos')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Posiciones — Fase de grupos</p>
     <button class="sec-toggle" id="st-grupos">▲ CERRAR</button>
@@ -320,7 +350,7 @@
         <tr class="clasifica">
           <td>1</td><td><a class="team-link" href="/plantel.html?t=Canada"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</a></td>
           <td>2</td><td>1</td><td>1</td><td>0</td>
-          <td>7</td><td>1</td>
+          <td>6</td><td>0</td>
           <td><span class="dg-p">+6</span></td><td><span class="pts">4</span></td>
         </tr>
         <tr class="clasifica">
@@ -332,7 +362,7 @@
         <tr class="tercero">
           <td>3</td><td><a class="team-link" href="/plantel.html?t=Bosnia-H."><img src="/flags/20x15/ba.png" alt="Bosnia y Herz." width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bosnia y Herz.</a></td>
           <td>2</td><td>0</td><td>1</td><td>1</td>
-          <td>2</td><td>5</td>
+          <td>1</td><td>4</td>
           <td><span class="dg-n">-3</span></td><td><span class="pts">1</span></td>
         </tr>
         <tr class="eliminado">
@@ -516,13 +546,13 @@
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="tercero">
-          <td>3</td><td><a class="team-link" href="/plantel.html?t=Spain"><img src="/flags/20x15/es.png" alt="España" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">España</a></td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Cape%20Verde"><img src="/flags/20x15/cv.png" alt="Cabo Verde" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Cabo Verde</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>0</td><td>0</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><a class="team-link" href="/plantel.html?t=Cape%20Verde"><img src="/flags/20x15/cv.png" alt="Cabo Verde" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Cabo Verde</a></td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=Spain"><img src="/flags/20x15/es.png" alt="España" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">España</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>0</td><td>0</td>
           <td>0</td><td><span class="pts">1</span></td>
@@ -603,13 +633,13 @@
           <td><span class="dg-p">+2</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><a class="team-link" href="/plantel.html?t=Portugal"><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</a></td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=Congo%20DR"><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>1</td><td>1</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="tercero">
-          <td>3</td><td><a class="team-link" href="/plantel.html?t=Congo%20DR"><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</a></td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Portugal"><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>1</td><td>1</td>
           <td>0</td><td><span class="pts">1</span></td>
@@ -656,7 +686,7 @@
   </div>
 </div>
 
-<div class="sec">
+<div class="sec" id="sec-terceros">
   <div class="sec-hdr" onclick="toggleSec('terceros')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Mejor Tercero — Mundial 2026</p>
     <button class="sec-toggle" id="st-terceros">▲ CERRAR</button>
@@ -693,13 +723,13 @@
       <td>0</td><td><span class="pts">1</span></td>
     </tr>
     <tr class="clasifica">
-      <td>5</td><td><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</td>
+      <td>5</td><td><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</td>
       <td>K</td>
       <td>1</td><td>1</td><td>1</td>
       <td>0</td><td><span class="pts">1</span></td>
     </tr>
     <tr class="clasifica">
-      <td>6</td><td><img src="/flags/20x15/es.png" alt="España" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">España</td>
+      <td>6</td><td><img src="/flags/20x15/cv.png" alt="Cabo Verde" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Cabo Verde</td>
       <td>H</td>
       <td>1</td><td>0</td><td>0</td>
       <td>0</td><td><span class="pts">1</span></td>
@@ -713,7 +743,7 @@
     <tr class="clasifica">
       <td>8</td><td><img src="/flags/20x15/ba.png" alt="Bosnia y Herz." width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bosnia y Herz.</td>
       <td>B</td>
-      <td>2</td><td>2</td><td>5</td>
+      <td>2</td><td>1</td><td>4</td>
       <td><span class="dg-n">-3</span></td><td><span class="pts">1</span></td>
     </tr>
     <tr class="eliminado">
@@ -747,7 +777,7 @@
 </div>
 <div class="divider"></div>
 
-<div class="sec">
+<div class="sec" id="sec-bracket">
   <div class="sec-hdr" onclick="toggleSec('bracket')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Bracket — Hacé clic para simular el avance</p>
     <button class="sec-toggle" id="st-bracket">▲ CERRAR</button>
@@ -791,7 +821,7 @@
     </div></div><div class="par">
     <div class="mc" data-mid="83">
       <div class="mc-label"><span>Partido 83</span></div>
-      <div class="team-row" data-mid="83" data-name="Portugal" data-html="<img src=&quot;/flags/20x15/pt.png&quot; alt=&quot;Portugal&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Portugal" onclick="pickWinner(this)"><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</div><div class="team-row" data-mid="83" data-name="Ghana" data-html="<img src=&quot;/flags/20x15/gh.png&quot; alt=&quot;Ghana&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Ghana" onclick="pickWinner(this)"><img src="/flags/20x15/gh.png" alt="Ghana" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ghana</div>
+      <div class="team-row" data-mid="83" data-name="Congo DR" data-html="<img src=&quot;/flags/20x15/cd.png&quot; alt=&quot;Congo RD&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Congo RD" onclick="pickWinner(this)"><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</div><div class="team-row" data-mid="83" data-name="Ghana" data-html="<img src=&quot;/flags/20x15/gh.png&quot; alt=&quot;Ghana&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Ghana" onclick="pickWinner(this)"><img src="/flags/20x15/gh.png" alt="Ghana" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ghana</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-06-30T22:00:00Z"></span>
         <span class="venue">Mercedes-Benz Stadium, Atlanta</span>
@@ -999,7 +1029,7 @@
     </div></div><div class="par">
     <div class="mc" data-mid="79">
       <div class="mc-label"><span>Partido 79</span></div>
-      <div class="team-row" data-mid="79" data-name="Mexico" data-html="<img src=&quot;/flags/20x15/mx.png&quot; alt=&quot;México&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>México" onclick="pickWinner(this)"><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México</div><div class="team-row" data-mid="79" data-name="Spain" data-html="<img src=&quot;/flags/20x15/es.png&quot; alt=&quot;España&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>España" onclick="pickWinner(this)"><img src="/flags/20x15/es.png" alt="España" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">España</div>
+      <div class="team-row" data-mid="79" data-name="Mexico" data-html="<img src=&quot;/flags/20x15/mx.png&quot; alt=&quot;México&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>México" onclick="pickWinner(this)"><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México</div><div class="team-row" data-mid="79" data-name="Cape Verde" data-html="<img src=&quot;/flags/20x15/cv.png&quot; alt=&quot;Cabo Verde&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Cabo Verde" onclick="pickWinner(this)"><img src="/flags/20x15/cv.png" alt="Cabo Verde" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Cabo Verde</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-03T22:00:00Z"></span>
         <span class="venue">Levi's Stadium, San Francisco</span>
@@ -1007,7 +1037,7 @@
     </div>
     <div class="mc" data-mid="80">
       <div class="mc-label"><span>Partido 80</span></div>
-      <div class="team-row" data-mid="80" data-name="England" data-html="<img src=&quot;/flags/20x15/gb-eng.png&quot; alt=&quot;Inglaterra&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Inglaterra" onclick="pickWinner(this)"><img src="/flags/20x15/gb-eng.png" alt="Inglaterra" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Inglaterra</div><div class="team-row" data-mid="80" data-name="Congo DR" data-html="<img src=&quot;/flags/20x15/cd.png&quot; alt=&quot;Congo RD&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Congo RD" onclick="pickWinner(this)"><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</div>
+      <div class="team-row" data-mid="80" data-name="England" data-html="<img src=&quot;/flags/20x15/gb-eng.png&quot; alt=&quot;Inglaterra&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Inglaterra" onclick="pickWinner(this)"><img src="/flags/20x15/gb-eng.png" alt="Inglaterra" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Inglaterra</div><div class="team-row" data-mid="80" data-name="Portugal" data-html="<img src=&quot;/flags/20x15/pt.png&quot; alt=&quot;Portugal&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Portugal" onclick="pickWinner(this)"><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-04T02:00:00Z"></span>
         <span class="venue">Gillette Stadium, Boston</span>
@@ -1082,7 +1112,7 @@
     </div>
     <div class="mc" data-mid="83">
       <div class="mc-label"><span>Partido 83</span></div>
-      <div class="team-row" data-mid="83" data-name="Portugal" data-html="<img src=&quot;/flags/20x15/pt.png&quot; alt=&quot;Portugal&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Portugal" onclick="pickWinner(this)"><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</div><div class="team-row" data-mid="83" data-name="Ghana" data-html="<img src=&quot;/flags/20x15/gh.png&quot; alt=&quot;Ghana&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Ghana" onclick="pickWinner(this)"><img src="/flags/20x15/gh.png" alt="Ghana" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ghana</div>
+      <div class="team-row" data-mid="83" data-name="Congo DR" data-html="<img src=&quot;/flags/20x15/cd.png&quot; alt=&quot;Congo RD&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Congo RD" onclick="pickWinner(this)"><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</div><div class="team-row" data-mid="83" data-name="Ghana" data-html="<img src=&quot;/flags/20x15/gh.png&quot; alt=&quot;Ghana&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Ghana" onclick="pickWinner(this)"><img src="/flags/20x15/gh.png" alt="Ghana" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ghana</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-06-30T22:00:00Z"></span>
         <span class="venue">Mercedes-Benz Stadium, Atlanta</span>
@@ -1130,7 +1160,7 @@
     </div>
     <div class="mc" data-mid="79">
       <div class="mc-label"><span>Partido 79</span></div>
-      <div class="team-row" data-mid="79" data-name="Mexico" data-html="<img src=&quot;/flags/20x15/mx.png&quot; alt=&quot;México&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>México" onclick="pickWinner(this)"><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México</div><div class="team-row" data-mid="79" data-name="Spain" data-html="<img src=&quot;/flags/20x15/es.png&quot; alt=&quot;España&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>España" onclick="pickWinner(this)"><img src="/flags/20x15/es.png" alt="España" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">España</div>
+      <div class="team-row" data-mid="79" data-name="Mexico" data-html="<img src=&quot;/flags/20x15/mx.png&quot; alt=&quot;México&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>México" onclick="pickWinner(this)"><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México</div><div class="team-row" data-mid="79" data-name="Cape Verde" data-html="<img src=&quot;/flags/20x15/cv.png&quot; alt=&quot;Cabo Verde&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Cabo Verde" onclick="pickWinner(this)"><img src="/flags/20x15/cv.png" alt="Cabo Verde" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Cabo Verde</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-03T22:00:00Z"></span>
         <span class="venue">Levi's Stadium, San Francisco</span>
@@ -1138,7 +1168,7 @@
     </div>
     <div class="mc" data-mid="80">
       <div class="mc-label"><span>Partido 80</span></div>
-      <div class="team-row" data-mid="80" data-name="England" data-html="<img src=&quot;/flags/20x15/gb-eng.png&quot; alt=&quot;Inglaterra&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Inglaterra" onclick="pickWinner(this)"><img src="/flags/20x15/gb-eng.png" alt="Inglaterra" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Inglaterra</div><div class="team-row" data-mid="80" data-name="Congo DR" data-html="<img src=&quot;/flags/20x15/cd.png&quot; alt=&quot;Congo RD&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Congo RD" onclick="pickWinner(this)"><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</div>
+      <div class="team-row" data-mid="80" data-name="England" data-html="<img src=&quot;/flags/20x15/gb-eng.png&quot; alt=&quot;Inglaterra&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Inglaterra" onclick="pickWinner(this)"><img src="/flags/20x15/gb-eng.png" alt="Inglaterra" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Inglaterra</div><div class="team-row" data-mid="80" data-name="Portugal" data-html="<img src=&quot;/flags/20x15/pt.png&quot; alt=&quot;Portugal&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Portugal" onclick="pickWinner(this)"><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-04T02:00:00Z"></span>
         <span class="venue">Gillette Stadium, Boston</span>
@@ -1181,7 +1211,7 @@
 </div>
 
 <div class="divider"></div>
-<div class="sec">
+<div class="sec" id="sec-goleadores">
   <div class="sec-hdr" onclick="toggleSec('goleadores')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Goleadores — Mundial 2026</p>
     <button class="sec-toggle" id="st-goleadores">▲ CERRAR</button>
@@ -1208,7 +1238,7 @@
 </div>
 
 <div class="divider"></div>
-<div class="sec">
+<div class="sec" id="sec-asistencias">
   <div class="sec-hdr" onclick="toggleSec('asistencias')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Asistencias — Mundial 2026</p>
     <button class="sec-toggle" id="st-asistencias">▲ CERRAR</button>
@@ -1232,7 +1262,7 @@
 </div>
 
 <div class="divider"></div>
-<div class="sec">
+<div class="sec" id="sec-amarillas">
   <div class="sec-hdr" onclick="toggleSec('amarillas')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Tarjetas amarillas — Mundial 2026</p>
     <button class="sec-toggle" id="st-amarillas">▲ CERRAR</button>
@@ -1256,7 +1286,7 @@
 </div>
 
 <div class="divider"></div>
-<div class="sec">
+<div class="sec" id="sec-rojas">
   <div class="sec-hdr" onclick="toggleSec('rojas')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Tarjetas rojas — Mundial 2026</p>
     <button class="sec-toggle" id="st-rojas">▲ CERRAR</button>
@@ -1280,7 +1310,7 @@
 </div>
 
 <div class="divider"></div>
-<div class="sec">
+<div class="sec" id="sec-estadios">
   <div class="sec-hdr" onclick="toggleSec('estadios')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Estadios — Mundial 2026</p>
     <button class="sec-toggle" id="st-estadios">▲ CERRAR</button>
@@ -1791,6 +1821,28 @@ function restoreSecs() {
       if (btn) btn.textContent = '▼ ABRIR';
     }
   });
+}
+
+// ── Sidebar de navegación ─────────────────────────────────────────────────
+function toggleNav() {
+  document.getElementById('navDrawer').classList.toggle('open');
+  document.getElementById('navOverlay').classList.toggle('open');
+}
+function closeNav() {
+  document.getElementById('navDrawer').classList.remove('open');
+  document.getElementById('navOverlay').classList.remove('open');
+}
+function navGo(secId) {
+  closeNav();
+  var body = document.getElementById('sb-' + secId);
+  if (body && body.classList.contains('sec-collapsed')) {
+    body.classList.remove('sec-collapsed');
+    var btn = document.getElementById('st-' + secId);
+    if (btn) btn.textContent = '▲ CERRAR';
+    SEC[secId] = false; saveSecs();
+  }
+  var target = document.getElementById('sec-' + secId);
+  if (target) setTimeout(function() { target.scrollIntoView({behavior: 'smooth', block: 'start'}); }, 60);
 }
 
 function pollData() {
