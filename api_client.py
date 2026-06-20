@@ -33,9 +33,11 @@ class WorldCupClient:
             player = s.get("player", {})
             team   = s.get("team", {})
             result.append({
-                "name":  player.get("name", ""),
-                "team":  team.get("shortName") or team.get("name", ""),
-                "goals": s.get("goals") or 0,
+                "name":      player.get("name", ""),
+                "team":      team.get("shortName") or team.get("name", ""),
+                "goals":     s.get("goals") or 0,
+                "assists":   s.get("assists") or 0,
+                "penalties": s.get("penalties") or 0,
             })
         return result
 
@@ -70,6 +72,40 @@ class WorldCupClient:
             referees = m.get("referees") or []
             referee  = referees[0].get("name", "") if referees else ""
 
+            goals_detail = []
+            for g in (m.get("goals") or []):
+                minute = str(g.get("minute") or "")
+                if g.get("injuryTime"):
+                    minute += f'+{g["injuryTime"]}'
+                goals_detail.append({
+                    "minute": minute,
+                    "scorer": (g.get("scorer") or {}).get("name", ""),
+                    "team":   (g.get("team") or {}).get("shortName") or (g.get("team") or {}).get("name", ""),
+                    "assist": (g.get("assist") or {}).get("name", ""),
+                    "type":   g.get("type", "NORMAL"),
+                })
+
+            bookings = []
+            for b in (m.get("bookings") or []):
+                minute = str(b.get("minute") or "")
+                if b.get("injuryTime"):
+                    minute += f'+{b["injuryTime"]}'
+                bookings.append({
+                    "minute": minute,
+                    "player": (b.get("player") or {}).get("name", ""),
+                    "team":   (b.get("team") or {}).get("shortName") or (b.get("team") or {}).get("name", ""),
+                    "card":   b.get("card", "YELLOW"),
+                })
+
+            substitutions = []
+            for s in (m.get("substitutions") or []):
+                substitutions.append({
+                    "minute":     str(s.get("minute") or ""),
+                    "player_out": (s.get("playerOut") or {}).get("name", ""),
+                    "player_in":  (s.get("playerIn") or {}).get("name", ""),
+                    "team":       (s.get("team") or {}).get("shortName") or (s.get("team") or {}).get("name", ""),
+                })
+
             by_date.setdefault(local_date.isoformat(), []).append({
                 "home": home,
                 "away": away,
@@ -81,6 +117,9 @@ class WorldCupClient:
                 "group": m.get("group") or "",
                 "matchday": m.get("matchday") or 0,
                 "referee": referee,
+                "goals_detail":  goals_detail,
+                "bookings":      bookings,
+                "substitutions": substitutions,
             })
 
         return {"dates": by_date, "today": today_local.isoformat()}

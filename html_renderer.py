@@ -211,8 +211,25 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .hoy-nav-btn:hover{{background:{GRY}}}
     .hoy-nav-btn:disabled{{opacity:.3;cursor:default}}
     .hoy-lista{{display:flex;flex-direction:column;gap:6px;max-width:600px;margin:0 auto}}
-    .hoy-fila{{background:{WHT};border:1px solid {BDR};padding:7px 12px}}
-    .hoy-etiqueta{{font-size:.6rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:5px;text-align:center}}
+    .hoy-fila{{background:{WHT};border:1px solid {BDR};padding:7px 12px;cursor:pointer;user-select:none}}
+    .hoy-fila:hover{{border-color:{BDR2}}}
+    .hoy-head{{display:flex;align-items:center;gap:6px;margin-bottom:5px}}
+    .hoy-etiqueta{{font-size:.6rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase;flex:1}}
+    .hoy-chev{{color:{BDR2};font-size:.65rem;flex-shrink:0;transition:transform .2s;line-height:1}}
+    .hoy-fila.open .hoy-chev{{transform:rotate(180deg)}}
+    .hoy-detail{{display:none;border-top:1px solid {GRY};padding:8px 2px 4px;margin-top:8px}}
+    .hoy-fila.open .hoy-detail{{display:block}}
+    .hoy-dsec{{margin-bottom:8px}}
+    .hoy-dsec:last-child{{margin-bottom:0}}
+    .hoy-dsec-t{{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:{DIM};margin:0 0 4px}}
+    .hoy-ev{{display:flex;align-items:flex-start;gap:6px;padding:2px 0;font-size:.75rem;color:{TXT}}}
+    .hoy-ev-min{{color:{DIM};font-size:.68rem;min-width:26px;flex-shrink:0;padding-top:1px}}
+    .hoy-ev-dot{{width:7px;height:7px;border-radius:50%;background:{T};flex-shrink:0;margin-top:3px}}
+    .hoy-ev-yc{{width:7px;height:10px;background:{WRN};flex-shrink:0;margin-top:2px;border-radius:1px}}
+    .hoy-ev-rc{{width:7px;height:10px;background:#dc2626;flex-shrink:0;margin-top:2px;border-radius:1px}}
+    .hoy-ev-sw{{font-size:.75rem;color:{TEL};flex-shrink:0;line-height:1.4}}
+    .hoy-ev-s{{color:{MUT};font-size:.68rem}}
+    .hoy-ev-txt{{flex:1;line-height:1.45}}
     .hoy-match{{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%}}
     .hoy-home{{display:flex;align-items:center;justify-content:flex-start;flex-direction:row-reverse;gap:6px;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden}}
     .hoy-away{{display:flex;align-items:center;justify-content:flex-start;gap:6px;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden}}
@@ -365,6 +382,9 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </style>
 
 <script>
+// ── Partidos expandibles ──────────────────────────────────────────────────
+function toggleMatch(el) {{ el.classList.toggle('open'); }}
+
 // ── Goleadores expandibles ────────────────────────────────────────────────
 function toggleScorers() {{
   var extra = document.getElementById('scorers-extra');
@@ -1211,12 +1231,12 @@ def _stage_label(stage: str, group: str, matchday: int) -> str:
 
 
 def _hoy_badge(m: dict) -> str:
-    """Badge de estado (FIN / EN VIVO) para mostrar encima de la fila de equipos."""
+    """Badge de estado inline para la cabecera de la fila."""
     status = m["status"]
     if status == "FINISHED":
-        return f'<div style="text-align:center;margin-bottom:3px"><span class="hoy-badge-fin">FIN</span></div>'
+        return '<span class="hoy-badge-fin">FIN</span>'
     if status in ("IN_PLAY", "PAUSED"):
-        return f'<div style="text-align:center;margin-bottom:3px"><span class="hoy-badge-live"><span class="dot"></span>EN VIVO</span></div>'
+        return '<span class="hoy-badge-live"><span class="dot"></span>EN VIVO</span>'
     return ''
 
 
@@ -1243,12 +1263,14 @@ def _render_scorers(standings: Dict) -> str:
         return f'<p style="font-size:.75rem;color:{MUT};margin-top:4px">Disponible próximamente.</p>'
 
     def _row(i: int, s: dict) -> str:
-        bg = f'style="background:{GRY}"' if i % 2 == 0 else ''
+        bg      = f'style="background:{GRY}"' if i % 2 == 0 else ''
+        assists = s.get("assists") or 0
         return (f'<tr {bg}>'
                 f'<td>{i}</td>'
                 f'<td style="text-align:left;white-space:nowrap">{s["name"]}</td>'
                 f'<td style="text-align:left;white-space:nowrap">{traducir(s["team"])}</td>'
                 f'<td><span class="pts">{s["goals"]}</span></td>'
+                f'<td style="color:{MUT}">{assists if assists else "—"}</td>'
                 f'</tr>')
 
     top   = "".join(_row(i, s) for i, s in enumerate(scorers[:10], 1))
@@ -1271,6 +1293,7 @@ def _render_scorers(standings: Dict) -> str:
             <th style="text-align:left">Jugador</th>
             <th style="text-align:left">País</th>
             <th>Goles</th>
+            <th>Asist.</th>
           </tr></thead>
           <tbody>{top}</tbody>
           {extra}
@@ -1280,6 +1303,74 @@ def _render_scorers(standings: Dict) -> str:
     </div>"""
 
 
+def _hoy_detail_html(m: dict) -> str:
+    """Bloque expandible con goles, tarjetas, cambios y árbitro."""
+    sections = []
+
+    goals = m.get("goals_detail") or []
+    if goals:
+        rows = ""
+        for g in goals:
+            minute = g.get("minute", "")
+            scorer = g.get("scorer", "")
+            team   = g.get("team", "")
+            assist = g.get("assist", "")
+            g_type = g.get("type", "NORMAL")
+            suffix = " (PP)" if g_type == "PENALTY" else (" (PC)" if g_type == "OWN" else "")
+            assist_txt = f'<span class="hoy-ev-s"> · asist: {assist}</span>' if assist else ""
+            rows += (f'<div class="hoy-ev">'
+                     f'<span class="hoy-ev-min">{minute}\'</span>'
+                     f'<span class="hoy-ev-dot"></span>'
+                     f'<span class="hoy-ev-txt">{scorer}{suffix}'
+                     f'<span class="hoy-ev-s"> · {team}</span>'
+                     f'{assist_txt}</span>'
+                     f'</div>')
+        sections.append(f'<div class="hoy-dsec"><p class="hoy-dsec-t">Goles</p>{rows}</div>')
+
+    bookings = m.get("bookings") or []
+    if bookings:
+        rows = ""
+        for b in bookings:
+            card   = b.get("card", "YELLOW")
+            player = b.get("player", "")
+            team   = b.get("team", "")
+            minute = b.get("minute", "")
+            icon   = "hoy-ev-yc" if card == "YELLOW" else "hoy-ev-rc"
+            rows += (f'<div class="hoy-ev">'
+                     f'<span class="hoy-ev-min">{minute}\'</span>'
+                     f'<span class="{icon}"></span>'
+                     f'<span class="hoy-ev-txt">{player}'
+                     f'<span class="hoy-ev-s"> · {team}</span></span>'
+                     f'</div>')
+        sections.append(f'<div class="hoy-dsec"><p class="hoy-dsec-t">Tarjetas</p>{rows}</div>')
+
+    subs = m.get("substitutions") or []
+    if subs:
+        rows = ""
+        for s in subs:
+            minute     = s.get("minute", "")
+            player_in  = s.get("player_in", "")
+            player_out = s.get("player_out", "")
+            team       = s.get("team", "")
+            rows += (f'<div class="hoy-ev">'
+                     f'<span class="hoy-ev-min">{minute}\'</span>'
+                     f'<span class="hoy-ev-sw">&#x21C4;</span>'
+                     f'<span class="hoy-ev-txt">{player_in} → {player_out}'
+                     f'<span class="hoy-ev-s"> · {team}</span></span>'
+                     f'</div>')
+        sections.append(f'<div class="hoy-dsec"><p class="hoy-dsec-t">Cambios</p>{rows}</div>')
+
+    ref = m.get("referee", "")
+    if ref:
+        sections.append(f'<div class="hoy-dsec"><p class="hoy-dsec-t">Árbitro</p>'
+                        f'<p style="font-size:.75rem;color:{MUT};margin:0">{ref}</p></div>')
+
+    if not sections:
+        return ""
+
+    return f'<div class="hoy-detail">{"".join(sections)}</div>'
+
+
 def _render_today_matches(matches: list) -> str:
     """Devuelve solo el cuerpo de partidos (sin wrapper sec ni título — los maneja el JS de navegación)."""
     if not matches:
@@ -1287,22 +1378,23 @@ def _render_today_matches(matches: list) -> str:
     matches = sorted(matches, key=lambda m: m.get("utc_date", ""))
     rows = ""
     for m in matches:
-        lbl = _stage_label(m["stage"], m["group"], m.get("matchday", 0))
+        lbl       = _stage_label(m["stage"], m["group"], m.get("matchday", 0))
         home_html = traducir(m["home"])
         away_html = traducir(m["away"])
-        badge  = _hoy_badge(m)
-        centro = _hoy_centro(m)
-        ref = m.get("referee", "")
-        ref_line = (f'<div style="text-align:center;font-size:.57rem;color:{DIM};margin-top:4px">'
-                    f'Árbitro: {ref}</div>') if ref else ""
-        rows += (f'<div class="hoy-fila">'
+        badge     = _hoy_badge(m)
+        centro    = _hoy_centro(m)
+        detail    = _hoy_detail_html(m)
+        rows += (f'<div class="hoy-fila" onclick="toggleMatch(this)">'
+                 f'<div class="hoy-head">'
                  f'<span class="hoy-etiqueta">{lbl}</span>'
                  f'{badge}'
+                 f'<span class="hoy-chev">&#9662;</span>'
+                 f'</div>'
                  f'<div class="hoy-match">'
                  f'<div class="hoy-home">{home_html}</div>'
                  f'<div class="hoy-centro">{centro}</div>'
                  f'<div class="hoy-away">{away_html}</div>'
                  f'</div>'
-                 f'{ref_line}'
+                 f'{detail}'
                  f'</div>')
     return f'<div class="hoy-lista">{rows}</div>'
