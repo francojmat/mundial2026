@@ -204,12 +204,16 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .fade-in{{animation:fadeIn .22s ease}}
 
     /* ── Partidos de hoy ── */
+    .hoy-nav{{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px}}
+    .hoy-nav-btn{{background:none;border:1px solid {BDR};border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:1.1rem;line-height:1;display:flex;align-items:center;justify-content:center;color:{DIM};padding:0;flex-shrink:0}}
+    .hoy-nav-btn:hover{{background:{GRY}}}
+    .hoy-nav-btn:disabled{{opacity:.3;cursor:default}}
     .hoy-lista{{display:flex;flex-direction:column;gap:6px}}
     .hoy-fila{{background:{WHT};border:1px solid {BDR};padding:7px 12px}}
     .hoy-etiqueta{{font-size:.6rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:5px}}
     .hoy-match{{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%}}
-    .hoy-home{{display:flex;align-items:center;justify-content:center;flex-direction:row-reverse;gap:6px;font-size:.82rem;font-weight:600;white-space:nowrap}}
-    .hoy-away{{display:flex;align-items:center;justify-content:center;gap:6px;font-size:.82rem;font-weight:600;white-space:nowrap}}
+    .hoy-home{{display:flex;align-items:center;justify-content:flex-start;flex-direction:row-reverse;gap:6px;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden}}
+    .hoy-away{{display:flex;align-items:center;justify-content:flex-start;gap:6px;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden}}
     .hoy-home img,.hoy-away img{{margin-right:0;flex-shrink:0}}
     .hoy-centro{{display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap}}
     .hoy-score{{font-size:.85rem;font-weight:700;color:{TXT}}}
@@ -245,7 +249,17 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 <p class="upd">Última actualización: <span id="upd">{updated}</span></p>
 
-<div id="today-container">{_render_today_matches(standings.get("_today_matches", []))}</div>
+<div id="today-container">
+<div class="sec">
+  <div class="hoy-nav">
+    <button class="hoy-nav-btn" id="hoy-prev" onclick="navDay(-1)">&#8249;</button>
+    <p class="sec-t" id="hoy-nav-label" style="margin:0">Partidos de hoy</p>
+    <button class="hoy-nav-btn" id="hoy-next" onclick="navDay(+1)">&#8250;</button>
+  </div>
+  <div id="today-body">{_render_today_matches(standings.get("_today_matches", []))}</div>
+</div>
+<div class="divider"></div>
+</div>
 
 <div class="sec">
   <p class="sec-t">Posiciones — Fase de grupos</p>
@@ -699,6 +713,48 @@ function applyDataUtc(root) {{
   }});
 }}
 
+// ── Navegación de días ────────────────────────────────────────────────────
+var _navDatesHtml = {{}};
+var _navDates = [];
+var _navIdx = 0;
+var _navTodayStr = '';
+
+function navInit(todayStr, datesHtml) {{
+  _navDatesHtml = datesHtml;
+  _navDates = Object.keys(datesHtml).sort();
+  var ti = _navDates.indexOf(todayStr);
+  var prevTodayIdx = _navDates.indexOf(_navTodayStr);
+  var wasOnToday = (_navTodayStr === '' || _navIdx === prevTodayIdx);
+  _navTodayStr = todayStr;
+  if (wasOnToday) _navIdx = ti >= 0 ? ti : 0;
+  navRender();
+}}
+
+function navDay(delta) {{
+  var next = _navIdx + delta;
+  if (next < 0 || next >= _navDates.length) return;
+  _navIdx = next;
+  navRender();
+}}
+
+function navRender() {{
+  if (!_navDates.length) return;
+  var todayIdx = _navDates.indexOf(_navTodayStr);
+  var diff = _navIdx - todayIdx;
+  var label = diff === 0 ? 'Partidos de hoy'
+            : diff === -1 ? 'Partidos de ayer'
+            : diff === 1 ? 'Partidos de mañana'
+            : 'Partidos del ' + _navDates[_navIdx];
+  var labelEl = document.getElementById('hoy-nav-label');
+  if (labelEl) labelEl.textContent = label;
+  var body = document.getElementById('today-body');
+  if (body) {{ body.innerHTML = _navDatesHtml[_navDates[_navIdx]] || ''; applyDataUtc(body); }}
+  var prev = document.getElementById('hoy-prev');
+  var next = document.getElementById('hoy-next');
+  if (prev) prev.disabled = (_navIdx === 0);
+  if (next) next.disabled = (_navIdx === _navDates.length - 1);
+}}
+
 function pollData() {{
   fetch('data.json?_=' + Date.now())
     .then(function(r) {{ return r.json(); }})
@@ -709,8 +765,9 @@ function pollData() {{
       var tc = document.getElementById('thirds-container');
       if (tc && d.thirds_html !== undefined) tc.innerHTML = d.thirds_html;
 
-      var hoy = document.getElementById('today-container');
-      if (hoy && d.today_html !== undefined) {{ hoy.innerHTML = d.today_html; applyDataUtc(hoy); }}
+      if (d.dates_html !== undefined && d.today_date !== undefined) {{
+        navInit(d.today_date, d.dates_html);
+      }}
 
       var r32Updated = false;
       var rl = document.getElementById('r32-left');
@@ -1106,11 +1163,9 @@ def _hoy_centro(m: dict) -> str:
 
 
 def _render_today_matches(matches: list) -> str:
+    """Devuelve solo el cuerpo de partidos (sin wrapper sec ni título — los maneja el JS de navegación)."""
     if not matches:
-        return (f'<div class="sec">'
-                f'<p class="sec-t">Partidos de hoy</p>'
-                f'<p style="font-size:.75rem;color:{MUT}">No hay partidos programados para hoy.</p>'
-                f'</div><div class="divider"></div>')
+        return f'<p style="font-size:.75rem;color:{MUT};padding:2px 0">No hay partidos programados.</p>'
     matches = sorted(matches, key=lambda m: m.get("utc_date", ""))
     rows = ""
     for m in matches:
@@ -1125,7 +1180,4 @@ def _render_today_matches(matches: list) -> str:
                  f'<div class="hoy-centro">{centro}</div>'
                  f'<div class="hoy-away">{away_html}</div>'
                  f'</div></div>')
-    return (f'<div class="sec">'
-            f'<p class="sec-t">Partidos de hoy</p>'
-            f'<div class="hoy-lista">{rows}</div>'
-            f'</div><div class="divider"></div>')
+    return f'<div class="hoy-lista">{rows}</div>'

@@ -8,7 +8,6 @@ from html_renderer import _render_groups, _render_thirds, _match_card, _render_t
 
 
 def _r32_inner(matches: List[Dict]) -> str:
-    """Devuelve el contenido interno de una columna R32 (los divs .par)."""
     html = ""
     for i in range(0, len(matches), 2):
         m1 = _match_card(matches[i])
@@ -21,9 +20,19 @@ def render_data_json(standings: Dict, matchups: List[Dict]) -> str:
     live_teams: Set[str] = standings.get("_live_teams", set())
     thirds_advancing_set = {e["team"] for e in standings.get("_thirds_advancing", [])}
 
+    matches_by_date: Dict[str, list] = standings.get("_matches_by_date", {})
+    today_date: str = standings.get("_today_date", "")
+
+    dates_html = {
+        date_str: _render_today_matches(matches)
+        for date_str, matches in matches_by_date.items()
+    }
+
     data = {
         "updated": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-        "today_html": _render_today_matches(standings.get("_today_matches", [])),
+        "today_date": today_date,
+        "dates_html": dates_html,
+        "today_html": dates_html.get(today_date, _render_today_matches([])),
         "groups_html": _render_groups(standings, live_teams, thirds_advancing_set),
         "thirds_html": _render_thirds(standings),
         "r32_left_html": _r32_inner(matchups[:8]),

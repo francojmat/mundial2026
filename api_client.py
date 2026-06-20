@@ -32,30 +32,58 @@ class WorldCupClient:
     def get_teams(self) -> dict:
         return self._get(f"/competitions/{COMPETITION}/teams")
 
-    def get_today_matches(self) -> list:
-        from datetime import datetime, timezone
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    def get_matches_for_display(self) -> dict:
+        """
+        Fetches yesterday, today and tomorrow in Argentine time (UTC-3).
+        Returns {"dates": {"2026-06-19": [match, ...]}, "today": "2026-06-19"}.
+        """
+        from datetime import datetime, timezone, timedelta
+
+        ARGENTINA = timezone(timedelta(hours=-3))
+        now_arg = datetime.now(ARGENTINA)
+        today_local = now_arg.date()
+
+        start_utc = (today_local - timedelta(days=1)).isoformat()
+        end_utc   = (today_local + timedelta(days=2)).isoformat()
+
         raw = self._get(f"/competitions/{COMPETITION}/matches",
-                        params={"dateFrom": today, "dateTo": today})
-        result = []
+                        params={"dateFrom": start_utc, "dateTo": end_utc})
+
+        window = {
+            today_local - timedelta(days=1),
+            today_local,
+            today_local + timedelta(days=1),
+        }
+        by_date: dict = {}
+
         for m in raw.get("matches", []):
+            utc_str = m.get("utcDate", "")
+            if not utc_str:
+                continue
+            utc_dt = datetime.fromisoformat(utc_str.replace("Z", "+00:00"))
+            local_date = utc_dt.astimezone(ARGENTINA).date()
+            if local_date not in window:
+                continue
+
             home = m["homeTeam"].get("shortName") or m["homeTeam"].get("name", "TBD")
             away = m["awayTeam"].get("shortName") or m["awayTeam"].get("name", "TBD")
             score = m.get("score", {})
-            full = score.get("fullTime", {}) or {}
+            full  = score.get("fullTime", {}) or {}
             status = m.get("status", "TIMED")
-            result.append({
+
+            by_date.setdefault(local_date.isoformat(), []).append({
                 "home": home,
                 "away": away,
                 "home_goals": full.get("home"),
                 "away_goals": full.get("away"),
                 "status": status,
-                "utc_date": m.get("utcDate", ""),
+                "utc_date": utc_str,
                 "stage": m.get("stage", ""),
                 "group": m.get("group") or "",
                 "matchday": m.get("matchday") or 0,
             })
-        return result
+
+        return {"dates": by_date, "today": today_local.isoformat()}
 
 
 def parse_matches(raw_matches: dict) -> Dict[str, List[MatchResult]]:
@@ -137,6 +165,9 @@ def build_standings(client: WorldCupClient, fifa_rankings: Dict[str, int] = None
                 live_teams.add(m.home)
                 live_teams.add(m.away)
     result["_live_teams"] = live_teams
-    result["_today_matches"] = client.get_today_matches()
+    display = client.get_matches_for_display()
+    result["_matches_by_date"] = display["dates"]
+    result["_today_date"]      = display["today"]
+    result["_today_matches"]   = display["dates"].get(display["today"], [])
 
     return result
