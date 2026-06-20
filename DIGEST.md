@@ -62,6 +62,19 @@ Referenciado en el `<head>` de `html_renderer.py`. El `manifest.json` se reescri
 solo iconos que existen (el del zip referenciaba android-icon 36-144 que no venían). Se sirven
 en la raíz (Cloudflare Pages); el `_redirects` solo afecta `/` exacto, no los archivos.
 
+## Páginas internas (pages.py + tournament.py)
+Patrón para páginas nuevas: **shell estática + fragmento pre-renderizado en JSON** (evita
+generar 1 archivo por entidad). `generate.py` escribe la shell y el JSON cada corrida.
+- **Plantel** (`plantel.html` + `planteles.json`): la shell lee `?t=<pais>` e inyecta el
+  fragmento. `pages.render_squad_fragment()` arma el plantel (jugadores con foto agrupados por
+  posición, expandibles, + DT aparte). Link desde cada país en Posiciones (`_render_groups`).
+  Datos: `players/squads` + `coachs` por equipo. `planteles.json` keyed por nombre football-data.
+- `tournament.py` cachea en `apifootball_cache.json`: rankings (asist/amar/rojas, refresh 10min),
+  estadios (refresh 30min), `team_id_map` (nombre football-data → team_id API-Football, vía
+  timestamp de kickoff), y `squads` (refresh semanal, tope 10 equipos/corrida para no saturar).
+- Identidad visual de marca obligatoria en TODO lo nuevo (tokens en html_renderer.py: T=#c2410c…).
+- Toda página nueva debe tener retorno a la principal (botón "← Volver al inicio").
+
 ## Sistema de eventos (events.py + apifootball_client.py)
 
 `build_standings(client, apifootball=...)` llama a `events.enrich_with_events()` que
