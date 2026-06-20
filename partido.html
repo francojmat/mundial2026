@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Partido · Mundial 2026</title>
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#faf8f4;color:#211c14;padding:24px 18px 48px}
+    .wrap{max-width:680px;margin:0 auto}
+    .topbar{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+    .back{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;color:#c2410c;text-decoration:none;border:1px solid #e8ddd0;border-radius:8px;padding:6px 12px;background:#ffffff}
+    .back:hover{background:#f0ebe4}
+    .brand{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b09880}
+    .mt-head{background:#ffffff;border:1px solid #e8ddd0;border-radius:12px;padding:18px 16px;text-align:center;margin-bottom:22px}
+    .mt-meta{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#b09880;margin-bottom:12px}
+    .mt-scoreline{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+    .mt-team{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px}
+    .mt-th{justify-content:flex-end;flex-direction:row-reverse}
+    .mt-ta{justify-content:flex-start}
+    .mt-team img{width:26px;height:20px;border-radius:2px;margin-right:0}
+    .mt-center{display:flex;align-items:center;gap:7px}
+    .mt-sc{font-size:1.7rem;font-weight:800;color:#211c14}
+    .mt-sep{color:#b09880;font-weight:700}
+    .mt-vs{font-size:.85rem;color:#b09880;font-weight:700}
+    .mt-badge-wrap{margin-top:10px}
+    .mt-badge{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 10px;border-radius:10px}
+    .mt-fin{background:#f0ebe4;color:#7c6a58}
+    .mt-live{background:rgba(194,65,12,.12);color:#c2410c}
+    .mt-ref{font-size:.72rem;color:#7c6a58;margin-top:10px}
+    .mt-sec{margin-bottom:26px}
+    .mt-st{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#c2410c;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #e8ddd0}
+    .mt-ln-grid,.mt-pl-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .mt-ln-team,.mt-pl-team{background:#ffffff;border:1px solid #e8ddd0;border-radius:10px;padding:12px}
+    .mt-ln-h{font-size:.82rem;font-weight:700;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+    .mt-form{font-size:.64rem;font-weight:700;color:#c2410c;background:#f0ebe4;border-radius:8px;padding:2px 7px}
+    .mt-ln-list{display:flex;flex-direction:column;gap:3px}
+    .mt-pl{display:flex;align-items:center;gap:8px;font-size:.78rem;padding:2px 0}
+    .mt-pl-n{color:#c2410c;font-weight:700;min-width:18px;text-align:center;font-size:.72rem}
+    .mt-pl-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .mt-pl-pos{font-size:.6rem;color:#b09880;font-weight:700}
+    .mt-subt{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#b09880;margin:10px 0 5px}
+    .mt-subs{opacity:.78}
+    .mt-coach{font-size:.68rem;color:#7c6a58;margin-top:9px;padding-top:7px;border-top:1px solid #f0ebe4}
+    .mt-strow{margin-bottom:11px}
+    .mt-stvals{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;font-weight:700;margin-bottom:3px}
+    .mt-stlbl{font-size:.66rem;font-weight:600;color:#7c6a58;text-transform:uppercase;letter-spacing:.04em}
+    .mt-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;background:#f0ebe4}
+    .mt-bar-h{background:#c2410c}
+    .mt-bar-a{background:#0d9488}
+    .mt-ptable{width:100%;border-collapse:collapse;font-size:.76rem}
+    .mt-ptable th{font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:#b09880;text-align:center;padding:4px 3px;border-bottom:1px solid #e8ddd0}
+    .mt-ptable td{text-align:center;padding:5px 3px;border-bottom:1px solid #f0ebe4}
+    .mt-ptable .mt-p-name{text-align:left;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+    .mt-rating{background:#c2410c;color:#ffffff;border-radius:6px;padding:1px 6px;font-weight:700;font-size:.72rem}
+    .mt-cap{font-size:.55rem;background:#7c6a58;color:#ffffff;border-radius:3px;padding:0 3px;font-weight:700;vertical-align:middle}
+    .mt-stand .mt-cls{background:rgba(13,148,136,.08)}
+    .loading{text-align:center;color:#7c6a58;font-size:.85rem;margin-top:40px}
+    @media(max-width:560px){
+      .mt-ln-grid,.mt-pl-grid{grid-template-columns:1fr}
+      .mt-team{font-size:.85rem}
+      .mt-sc{font-size:1.4rem}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a class="back" href="/">&#8592; Volver al inicio</a>
+      <span class="brand">Mundial 2026</span>
+    </div>
+    <div id="match"><p class="loading">Cargando partido…</p></div>
+  </div>
+  <script>
+    (function() {
+      var id = new URLSearchParams(location.search).get('id') || '';
+      var box = document.getElementById('match');
+      fetch('partidos.json?_=' + Date.now())
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var html = d[id];
+          if (html) { box.innerHTML = html; }
+          else { box.innerHTML = '<p class="loading">Detalle no disponible todavía. Probá cuando arranque el partido.</p>'; }
+        })
+        .catch(function() { box.innerHTML = '<p class="loading">No se pudo cargar el partido.</p>'; });
+    })();
+  </script>
+</body>
+</html>
