@@ -11,7 +11,7 @@
 
 const CORS_ORIGIN  = "https://mejortercero.online";
 const REPO         = "francojmat/mundial2026";
-const PREVIEW_URL  = "https://preview.mundial2026.pages.dev";
+const PREVIEW_URL  = "https://preview.mundial2026-d40.pages.dev/mundial2026";
 const MEMORY_KEY   = "memory:changes";
 
 function cors() {
