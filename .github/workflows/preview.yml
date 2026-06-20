@@ -22,6 +22,11 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
+      - name: Validate Python syntax
+        run: |
+          python -m py_compile html_renderer.py api_client.py countries.py data_renderer.py
+          echo "✅ Sintaxis OK"
+
       - name: Generate HTML + data.json
         env:
           FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}

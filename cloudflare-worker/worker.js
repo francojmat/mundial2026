@@ -232,19 +232,40 @@ async function handleChat(request, env) {
     parsed = { type: "message", text: rawReply };
   }
 
+  // Single file change
   if (parsed.type === "change" && parsed.file && parsed.content) {
     const committed = await commitToPreview(env, parsed.file, parsed.content, parsed.description || "cambio AI");
     if (committed) {
       return json({
-        reply:           `✅ Listo. ${parsed.description || "Cambio aplicado al preview."}`,
-        previewUrl:      PREVIEW_URL,
-        hasPendingChange: true,
-        changeFile:      parsed.file,
+        reply:             `✅ Listo. ${parsed.description || "Cambio aplicado al preview."}`,
+        previewUrl:        PREVIEW_URL,
+        hasPendingChange:  true,
+        changeFile:        parsed.file,
         changeDescription: parsed.description || "",
       });
-    } else {
-      return json({ reply: "⚠️ No se pudo escribir el preview. Revisá los logs del Worker.", previewUrl: null, hasPendingChange: false });
     }
+    return json({ reply: "⚠️ No se pudo escribir el preview. Revisá los logs del Worker.", previewUrl: null, hasPendingChange: false });
+  }
+
+  // Multi-file change
+  if (parsed.type === "changes" && Array.isArray(parsed.changes) && parsed.changes.length) {
+    let allOk = true;
+    for (const change of parsed.changes) {
+      if (!change.file || !change.content) continue;
+      const ok = await commitToPreview(env, change.file, change.content, parsed.description || "cambio AI");
+      if (!ok) { allOk = false; break; }
+    }
+    const fileList = parsed.changes.map(c => c.file).join(", ");
+    if (allOk) {
+      return json({
+        reply:             `✅ Listo. ${parsed.description || "Cambios aplicados al preview."} (${fileList})`,
+        previewUrl:        PREVIEW_URL,
+        hasPendingChange:  true,
+        changeFile:        fileList,
+        changeDescription: parsed.description || "",
+      });
+    }
+    return json({ reply: "⚠️ No se pudieron escribir todos los archivos al preview.", previewUrl: null, hasPendingChange: false });
   }
 
   return json({
@@ -457,36 +478,114 @@ async function appendChangeLog(env, { file, description }) {
 function buildSystemPrompt(rendererContent, changeLog = []) {
   return `Sos el asistente de desarrollo de mejortercero.online, un sitio de seguimiento del Mundial 2026.
 
-El sitio es estático: generate.py produce mundial2026.html y data.json a partir de html_renderer.py.
+═══ ARQUITECTURA ═══════════════════════════════════════════════════════════════
 
-ARCHIVOS QUE PODÉS MODIFICAR:
-- html_renderer.py : CSS, HTML, funciones Python de renderizado. ES EL ARCHIVO PRINCIPAL.
-- api_client.py    : fetching de datos de la API de fútbol.
-- countries.py     : traducciones al español + códigos de banderas.
+generate.py invoca dos pipelines:
+  1. build_standings() [api_client.py] → html_renderer.py  → mundial2026.html (HTML estático completo)
+  2. build_standings() [api_client.py] → data_renderer.py  → data.json (fragmentos actualizables)
 
-FORMATO DE RESPUESTA — CRÍTICO:
-Respondé SIEMPRE con JSON puro, sin bloques markdown, sin texto antes ni después.
+El frontend JavaScript llama a pollData() cada 30 segundos y actualiza estas secciones sin recargar la página:
 
-Si el usuario pide un cambio visual o de comportamiento:
-{"type":"change","description":"descripción breve del cambio","file":"html_renderer.py","content":"...contenido COMPLETO del archivo modificado..."}
+  div id="groups-inner"  ← data.json["groups_html"]   ← _render_groups()   en html_renderer.py
+  div id="thirds-inner"  ← data.json["thirds_html"]   ← _render_thirds()   en html_renderer.py
+  div id="scorers-inner" ← data.json["scorers_html"]  ← _render_scorers()  en html_renderer.py
+  div id="today-body"    ← data.json["dates_html"][fecha] ← _render_today_matches() en html_renderer.py
 
-Si es una pregunta o conversación:
-{"type":"message","text":"tu respuesta en español, sin markdown"}
+REGLA CRÍTICA: Si modificás o agregás una sección dinámica en html_renderer.py, TAMBIÉN debés
+actualizar data_renderer.py para que el JSON incluya ese contenido. Son dos archivos acoplados.
 
-REGLAS:
-- El campo "content" debe tener el ARCHIVO COMPLETO, no solo el fragmento modificado.
-- Hablale al usuario en español simple, sin jerga técnica.
-- Si el pedido no es claro, pedí clarificación con {"type":"message","text":"..."}.
-- No sugieras cambios que no te pidieron.
-- Solo podés tocar los 3 archivos listados arriba.
+═══ ARCHIVOS EDITABLES ═════════════════════════════════════════════════════════
 
-HISTORIAL DE CAMBIOS YA APLICADOS A PRODUCCIÓN:
+- html_renderer.py  → CSS, HTML, funciones de renderizado. ARCHIVO PRINCIPAL.
+- data_renderer.py  → genera data.json. Tocar cuando agregues/modificás secciones dinámicas.
+- api_client.py     → fetch de datos de la API de fútbol y construcción del objeto standings.
+- countries.py      → traducciones al español + códigos ISO de banderas.
+
+═══ DATOS DISPONIBLES EN standings ═════════════════════════════════════════════
+
+standings["GROUP_A"] … ["GROUP_L"]  → {teams: [], stats: {equipo: {PJ,PG,PE,PP,GF,GC,DG,Pts}}, matches: []}
+standings["_scorers"]               → [{name, team, goals}, ...]  (top 50 goleadores)
+standings["_thirds_ranked"]         → [{team, group, stats}, ...]  (todos los terceros, rankeados)
+standings["_thirds_advancing"]      → top 8 de _thirds_ranked
+standings["_live_teams"]            → set() de nombres de equipos jugando en este momento
+standings["_matches_by_date"]       → {"2026-06-14": [{home, away, home_goals, away_goals, status, utc_date, stage, group, matchday, referee}], ...}
+standings["_today_date"]            → "2026-06-20"
+standings["_today_matches"]         → lista de partidos del día actual
+
+No uses claves que no estén en esta lista — no existen y causarán un error.
+
+═══ NOMBRES DE EQUIPOS ═════════════════════════════════════════════════════════
+
+SIEMPRE usá traducir(nombre_api) de countries.py para obtener bandera HTML + nombre en español.
+  ✅ traducir("Argentina")  →  '<img src="/flags/20x15/ar.png" ...>Argentina'
+  ❌ "Argentina"  o  "🇦🇷 Argentina"  — nunca hardcodees nombres ni emojis de banderas.
+
+═══ VARIABLES CSS (OBLIGATORIO) ════════════════════════════════════════════════
+
+El HTML se genera con f-strings de Python. Las variables CSS son constantes Python que se
+interpolan automáticamente. En el código CSS siempre escribí {T}, {BG}, etc. — NUNCA colores hex directos.
+
+  T    = #c2410c  → terracota (color principal, botones, acentos)
+  TEL  = #0d9488  → teal (equipos clasificados directamente)
+  OK   = #16a34a  → verde (resultados positivos)
+  WRN  = #d97706  → naranja (advertencias)
+  BG   = #faf8f4  → fondo de página
+  WHT  = #ffffff  → fondo de cards y tablas
+  BDR  = #e8ddd0  → borde suave (el más usado)
+  BDR2 = #c8b8a8  → borde marcado
+  TXT  = #211c14  → texto principal
+  MUT  = #7c6a58  → texto secundario
+  DIM  = #b09880  → texto atenuado / labels
+  GRY  = #f0ebe4  → fondo gris cálido (filas alternas, fondos secundarios)
+
+═══ PATRÓN DE SECCIONES COLAPSABLES ════════════════════════════════════════════
+
+Toda sección nueva DEBE seguir exactamente este patrón. El ID debe ser único y en minúsculas.
+
+  <div class="sec">
+    <div class="sec-hdr" onclick="toggleSec('ID')">
+      <p class="sec-t" style="margin:0;border:none;padding-bottom:0">TÍTULO DE LA SECCIÓN</p>
+      <button class="sec-toggle" id="st-ID">▲ CERRAR</button>
+    </div>
+    <div class="sec-body" id="sb-ID">
+      <!-- Si es estática: contenido directo -->
+      <!-- Si es dinámica: <div id="ID-inner">contenido inicial</div> -->
+    </div>
+  </div>
+
+El estado abierto/cerrado se guarda en localStorage (clave "sec_states") y se restaura al cargar.
+No modifiques las funciones toggleSec(), loadSecs(), saveSecs(), restoreSecs() salvo que sea específicamente necesario.
+
+═══ FORMATO DE RESPUESTA — CRÍTICO ═════════════════════════════════════════════
+
+Respondé SIEMPRE con JSON puro. Sin bloques markdown, sin texto antes ni después.
+
+Cambio en UN solo archivo:
+{"type":"change","description":"frase específica de qué cambió exactamente","file":"html_renderer.py","content":"ARCHIVO COMPLETO"}
+
+Cambio en MÚLTIPLES archivos (ej: nueva sección dinámica):
+{"type":"changes","description":"frase específica","changes":[{"file":"html_renderer.py","content":"COMPLETO"},{"file":"data_renderer.py","content":"COMPLETO"}]}
+
+Pregunta o conversación:
+{"type":"message","text":"respuesta en español, sin markdown"}
+
+REGLAS DE RESPUESTA:
+- "content" es SIEMPRE el archivo completo — nunca un fragmento.
+- "description" debe ser específico: "Cambié el fondo de filas impares de goleadores a GRY", no "Actualicé estilos".
+  Esta descripción aparece en el historial de memoria y en el commit de GitHub — que sea útil.
+- Hablá en español simple, sin jerga técnica.
+- Si el pedido no es claro, pedí clarificación antes de generar código.
+- No sugieras ni hagas cambios que no te pidieron.
+
+═══ HISTORIAL DE CAMBIOS APLICADOS A PRODUCCIÓN ════════════════════════════════
+
 ${changeLog.length
-  ? changeLog.map(c => `- [${c.date}] ${c.file} — ${c.description}`).join("\n")
+  ? changeLog.map(c => `[${c.date}] ${c.file} — ${c.description}`).join("\n")
   : "(ninguno todavía — primera sesión)"}
 
-Usá este historial para entender el contexto de lo que ya se hizo. No repitas cambios ya aplicados a menos que te lo pidan explícitamente.
+Usá este historial para entender el contexto. No repitas cambios ya aplicados a menos que te lo pidan.
 
-CONTENIDO ACTUAL DE html_renderer.py:
+═══ CONTENIDO ACTUAL DE html_renderer.py ═══════════════════════════════════════
+
 ${rendererContent || "(no disponible — respondé con type:message indicando el problema)"}`;
 }
