@@ -57,10 +57,11 @@ async function handleMetrics(request, env) {
     return json({ error: "No autorizado" }, 401);
   }
 
+  const phKey = (env.POSTHOG_KEY || '').replace(/^﻿/, '').trim();
   const res = await fetch("https://us.posthog.com/api/projects/478313/query", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${env.POSTHOG_KEY}`,
+      "Authorization": `Bearer ${phKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
