@@ -22,15 +22,9 @@ class WorldCupClient:
         resp.raise_for_status()
         return resp.json()
 
-    def get_raw_standings(self) -> dict:
-        return self._get(f"/competitions/{COMPETITION}/standings")
-
     def get_matches(self, stage: str = None) -> dict:
         params = {"stage": stage} if stage else {}
         return self._get(f"/competitions/{COMPETITION}/matches", params=params)
-
-    def get_teams(self) -> dict:
-        return self._get(f"/competitions/{COMPETITION}/teams")
 
     def get_matches_for_display(self) -> dict:
         """

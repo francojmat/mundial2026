@@ -57,6 +57,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Mundial 2026</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
   <style>
     *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
     body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:{BG};color:{TXT};padding:28px 24px}}
@@ -123,8 +124,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
       .grupos{{grid-template-columns:1fr}}
       td{{font-size:.74rem;padding:5px 6px}}
       th{{font-size:.55rem;padding:4px 6px}}
-      .fab-sug{{bottom:14px;right:14px;padding:8px 14px;font-size:.72rem}}
-      .reset-btn{{font-size:.68rem}}
+.reset-btn{{font-size:.68rem}}
     }}
 
     .mitad{{display:flex;flex:1}}
@@ -283,105 +283,6 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   {_render_mobile_bracket(matchups)}
   <button class="reset-btn" onclick="resetBracket()">↺ Resetear simulación</button>
 </div>
-
-<!-- Botón flotante sugerencias -->
-<button class="fab-sug" onclick="openSug()" title="Enviar sugerencia">
-  ✉ Sugerencias
-</button>
-
-<!-- Modal sugerencias -->
-<div class="sug-overlay" id="sugOverlay" onclick="if(event.target===this)closeSug()">
-  <div class="sug-modal">
-    <div class="sug-header">
-      <span>Envianos una sugerencia</span>
-      <button onclick="closeSug()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:{MUT}">✕</button>
-    </div>
-    <div class="sug-body">
-      <label class="sug-label">Tu nombre <span style="color:{DIM}">(opcional)</span></label>
-      <input id="sugName" class="sug-input" type="text" placeholder="Ej: Martín" maxlength="80" autocomplete="off">
-      <label class="sug-label">Sugerencia *</label>
-      <textarea id="sugMsg" class="sug-input" rows="4" placeholder="¿Qué mejorarías o agregarías?" maxlength="600"></textarea>
-      <button class="sug-send" onclick="sendSug()">Enviar sugerencia</button>
-      <p id="sugThanks" style="display:none;color:{TEL};font-size:.8rem;margin-top:8px;font-weight:600">¡Gracias! Tu sugerencia fue registrada.</p>
-      <p id="sugErr" style="display:none;color:#dc2626;font-size:.78rem;margin-top:8px"></p>
-    </div>
-  </div>
-</div>
-
-<style>
-  .fab-sug{{position:fixed;bottom:24px;right:24px;background:{T};color:#fff;border:none;padding:10px 18px;font-size:.78rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;z-index:999;box-shadow:0 4px 16px rgba(194,65,12,.35)}}
-  .fab-sug:hover{{background:#a83509}}
-  .sug-overlay{{display:none;position:fixed;inset:0;background:rgba(33,28,20,.5);z-index:1000;align-items:center;justify-content:center}}
-  .sug-overlay.open{{display:flex}}
-  .sug-modal{{background:{WHT};width:100%;max-width:420px;margin:20px}}
-  .sug-header{{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid {BDR};font-size:.82rem;font-weight:700;color:{TXT}}}
-  .sug-body{{padding:18px}}
-  .sug-label{{display:block;font-size:.7rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;margin-top:12px}}
-  .sug-label:first-child{{margin-top:0}}
-  .sug-input{{width:100%;border:1px solid {BDR};padding:8px 10px;font-size:.82rem;font-family:inherit;color:{TXT};background:{BG};resize:vertical}}
-  .sug-input:focus{{outline:1px solid {T}}}
-  .sug-send{{margin-top:14px;width:100%;background:{T};color:#fff;border:none;padding:10px;font-size:.78rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase}}
-  .sug-send:hover{{background:#a83509}}
-</style>
-
-<script>
-// ── Tracking de visitas ───────────────────────────────────────────────────
-(function(){{
-  const visits = JSON.parse(localStorage.getItem('wc26_visits')||'[]');
-  visits.push({{
-    ts: new Date().toISOString(),
-    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    ua: navigator.userAgent.substring(0,120),
-  }});
-  if(visits.length > 500) visits.splice(0, visits.length-500);
-  localStorage.setItem('wc26_visits', JSON.stringify(visits));
-}})();
-
-// ── Modal de sugerencias ──────────────────────────────────────────────────
-function openSug(){{ document.getElementById('sugOverlay').classList.add('open'); document.getElementById('sugErr').style.display='none'; }}
-function closeSug(){{ document.getElementById('sugOverlay').classList.remove('open'); document.getElementById('sugThanks').style.display='none'; document.getElementById('sugErr').style.display='none'; }}
-
-function _sanitize(str, maxLen){{
-  return str
-    .replace(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/g,'') // caracteres de control
-    .trim()
-    .slice(0, maxLen);
-}}
-
-function _canSug(){{
-  const sugs = JSON.parse(localStorage.getItem('wc26_sugerencias')||'[]');
-  const since = Date.now() - 30*60*1000; // 30 min
-  return sugs.filter(s => new Date(s.ts).getTime() > since).length < 3;
-}}
-
-function sendSug(){{
-  const errEl = document.getElementById('sugErr');
-  errEl.style.display='none';
-
-  if(!_canSug()){{
-    errEl.textContent='Límite alcanzado. Podés enviar hasta 3 sugerencias cada 30 minutos.';
-    errEl.style.display='block';
-    return;
-  }}
-
-  const rawMsg  = document.getElementById('sugMsg').value;
-  const rawName = document.getElementById('sugName').value;
-  const msg  = _sanitize(rawMsg, 600);
-  const name = _sanitize(rawName, 80);
-
-  if(!msg){{ errEl.textContent='El campo sugerencia no puede estar vacío.'; errEl.style.display='block'; return; }}
-
-  const sugs = JSON.parse(localStorage.getItem('wc26_sugerencias')||'[]');
-  if(sugs.length >= 200){{ sugs.splice(0, sugs.length - 199); }} // cap total
-  sugs.push({{ id: Date.now(), ts: new Date().toISOString(), name: name||'Anónimo', msg, read: false }});
-  localStorage.setItem('wc26_sugerencias', JSON.stringify(sugs));
-
-  document.getElementById('sugMsg').value='';
-  document.getElementById('sugName').value='';
-  document.getElementById('sugThanks').style.display='block';
-  setTimeout(closeSug, 2000);
-}}
-</script>
 
 <script>
 // ── Datos ──────────────────────────────────────────────────────────────────
