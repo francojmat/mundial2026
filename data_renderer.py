@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 from typing import Dict, List, Set
 
-from html_renderer import _render_groups, _render_thirds, _match_card, _render_today_matches
+from html_renderer import _render_groups, _render_thirds, _render_scorers, _match_card, _render_today_matches
 
 
 def _r32_inner(matches: List[Dict]) -> str:
@@ -37,5 +37,6 @@ def render_data_json(standings: Dict, matchups: List[Dict]) -> str:
         "thirds_html": _render_thirds(standings),
         "r32_left_html": _r32_inner(matchups[:8]),
         "r32_right_html": _r32_inner(matchups[8:]),
+        "scorers_html": _render_scorers(standings),
     }
     return json.dumps(data, ensure_ascii=False)

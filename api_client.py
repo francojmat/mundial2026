@@ -26,6 +26,19 @@ class WorldCupClient:
         params = {"stage": stage} if stage else {}
         return self._get(f"/competitions/{COMPETITION}/matches", params=params)
 
+    def get_scorers(self, limit: int = 10) -> list:
+        raw = self._get(f"/competitions/{COMPETITION}/scorers", params={"limit": limit})
+        result = []
+        for s in raw.get("scorers", []):
+            player = s.get("player", {})
+            team   = s.get("team", {})
+            result.append({
+                "name":  player.get("name", ""),
+                "team":  team.get("shortName") or team.get("name", ""),
+                "goals": s.get("goals") or 0,
+            })
+        return result
+
     def get_matches_for_display(self) -> dict:
         """
         Returns all World Cup matches grouped by local date (Argentine time, UTC-3).
@@ -152,5 +165,9 @@ def build_standings(client: WorldCupClient, fifa_rankings: Dict[str, int] = None
     result["_matches_by_date"] = display["dates"]
     result["_today_date"]      = display["today"]
     result["_today_matches"]   = display["dates"].get(display["today"], [])
+    try:
+        result["_scorers"] = client.get_scorers(limit=10)
+    except Exception:
+        result["_scorers"] = []
 
     return result

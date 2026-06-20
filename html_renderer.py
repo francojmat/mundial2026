@@ -285,6 +285,9 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   <button class="reset-btn" onclick="resetBracket()">↺ Resetear simulación</button>
 </div>
 
+<div class="divider"></div>
+<div id="scorers-container">{_render_scorers(standings)}</div>
+
 <!-- Botón flotante sugerencias -->
 <button class="fab-sug" onclick="openSug()" title="Enviar sugerencia">✉ Sugerencias</button>
 
@@ -780,6 +783,9 @@ function pollData() {{
       }}
       if (r32Updated) restore();
 
+      var sc = document.getElementById('scorers-container');
+      if (sc && d.scorers_html !== undefined) sc.innerHTML = d.scorers_html;
+
       var upd = document.getElementById('upd');
       if (upd && d.updated) upd.textContent = d.updated;
     }})
@@ -1155,6 +1161,38 @@ def _hoy_centro(m: dict) -> str:
     if utc:
         return f'<span class="hoy-hora" data-utc="{utc}" data-format="time"></span>'
     return '<span class="hoy-vs">vs</span>'
+
+
+def _render_scorers(standings: Dict) -> str:
+    scorers = standings.get("_scorers", [])
+    if not scorers:
+        return ""
+    filas = ""
+    for i, s in enumerate(scorers, 1):
+        filas += f"""
+    <tr>
+      <td>{i}</td>
+      <td style="text-align:left;white-space:nowrap">{s["name"]}</td>
+      <td style="text-align:left;white-space:nowrap">{traducir(s["team"])}</td>
+      <td><span class="pts">{s["goals"]}</span></td>
+    </tr>"""
+    return f"""
+  <div class="sec">
+    <p class="sec-t">Goleadores — Mundial 2026</p>
+    <div style="max-width:500px">
+      <div class="grupo">
+        <table>
+          <thead><tr>
+            <th>#</th>
+            <th style="text-align:left">Jugador</th>
+            <th style="text-align:left">País</th>
+            <th>Goles</th>
+          </tr></thead>
+          <tbody>{filas}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>"""
 
 
 def _render_today_matches(matches: list) -> str:
