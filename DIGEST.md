@@ -38,6 +38,30 @@ El **marcador** ya se actualiza en vivo gratis vía football-data.org, así que 
 ve los goles en el resultado en ~60s sin gastar API-Football. API-Football solo llena el
 detalle del cuadro desplegable (quién, minuto, asistencia, tarjetas, cambios).
 
+## Datos de API-Football disponibles y NO usados (WC 2026, league=1, season=2026)
+Hoy solo usamos `fixtures` (mapeo) y `fixtures/events` (goles/tarjetas/cambios). El plan Pro
+da MUCHO más, todo verificado que devuelve datos para 2026 (por si se suman features):
+- **fixtures/lineups** — formación, XI titular con posición, suplentes, DT
+- **fixtures/statistics** — posesión, tiros, pases+precisión, córners, faltas, offsides, atajadas
+- **fixtures/players** — stats por jugador: rating, minutos, pases, tackles, duelos, gambetas
+- **predictions** — % de cada resultado, consejo, comparativa de forma
+- **teams/statistics** — forma, promedios de goles, vallas invictas por selección
+- **standings** (API-Football) — con forma reciente (WWDLW) y splits local/visitante
+- **players/squads** — plantel completo (número, posición, edad, foto)
+- **players** — perfil + stats (edad, nacionalidad, altura, peso, foto)
+- **coachs** — DTs (carrera, edad, foto)
+- **players/topassists**, **topyellowcards**, **topredcards** — rankings
+- **fixtures/headtohead**, **fixtures/rounds**, **injuries**, **sidelined**, **trophies**
+- **odds** / **odds/live** — cuotas de apuestas · **teams** / **venues** — info y estadios
+- Multimedia: URLs de logos, fotos de jugadores/DTs, imágenes de estadios
+
+## Favicon
+Set completo (realfavicongenerator) en la raíz del repo: `favicon.ico`, `favicon-16/32/96/256`,
+`apple-icon-*`, `android-icon-192x192`, `ms-icon-*`, `manifest.json`, `browserconfig.xml`.
+Referenciado en el `<head>` de `html_renderer.py`. El `manifest.json` se reescribió para listar
+solo iconos que existen (el del zip referenciaba android-icon 36-144 que no venían). Se sirven
+en la raíz (Cloudflare Pages); el `_redirects` solo afecta `/` exacto, no los archivos.
+
 ## Sistema de eventos (events.py + apifootball_client.py)
 
 `build_standings(client, apifootball=...)` llama a `events.enrich_with_events()` que
