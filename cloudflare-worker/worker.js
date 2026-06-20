@@ -259,28 +259,16 @@ async function processChatJob(jobId, body, env) {
       parsed = { type: "message", text: rawReply };
     }
 
-    // Single file change
-    if (parsed.type === "change" && parsed.file && parsed.content) {
-      const committed = await commitToPreview(env, parsed.file, parsed.content, parsed.description || "cambio AI");
-      return saveResult({ status: "done", result: committed
-        ? { reply: `✅ Listo. ${parsed.description || "Cambio aplicado al preview."}`, previewUrl: PREVIEW_URL, hasPendingChange: true, changeFile: parsed.file, changeDescription: parsed.description || "" }
-        : { reply: "⚠️ No se pudo escribir el preview.", previewUrl: null, hasPendingChange: false }
-      });
+    // Single patch
+    if (parsed.type === "patch" && parsed.file && parsed.old != null && parsed.new != null) {
+      const result = await applyAndCommit(env, [{ file: parsed.file, old: parsed.old, new: parsed.new }], parsed.description || "cambio AI");
+      return saveResult({ status: "done", result });
     }
 
-    // Multi-file change
-    if (parsed.type === "changes" && Array.isArray(parsed.changes) && parsed.changes.length) {
-      let allOk = true;
-      for (const change of parsed.changes) {
-        if (!change.file || !change.content) continue;
-        const ok = await commitToPreview(env, change.file, change.content, parsed.description || "cambio AI");
-        if (!ok) { allOk = false; break; }
-      }
-      const fileList = parsed.changes.map(c => c.file).join(", ");
-      return saveResult({ status: "done", result: allOk
-        ? { reply: `✅ Listo. ${parsed.description || "Cambios aplicados."} (${fileList})`, previewUrl: PREVIEW_URL, hasPendingChange: true, changeFile: fileList, changeDescription: parsed.description || "" }
-        : { reply: "⚠️ No se pudieron escribir todos los archivos al preview.", previewUrl: null, hasPendingChange: false }
-      });
+    // Multi-file patches
+    if (parsed.type === "patches" && Array.isArray(parsed.patches) && parsed.patches.length) {
+      const result = await applyAndCommit(env, parsed.patches, parsed.description || "cambio AI");
+      return saveResult({ status: "done", result });
     }
 
     // Conversation
@@ -454,6 +442,39 @@ async function commitToPreview(env, filename, content, message) {
   return putResp.ok;
 }
 
+// Aplica una lista de {file, old, new} y commitea cada archivo modificado al preview
+async function applyAndCommit(env, patches, description) {
+  // Group patches by file
+  const byFile = {};
+  for (const p of patches) {
+    if (!byFile[p.file]) byFile[p.file] = await fetchGitHubFile(env, p.file, "main");
+    if (!byFile[p.file]) return { reply: `⚠️ No se pudo leer ${p.file} de GitHub.`, previewUrl: null, hasPendingChange: false };
+    const patched = applyPatch(byFile[p.file], p.old, p.new);
+    if (patched === null) return { reply: `⚠️ No encontré el texto a reemplazar en ${p.file}. Puede que el archivo haya cambiado. Intentá de nuevo.`, previewUrl: null, hasPendingChange: false };
+    byFile[p.file] = patched;
+  }
+
+  for (const [file, content] of Object.entries(byFile)) {
+    const ok = await commitToPreview(env, file, content, description);
+    if (!ok) return { reply: `⚠️ No se pudo escribir ${file} al preview.`, previewUrl: null, hasPendingChange: false };
+  }
+
+  const fileList = Object.keys(byFile).join(", ");
+  return {
+    reply: `✅ Listo. ${description}`,
+    previewUrl: PREVIEW_URL,
+    hasPendingChange: true,
+    changeFile: fileList,
+    changeDescription: description,
+  };
+}
+
+function applyPatch(content, oldText, newText) {
+  const idx = content.indexOf(oldText);
+  if (idx === -1) return null;
+  return content.slice(0, idx) + newText + content.slice(idx + oldText.length);
+}
+
 function utf8ToB64(str) {
   const bytes = new TextEncoder().encode(str);
   let binary = "";
@@ -576,22 +597,37 @@ No modifiques las funciones toggleSec(), loadSecs(), saveSecs(), restoreSecs() s
 
 Respondé SIEMPRE con JSON puro. Sin bloques markdown, sin texto antes ni después.
 
-Cambio en UN solo archivo:
-{"type":"change","description":"frase específica de qué cambió exactamente","file":"html_renderer.py","content":"ARCHIVO COMPLETO"}
+Cambio en UN archivo (la mayoría de los casos):
+{
+  "type": "patch",
+  "description": "frase específica de qué cambió",
+  "file": "html_renderer.py",
+  "old": "texto EXACTO del archivo que reemplazás — mínimo 3 líneas para que sea único",
+  "new": "texto nuevo que lo reemplaza"
+}
 
-Cambio en MÚLTIPLES archivos (ej: nueva sección dinámica):
-{"type":"changes","description":"frase específica","changes":[{"file":"html_renderer.py","content":"COMPLETO"},{"file":"data_renderer.py","content":"COMPLETO"}]}
+Cambio en MÚLTIPLES archivos:
+{
+  "type": "patches",
+  "description": "frase específica",
+  "patches": [
+    {"file": "html_renderer.py", "old": "texto exacto", "new": "texto nuevo"},
+    {"file": "data_renderer.py", "old": "texto exacto", "new": "texto nuevo"}
+  ]
+}
 
 Pregunta o conversación:
-{"type":"message","text":"respuesta en español, sin markdown"}
+{"type": "message", "text": "respuesta en español, sin markdown"}
 
-REGLAS DE RESPUESTA:
-- "content" es SIEMPRE el archivo completo — nunca un fragmento.
-- "description" debe ser específico: "Cambié el fondo de filas impares de goleadores a GRY", no "Actualicé estilos".
-  Esta descripción aparece en el historial de memoria y en el commit de GitHub — que sea útil.
+REGLAS DEL PATCH:
+- "old" debe ser el texto EXACTO tal como aparece en el archivo (respetá espacios e indentación).
+- "old" debe incluir suficiente contexto (al menos 3 líneas) para ser único en el archivo.
+- Si necesitás varios cambios en el mismo archivo, incluí todos en un único par old/new.
+- NO devuelvas el archivo completo. Solo el fragmento que cambia.
+- "description" debe ser específico: "Saqué el emoji ✉ del botón de sugerencias", no "Actualicé el botón".
+  Esta descripción va al historial de memoria y al commit de GitHub.
 - Hablá en español simple, sin jerga técnica.
 - Si el pedido no es claro, pedí clarificación antes de generar código.
-- No sugieras ni hagas cambios que no te pidieron.
 
 ═══ HISTORIAL DE CAMBIOS APLICADOS A PRODUCCIÓN ════════════════════════════════
 
