@@ -11,12 +11,16 @@ import json
 import os
 from datetime import datetime, timezone
 
+import requests
+
 RANKINGS_REFRESH = 600    # segundos: los rankings se recalculan cada 10 min
 VENUES_REFRESH = 1800     # segundos: estadios cada 30 min (la estructura es fija, refresca scores)
 SQUADS_REFRESH = 604800   # segundos: planteles 1 vez por semana (los rosters no cambian)
 SQUADS_PER_RUN = 10       # tope de equipos a refrescar por corrida (evita ráfaga de llamadas)
 MATCH_LIVE_REFRESH = 120  # segundos: detalle de partido en vivo cada 2 min
 MATCH_DETAILS_PER_RUN = 5 # tope de partidos a enriquecer por corrida (3 llamadas c/u)
+VENUE_DETAILS_REFRESH = 604800  # detalles de estadio (capacidad, foto) 1 vez por semana
+VENUE_IMG_MIN_BYTES = 35000     # debajo de esto la imagen es un placeholder de la API
 
 
 def _now():
@@ -98,7 +102,17 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
         vn = {"list": _build_venues(fixtures), "last_fetch": _now().isoformat()}
         cache["venues"] = vn
         dirty = True
-    standings["_venues"] = vn.get("list", [])
+    vlist = vn.get("list", [])
+    if vlist:
+        if _enrich_venue_details(vlist, client, cache):
+            dirty = True
+        vdetails = cache.get("venue_details") or {}
+        for v in vlist:
+            d = vdetails.get(v.get("name")) or {}
+            v["capacity"] = d.get("capacity")
+            v["surface"]  = d.get("surface")
+            v["image_url"] = d.get("image")
+    standings["_venues"] = vlist
 
     # Mapas nombre→team_id y match_id→fixture_id (se arman con los fixtures, persisten)
     tid_map = cache.get("team_id_map") or {}
@@ -215,6 +229,46 @@ def _build_maps(matches_by_date: dict, fixtures: list):
             if mapping.get("fixture_id"):
                 fx[str(m.get("match_id"))] = mapping["fixture_id"]
     return tid, fx
+
+
+def _image_is_real(url: str) -> bool:
+    """True si la imagen es real (no un placeholder de la API). Los placeholders pesan poco."""
+    if not url:
+        return False
+    try:
+        r = requests.get(url, timeout=8)
+        return r.ok and len(r.content) >= VENUE_IMG_MIN_BYTES
+    except Exception:
+        return False
+
+
+def _enrich_venue_details(vlist: list, client, cache: dict) -> bool:
+    """Trae capacidad/superficie/foto de cada estadio con id. Cache semanal. Valida la foto."""
+    details = cache.get("venue_details") or {}
+    dirty = False
+    for v in vlist:
+        name, vid = v.get("name"), v.get("id")
+        if not name or not vid:
+            continue
+        entry = details.get(name)
+        if entry and not _stale(entry, VENUE_DETAILS_REFRESH):
+            continue
+        data = client.get_venue(id=vid)
+        if not data:
+            continue
+        img = data.get("image")
+        if not _image_is_real(img):
+            img = None
+        details[name] = {
+            "capacity":   data.get("capacity"),
+            "surface":    data.get("surface"),
+            "image":      img,
+            "last_fetch": _now().isoformat(),
+        }
+        dirty = True
+    if dirty:
+        cache["venue_details"] = details
+    return dirty
 
 
 def _build_venues(fixtures: list) -> list:

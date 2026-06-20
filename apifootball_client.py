@@ -172,6 +172,15 @@ class APIFootballClient:
         pl = p.get("player") or {}
         return {"name": pl.get("name", ""), "number": pl.get("number"), "pos": pl.get("pos", "")}
 
+    def get_venue(self, **params) -> dict:
+        """Detalle de un estadio (capacity, surface, image, address). Por id o search."""
+        try:
+            raw = self._get("/venues", params)
+        except Exception:
+            return {}
+        resp = raw.get("response") or []
+        return resp[0] if resp else {}
+
     def get_fixture_lineups(self, fixture_id: int) -> list:
         """[{team, formation, coach, startXI:[{name,number,pos}], subs:[...]}] (2 equipos)."""
         try:

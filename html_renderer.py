@@ -276,6 +276,8 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .ven-m-mid{{font-weight:700;color:{MUT};font-size:.72rem;text-align:center;min-width:38px}}
     .ven-time{{color:{T};font-weight:700;font-size:.7rem}}
     .ven-img{{width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin-bottom:10px;display:block}}
+    .ven-info{{display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:10px;font-size:.78rem;color:{TXT}}}
+    .ven-info .ven-k{{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{DIM};margin-right:4px}}
     @media(max-width:480px){{
       .ven-m{{font-size:.68rem;grid-template-columns:28px 1fr auto 1fr}}
       .hoy-home,.hoy-away{{font-size:.72rem}}
@@ -1551,13 +1553,25 @@ def _render_venues(standings: Dict) -> str:
                      f'<span class="ven-m-mid">{mid}</span>'
                      f'<span class="ven-m-team ven-m-a">{away}</span>'
                      f'</div>')
-        # Foto del estadio (construida con el id; solo los que tienen id en la API)
+        # Foto del estadio (solo la validada como real, no placeholder)
         img = ""
-        if v.get("id"):
-            img = (f'<img class="ven-img" loading="lazy" alt="" '
-                   f'src="https://media.api-sports.io/football/venues/{v["id"]}.png" '
+        if v.get("image_url"):
+            img = (f'<img class="ven-img" loading="lazy" alt="" src="{v["image_url"]}" '
                    f'onerror="this.style.display=\'none\'">')
-        detail = f'<div class="hoy-detail">{img}<div class="hoy-dsec">{rows}</div></div>'
+        # Datos: capacidad + superficie
+        bits = []
+        cap = v.get("capacity")
+        if cap:
+            try:
+                bits.append(f'<span class="ven-k">Capacidad</span> {int(cap):,}'.replace(",", "."))
+            except Exception:
+                pass
+        surf = v.get("surface")
+        if surf:
+            surf_es = {"grass": "Césped natural", "artificial turf": "Césped sintético"}.get(surf, surf)
+            bits.append(f'<span class="ven-k">Superficie</span> {surf_es}')
+        info = f'<div class="ven-info">{"".join(f"<span>{b}</span>" for b in bits)}</div>' if bits else ""
+        detail = f'<div class="hoy-detail">{img}{info}<div class="hoy-dsec">{rows}</div></div>'
         cards += (f'<div class="hoy-fila" onclick="toggleMatch(this)">'
                   f'<div class="hoy-head">'
                   f'<span class="hoy-etiqueta">{v.get("name", "")}</span>'
