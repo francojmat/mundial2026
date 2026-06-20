@@ -57,7 +57,24 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Mejor Tercero · Mundial 2026</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+  <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="/apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="/apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+  <meta name="theme-color" content="#ffffff">
   <script>!function(t,e){{var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){{function g(t,e){{var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){{t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){{var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}},u.people.toString=function(){{return u.toString(1)+" (stub)"}},n="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep".split(" "),o=0;o<n.length;o++)g(u,n[o]);e._i.push([i,s,a])}},(e.__SV=1))}}(document,window.posthog||[]);posthog.init('phc_oJ2GTZXyfDHXr3dmKGnEww3n3bNSQ4SRAvbQa43eVZZ5',{{api_host:'https://us.i.posthog.com',person_profiles:'identified_only'}})</script>
   <style>
     *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
@@ -1313,7 +1330,7 @@ def _hoy_detail_html(m: dict) -> str:
         for g in goals:
             minute = g.get("minute", "")
             scorer = g.get("scorer", "")
-            team   = g.get("team", "")
+            team   = traducir(g.get("team", ""))
             assist = g.get("assist", "")
             g_type = g.get("type", "NORMAL")
             suffix = " (PP)" if g_type == "PENALTY" else (" (PC)" if g_type == "OWN" else "")
@@ -1333,7 +1350,7 @@ def _hoy_detail_html(m: dict) -> str:
         for b in bookings:
             card   = b.get("card", "YELLOW")
             player = b.get("player", "")
-            team   = b.get("team", "")
+            team   = traducir(b.get("team", ""))
             minute = b.get("minute", "")
             icon   = "hoy-ev-yc" if card == "YELLOW" else "hoy-ev-rc"
             rows += (f'<div class="hoy-ev">'
@@ -1351,7 +1368,7 @@ def _hoy_detail_html(m: dict) -> str:
             minute     = s.get("minute", "")
             player_in  = s.get("player_in", "")
             player_out = s.get("player_out", "")
-            team       = s.get("team", "")
+            team       = traducir(s.get("team", ""))
             rows += (f'<div class="hoy-ev">'
                      f'<span class="hoy-ev-min">{minute}\'</span>'
                      f'<span class="hoy-ev-sw">&#x21C4;</span>'
