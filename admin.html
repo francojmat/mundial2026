@@ -18,8 +18,8 @@
     #login-btn:hover{background:#a83509}
     #login-err{color:#dc2626;font-size:.78rem;display:none}
     #panel{display:none}
-    .tabs{display:flex;border-bottom:2px solid #e8ddd0;margin-bottom:24px}
-    .tab{padding:8px 20px;font-size:.78rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;color:#7c6a58;border:none;background:none}
+    .tabs{display:flex;border-bottom:2px solid #e8ddd0;margin-bottom:24px;gap:0}
+    .tab{padding:8px 18px;font-size:.78rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;color:#7c6a58;border:none;background:none}
     .tab.active{color:#c2410c;border-bottom:2px solid #c2410c;margin-bottom:-2px}
     .tab-pane{display:none}
     .tab-pane.active{display:block}
@@ -41,7 +41,43 @@
     .m-val{font-size:2rem;font-weight:700;color:#c2410c;line-height:1}
     .m-chart-wrap{background:#fff;border:1px solid #e8ddd0;padding:16px 20px}
     .m-chart-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#b09880;margin-bottom:12px}
-    @media(max-width:600px){.m-cards{grid-template-columns:1fr}}
+
+    /* ── Chat ── */
+    #chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 230px);min-height:380px}
+    #chat-msgs{flex:1;overflow-y:auto;padding:4px 0 12px;display:flex;flex-direction:column;gap:10px}
+    .msg{max-width:82%;padding:10px 14px;font-size:.87rem;line-height:1.55;word-wrap:break-word;white-space:pre-wrap}
+    .msg-user{align-self:flex-end;background:#c2410c;color:#fff}
+    .msg-bot{align-self:flex-start;background:#fff;border:1px solid #e8ddd0;color:#211c14}
+    .msg-thinking{align-self:flex-start;background:#fff;border:1px solid #e8ddd0;color:#b09880;font-style:italic;font-size:.8rem;padding:8px 14px}
+
+    #preview-card{background:#fff;border:1px solid #c2410c;padding:14px 16px;margin-bottom:12px}
+    .preview-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#c2410c;margin-bottom:8px}
+    .preview-desc{font-size:.82rem;color:#211c14;margin-bottom:10px;line-height:1.4}
+    .preview-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn-preview{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:7px 14px;text-decoration:none;border:none;cursor:pointer}
+    .btn-see{background:#211c14;color:#fff}
+    .btn-apply{background:#16a34a;color:#fff}
+    .btn-discard{background:none;border:1px solid #e8ddd0;color:#7c6a58}
+
+    #chat-bottom{padding-top:10px;border-top:1px solid #e8ddd0}
+    #chat-input-row{display:flex;gap:8px;align-items:flex-end}
+    #chat-input{flex:1;border:1px solid #e8ddd0;padding:10px 12px;font-size:.87rem;font-family:inherit;resize:none;min-height:44px;max-height:140px;background:#fff;line-height:1.45}
+    #chat-input:focus{outline:1px solid #c2410c}
+    .chat-btn{border:none;cursor:pointer;font-size:.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:10px 16px;white-space:nowrap;flex-shrink:0}
+    #send-btn{background:#c2410c;color:#fff}
+    #send-btn:hover{background:#a83509}
+    #send-btn:disabled{background:#e8ddd0;color:#b09880;cursor:default}
+    #mic-btn{background:#211c14;color:#fff;font-size:1.1rem;padding:10px 14px}
+    #mic-btn.recording{background:#dc2626;animation:pulse .9s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+    #voice-status{font-size:.7rem;color:#7c6a58;margin-top:5px;min-height:1em}
+    .chat-hint{font-size:.7rem;color:#b09880;margin-top:8px}
+
+    @media(max-width:600px){
+      .m-cards{grid-template-columns:1fr}
+      body{padding:20px 16px}
+      #chat-wrap{height:calc(100vh - 210px)}
+    }
   </style>
 </head>
 <body>
@@ -59,20 +95,23 @@
 
   <div class="tabs">
     <button class="tab active" onclick="switchTab('sugs')">Sugerencias</button>
-    <button class="tab" onclick="switchTab('metrics')">Métricas</button>
+    <button class="tab"        onclick="switchTab('metrics')">Métricas</button>
+    <button class="tab"        onclick="switchTab('chat')">Asistente IA</button>
   </div>
 
+  <!-- ── Sugerencias ── -->
   <div id="tab-sugs" class="tab-pane active">
     <div class="sug-bar">
       <span class="sug-count" id="sug-count"></span>
       <div>
         <button class="refresh-btn" onclick="loadSuggestions()">↺ Actualizar</button>
-        <button class="action-btn" onclick="markAllRead()">Marcar todo leído</button>
+        <button class="action-btn"  onclick="markAllRead()">Marcar todo leído</button>
       </div>
     </div>
     <div id="sug-list"><p class="loading">Cargando sugerencias…</p></div>
   </div>
 
+  <!-- ── Métricas ── -->
   <div id="tab-metrics" class="tab-pane">
     <div id="metrics-loading" class="loading">Cargando métricas…</div>
     <div id="metrics-content" style="display:none">
@@ -87,11 +126,40 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Asistente IA ── -->
+  <div id="tab-chat" class="tab-pane">
+    <div id="chat-wrap">
+      <div id="chat-msgs">
+        <div class="msg msg-bot">Hola. Contame qué querés cambiar en el sitio y lo hago en segundos. Podés escribir o usar el micrófono.</div>
+      </div>
+
+      <div id="chat-bottom">
+        <div id="preview-card" style="display:none">
+          <p class="preview-title">⚡ Cambio listo para revisar</p>
+          <p class="preview-desc" id="preview-desc"></p>
+          <div class="preview-actions">
+            <a class="btn-preview btn-see" id="preview-link" href="#" target="_blank">Ver preview →</a>
+            <button class="btn-preview btn-apply"   onclick="applyChange()">✅ Aplicar a producción</button>
+            <button class="btn-preview btn-discard" onclick="discardChange()">Descartar</button>
+          </div>
+        </div>
+
+        <div id="chat-input-row">
+          <textarea id="chat-input" rows="1" placeholder="Escribí qué querés cambiar…" oninput="autoResize(this)" onkeydown="chatKey(event)"></textarea>
+          <button id="mic-btn" class="chat-btn" onclick="toggleMic()" title="Hablar"></button>
+          <button id="send-btn" class="chat-btn" onclick="sendMessage()">Enviar</button>
+        </div>
+        <p id="voice-status"></p>
+        <p class="chat-hint">Enter para enviar · Shift+Enter para nueva línea</p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
 const API = 'https://mejortercero.online/api';
-const SESSION_TIMEOUT = 3 * 60 * 1000; // 3 minutos
+const SESSION_TIMEOUT = 3 * 60 * 1000;
 let _token = '';
 let _timeoutId = null;
 
@@ -153,16 +221,19 @@ function showPanel() {
 }
 
 function switchTab(name) {
+  const names = ['sugs', 'metrics', 'chat'];
   document.querySelectorAll('.tab').forEach((t, i) =>
-    t.classList.toggle('active', ['sugs','metrics'][i] === name));
-  document.getElementById('tab-sugs').classList.toggle('active', name === 'sugs');
-  document.getElementById('tab-metrics').classList.toggle('active', name === 'metrics');
+    t.classList.toggle('active', names[i] === name));
+  names.forEach(n => {
+    const el = document.getElementById('tab-' + n);
+    if (el) el.classList.toggle('active', n === name);
+  });
   if (name === 'metrics' && document.getElementById('metrics-content').style.display === 'none') {
     loadMetrics();
   }
 }
 
-// ── Métricas ─────────────────────────────────────────────────────────────────
+// ── Métricas ──────────────────────────────────────────────────────────────────
 
 async function loadMetrics() {
   try {
@@ -182,36 +253,27 @@ async function loadMetrics() {
 
 function renderChart(daily) {
   if (!daily || !daily.length) return '<p style="color:#b09880;font-size:.8rem;padding:8px 0">Sin datos aún.</p>';
-
-  const W = 560, H = 160;
-  const P = {t:12, r:12, b:32, l:38};
-  const cw = W - P.l - P.r, ch = H - P.t - P.b;
+  const W=560, H=160, P={t:12,r:12,b:32,l:38};
+  const cw=W-P.l-P.r, ch=H-P.t-P.b;
   const maxV = Math.max(...daily.map(d => d.views), 1);
   const n = daily.length;
-  const px = i => P.l + (i / Math.max(n - 1, 1)) * cw;
+  const px = i => P.l + (i / Math.max(n-1,1)) * cw;
   const py = v => P.t + ch - (v / maxV) * ch;
-
-  const pts = daily.map((d, i) => `${px(i).toFixed(1)},${py(d.views).toFixed(1)}`);
+  const pts = daily.map((d,i) => `${px(i).toFixed(1)},${py(d.views).toFixed(1)}`);
   const line = `M ${pts.join(' L ')}`;
   const fill = `${line} L ${px(n-1).toFixed(1)},${(P.t+ch).toFixed(1)} L ${P.l},${(P.t+ch).toFixed(1)} Z`;
-
-  const grid = [0, 0.5, 1].map(p => {
+  const grid = [0, .5, 1].map(p => {
     const yv = (P.t + ch - p * ch).toFixed(1);
     return `<line x1="${P.l}" y1="${yv}" x2="${P.l+cw}" y2="${yv}" stroke="#e8ddd0" stroke-width="1"/>
             <text x="${P.l-4}" y="${(+yv+3.5).toFixed(1)}" text-anchor="end" font-size="9" fill="#b09880">${Math.round(p*maxV)}</text>`;
   }).join('');
-
-  const labels = daily.map((d, i) => {
-    if (i % 7 !== 0 && i !== n - 1) return '';
-    const dt = new Date(d.day + 'T12:00:00');
-    const lbl = dt.toLocaleDateString('es-AR', {day:'numeric', month:'short'});
+  const labels = daily.map((d,i) => {
+    if (i % 7 !== 0 && i !== n-1) return '';
+    const dt = new Date(d.day+'T12:00:00');
+    const lbl = dt.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
     return `<text x="${px(i).toFixed(1)}" y="${H-5}" text-anchor="middle" font-size="9" fill="#b09880">${lbl}</text>`;
   }).join('');
-
-  const dots = n <= 20
-    ? daily.map((d, i) => `<circle cx="${px(i).toFixed(1)}" cy="${py(d.views).toFixed(1)}" r="2.5" fill="#c2410c"/>`)
-    : [];
-
+  const dots = n <= 20 ? daily.map((d,i) => `<circle cx="${px(i).toFixed(1)}" cy="${py(d.views).toFixed(1)}" r="2.5" fill="#c2410c"/>`) : [];
   return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
     ${grid}
     <path d="${fill}" fill="rgba(194,65,12,.08)"/>
@@ -221,6 +283,8 @@ function renderChart(daily) {
   </svg>`;
 }
 
+// ── Sugerencias ───────────────────────────────────────────────────────────────
+
 async function loadSuggestions() {
   document.getElementById('sug-list').innerHTML = '<p class="loading">Cargando…</p>';
   const res = await fetch(`${API}/suggestions?token=${encodeURIComponent(_token)}`);
@@ -229,26 +293,16 @@ async function loadSuggestions() {
 
 function renderSuggestions(sugs) {
   const unread = sugs.filter(s => !s.read).length;
-  document.getElementById('sug-count').textContent =
-    `${sugs.length} sugerencias · ${unread} sin leer`;
-
+  document.getElementById('sug-count').textContent = `${sugs.length} sugerencias · ${unread} sin leer`;
   if (!sugs.length) {
-    document.getElementById('sug-list').innerHTML =
-      '<p class="sug-empty">No hay sugerencias todavía.</p>';
+    document.getElementById('sug-list').innerHTML = '<p class="sug-empty">No hay sugerencias todavía.</p>';
     return;
   }
-
   document.getElementById('sug-list').innerHTML = sugs.map(s => {
-    const ts = new Date(s.ts).toLocaleString('es-AR', {
-      day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'
-    });
+    const ts = new Date(s.ts).toLocaleString('es-AR', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
     const safeId = s.id.replace(/[^a-zA-Z0-9_-]/g, '_');
     return `<div class="sug-item ${s.read ? 'read' : 'unread'}" id="si_${safeId}">
-      <div class="sug-meta">
-        <span class="sug-name">${esc(s.name)}</span>
-        &nbsp;·&nbsp;${ts}
-        ${s.page ? `&nbsp;·&nbsp;${esc(s.page)}` : ''}
-      </div>
+      <div class="sug-meta"><span class="sug-name">${esc(s.name)}</span>&nbsp;·&nbsp;${ts}${s.page ? `&nbsp;·&nbsp;${esc(s.page)}` : ''}</div>
       <p class="sug-msg">${esc(s.msg)}</p>
     </div>`;
   }).join('');
@@ -259,8 +313,7 @@ async function markAllRead() {
   if (!items.length) return;
   const ids = items.map(el => el.id.slice(3).replace(/_/g, ':').replace('sug:', 'sug:'));
   await fetch(`${API}/mark-read`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ token: _token, ids }),
   });
   items.forEach(el => { el.classList.remove('unread'); el.classList.add('read'); });
@@ -271,6 +324,206 @@ async function markAllRead() {
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── Chat IA ───────────────────────────────────────────────────────────────────
+
+let _chatHistory    = [];  // [{role, content}, ...]
+let _pendingChange  = null; // {file, description, previewUrl}
+let _chatBusy       = false;
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+function chatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function appendMsg(role, text) {
+  const msgs = document.getElementById('chat-msgs');
+  const div  = document.createElement('div');
+  div.className = role === 'user' ? 'msg msg-user' : 'msg msg-bot';
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function appendThinking() {
+  const msgs = document.getElementById('chat-msgs');
+  const div  = document.createElement('div');
+  div.className = 'msg msg-thinking';
+  div.id = 'thinking-bubble';
+  div.textContent = 'Pensando…';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeThinking() {
+  const el = document.getElementById('thinking-bubble');
+  if (el) el.remove();
+}
+
+function showPreviewCard(previewUrl, description) {
+  _pendingChange = { previewUrl, description, file: _pendingChange?.file || 'html_renderer.py' };
+  document.getElementById('preview-desc').textContent = description;
+  document.getElementById('preview-link').href = previewUrl;
+  document.getElementById('preview-card').style.display = 'block';
+}
+
+function hidePreviewCard() {
+  _pendingChange = null;
+  document.getElementById('preview-card').style.display = 'none';
+}
+
+async function sendMessage() {
+  if (_chatBusy) return;
+  const input = document.getElementById('chat-input');
+  const text  = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  appendMsg('user', text);
+  _chatHistory.push({ role: 'user', content: text });
+
+  _chatBusy = true;
+  document.getElementById('send-btn').disabled = true;
+  appendThinking();
+
+  try {
+    const res = await fetch(`${API}/chat`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ token: _token, message: text, history: _chatHistory.slice(-12) }),
+    });
+    const data = await res.json();
+
+    removeThinking();
+
+    if (data.error) {
+      appendMsg('bot', '⚠️ Error: ' + data.error);
+    } else {
+      appendMsg('bot', data.reply);
+      _chatHistory.push({ role: 'assistant', content: data.reply });
+
+      if (data.hasPendingChange && data.previewUrl) {
+        _pendingChange = { file: data.changeFile, description: data.changeDescription, previewUrl: data.previewUrl };
+        showPreviewCard(data.previewUrl, data.changeDescription || 'Cambio generado por IA');
+      }
+    }
+  } catch (e) {
+    removeThinking();
+    appendMsg('bot', '⚠️ Error de red: ' + e.message);
+  } finally {
+    _chatBusy = false;
+    document.getElementById('send-btn').disabled = false;
+  }
+}
+
+async function applyChange() {
+  if (!_pendingChange) return;
+  const card = document.getElementById('preview-card');
+  card.querySelector('.preview-actions').innerHTML = '<span style="font-size:.8rem;color:#7c6a58">Aplicando…</span>';
+
+  try {
+    const res = await fetch(`${API}/apply`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ token: _token, file: _pendingChange.file, description: _pendingChange.description }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      hidePreviewCard();
+      appendMsg('bot', '✅ Cambio aplicado a producción. GitHub Actions va a regenerar el sitio en los próximos minutos.');
+      _chatHistory.push({ role: 'assistant', content: '✅ Cambio aplicado a producción.' });
+    } else {
+      appendMsg('bot', '⚠️ No se pudo aplicar: ' + (data.error || 'error desconocido'));
+      card.querySelector('.preview-actions').innerHTML =
+        `<a class="btn-preview btn-see" id="preview-link" href="${_pendingChange.previewUrl}" target="_blank">Ver preview →</a>
+         <button class="btn-preview btn-apply" onclick="applyChange()">✅ Aplicar a producción</button>
+         <button class="btn-preview btn-discard" onclick="discardChange()">Descartar</button>`;
+    }
+  } catch (e) {
+    appendMsg('bot', '⚠️ Error de red: ' + e.message);
+  }
+}
+
+async function discardChange() {
+  if (!_pendingChange) return;
+  hidePreviewCard();
+  appendMsg('bot', 'Cambio descartado. Podés pedirme otra cosa.');
+  _chatHistory.push({ role: 'assistant', content: 'Cambio descartado.' });
+
+  fetch(`${API}/discard`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ token: _token }),
+  }).catch(() => {});
+}
+
+// ── Voz ───────────────────────────────────────────────────────────────────────
+
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+let _recognition = null;
+let _isRecording = false;
+
+const micBtn = document.getElementById('mic-btn');
+if (!SpeechRec) {
+  micBtn.style.display = 'none';
+} else {
+  micBtn.textContent = '🎤';
+}
+
+function toggleMic() {
+  if (!SpeechRec) return;
+
+  if (_isRecording) {
+    _recognition && _recognition.stop();
+    return;
+  }
+
+  _recognition = new SpeechRec();
+  _recognition.lang = 'es-AR';
+  _recognition.interimResults = true;
+  _recognition.maxAlternatives = 1;
+
+  _recognition.onstart = () => {
+    _isRecording = true;
+    micBtn.classList.add('recording');
+    document.getElementById('voice-status').textContent = 'Escuchando…';
+  };
+
+  _recognition.onresult = (e) => {
+    const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+    const input = document.getElementById('chat-input');
+    input.value = transcript;
+    autoResize(input);
+  };
+
+  _recognition.onend = () => {
+    _isRecording = false;
+    micBtn.classList.remove('recording');
+    document.getElementById('voice-status').textContent = '';
+    const input = document.getElementById('chat-input');
+    if (input.value.trim()) {
+      sendMessage();
+    }
+  };
+
+  _recognition.onerror = (e) => {
+    _isRecording = false;
+    micBtn.classList.remove('recording');
+    document.getElementById('voice-status').textContent =
+      e.error === 'not-allowed' ? 'Permiso de micrófono denegado.' : 'Error: ' + e.error;
+  };
+
+  _recognition.start();
 }
 </script>
 </body>
