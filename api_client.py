@@ -61,12 +61,19 @@ class WorldCupClient:
 
                 match_id = m.get("match_id")
                 if not match_id:
+                    print(f"[DEBUG enrich] sin match_id para {m.get('home')} vs {m.get('away')}")
                     continue
 
                 time.sleep(6.2)  # 10 req/min → 1 cada 6s
                 detail = self.get_match_details(match_id)
                 if not detail:
+                    print(f"[DEBUG enrich] sin detalle para match_id={match_id}")
                     continue
+
+                print(f"[DEBUG enrich] {m.get('home')} vs {m.get('away')} id={match_id} | goals={len(detail.get('goals') or [])} bookings={len(detail.get('bookings') or [])} subs={len(detail.get('substitutions') or [])}")
+                if detail.get("goals"):
+                    import json as _json
+                    print(f"[DEBUG goals raw] {_json.dumps(detail['goals'][:2], ensure_ascii=False)}")
 
                 goals_detail = []
                 for g in (detail.get("goals") or []):
