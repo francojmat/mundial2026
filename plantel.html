@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Plantel · Mundial 2026</title>
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#faf8f4;color:#211c14;padding:24px 18px 48px}
+    .wrap{max-width:640px;margin:0 auto}
+    .topbar{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+    .back{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;color:#c2410c;text-decoration:none;border:1px solid #e8ddd0;border-radius:8px;padding:6px 12px;background:#ffffff}
+    .back:hover{background:#f0ebe4}
+    .brand{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b09880}
+    .pl-title{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+    .pl-title img{width:32px;height:24px;border-radius:2px}
+    .pl-group{margin-bottom:24px}
+    .pl-gt{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#c2410c;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    .pl-gc{background:#f0ebe4;color:#7c6a58;border-radius:10px;padding:1px 8px;font-size:.62rem}
+    .pl-list{display:flex;flex-direction:column;gap:7px}
+    .pl-card{background:#ffffff;border:1px solid #e8ddd0;border-radius:10px;cursor:pointer;user-select:none;overflow:hidden}
+    .pl-card:hover{border-color:#c8b8a8}
+    .pl-row{display:flex;align-items:center;gap:11px;padding:9px 13px}
+    .pl-photo{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#f0ebe4;flex-shrink:0}
+    .pl-num{font-size:.82rem;font-weight:700;color:#c2410c;min-width:24px;text-align:center}
+    .pl-name{font-size:.9rem;font-weight:600;flex:1}
+    .pl-chev{color:#c8b8a8;font-size:.7rem;transition:transform .2s}
+    .pl-card.open .pl-chev{transform:rotate(180deg)}
+    .pl-detail{display:none;border-top:1px solid #f0ebe4;padding:11px 13px;background:#faf8f4}
+    .pl-card.open .pl-detail{display:block}
+    .pl-info{display:flex;flex-wrap:wrap;gap:8px 22px}
+    .pl-kv{display:flex;flex-direction:column;gap:1px}
+    .pl-k{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#b09880}
+    .pl-kv span:last-child{font-size:.85rem;font-weight:600}
+    .coach-card{display:flex;align-items:center;gap:14px;background:#ffffff;border:1px solid #e8ddd0;border-radius:10px;padding:13px 15px}
+    .coach-photo{width:52px;height:52px;border-radius:50%;object-fit:cover;background:#f0ebe4;flex-shrink:0}
+    .coach-name{font-size:1rem;font-weight:700}
+    .coach-meta{font-size:.78rem;color:#7c6a58;margin-top:2px}
+    .loading{text-align:center;color:#7c6a58;font-size:.85rem;margin-top:40px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <a class="back" href="/">&#8592; Volver al inicio</a>
+      <span class="brand">Mundial 2026</span>
+    </div>
+    <div id="squad"><p class="loading">Cargando plantel…</p></div>
+  </div>
+  <script>
+    (function() {
+      var t = new URLSearchParams(location.search).get('t') || '';
+      var box = document.getElementById('squad');
+      fetch('planteles.json?_=' + Date.now())
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var html = d[t];
+          if (html) { box.innerHTML = html; document.title = t + ' · Plantel · Mundial 2026'; }
+          else { box.innerHTML = '<p class="loading">Plantel no disponible todavía. Probá en unos minutos.</p>'; }
+        })
+        .catch(function() { box.innerHTML = '<p class="loading">No se pudo cargar el plantel.</p>'; });
+    })();
+  </script>
+</body>
+</html>

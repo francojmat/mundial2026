@@ -205,6 +205,8 @@
     .hoy-badge-live{color:#c2410c;font-size:.6rem;font-weight:700;text-transform:uppercase;display:inline-flex;align-items:center;gap:2px;letter-spacing:.04em}
     .hoy-badge-live .dot{width:5px;height:5px}
     .hoy-badge-fin{color:#7c6a58;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    .team-link{color:inherit;text-decoration:none;cursor:pointer;border-bottom:1px dotted #c8b8a8}
+    .team-link:hover{color:#c2410c;border-bottom-color:#c2410c}
     .ven-count{color:#7c6a58;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
     .ven-city{font-size:.72rem;color:#7c6a58;margin-top:3px}
     .ven-m{display:grid;grid-template-columns:34px 1fr auto 1fr;align-items:center;gap:6px;padding:3px 0;font-size:.74rem}
@@ -246,7 +248,7 @@
   <h1>Mundial 2026</h1>
   <span class="pill"><span class="dot"></span>En vivo</span>
 </div>
-<p class="upd">Última actualización: <span id="upd">20/06/2026 15:34:32</span></p>
+<p class="upd">Última actualización: <span id="upd">20/06/2026 15:34:36</span></p>
 
 <div id="today-container">
 <div class="sec">
@@ -283,25 +285,25 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México</td>
+          <td>1</td><td><a class="team-link" href="/plantel.html?t=Mexico"><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México</a></td>
           <td>2</td><td>2</td><td>0</td><td>0</td>
           <td>3</td><td>0</td>
           <td><span class="dg-p">+3</span></td><td><span class="pts">6</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/kr.png" alt="Corea del Sur" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Corea del Sur</td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=Korea%20Republic"><img src="/flags/20x15/kr.png" alt="Corea del Sur" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Corea del Sur</a></td>
           <td>2</td><td>1</td><td>0</td><td>1</td>
           <td>2</td><td>2</td>
           <td>0</td><td><span class="pts">3</span></td>
         </tr>
         <tr class="tercero">
-          <td>3</td><td><img src="/flags/20x15/cz.png" alt="Rep. Checa" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Rep. Checa</td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Czechia"><img src="/flags/20x15/cz.png" alt="Rep. Checa" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Rep. Checa</a></td>
           <td>2</td><td>0</td><td>1</td><td>1</td>
           <td>2</td><td>3</td>
           <td><span class="dg-n">-1</span></td><td><span class="pts">1</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><img src="/flags/20x15/za.png" alt="Sudáfrica" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Sudáfrica</td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=South%20Africa"><img src="/flags/20x15/za.png" alt="Sudáfrica" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Sudáfrica</a></td>
           <td>2</td><td>0</td><td>1</td><td>1</td>
           <td>1</td><td>3</td>
           <td><span class="dg-n">-2</span></td><td><span class="pts">1</span></td>
@@ -314,25 +316,25 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</td>
+          <td>1</td><td><a class="team-link" href="/plantel.html?t=Canada"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</a></td>
           <td>2</td><td>1</td><td>1</td><td>0</td>
           <td>7</td><td>1</td>
           <td><span class="dg-p">+6</span></td><td><span class="pts">4</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/ch.png" alt="Suiza" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suiza</td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=Switzerland"><img src="/flags/20x15/ch.png" alt="Suiza" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suiza</a></td>
           <td>2</td><td>1</td><td>1</td><td>0</td>
           <td>5</td><td>2</td>
           <td><span class="dg-p">+3</span></td><td><span class="pts">4</span></td>
         </tr>
         <tr class="tercero">
-          <td>3</td><td><img src="/flags/20x15/ba.png" alt="Bosnia y Herz." width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bosnia y Herz.</td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Bosnia-H."><img src="/flags/20x15/ba.png" alt="Bosnia y Herz." width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bosnia y Herz.</a></td>
           <td>2</td><td>0</td><td>1</td><td>1</td>
           <td>2</td><td>5</td>
           <td><span class="dg-n">-3</span></td><td><span class="pts">1</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><img src="/flags/20x15/qa.png" alt="Qatar" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Qatar</td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=Qatar"><img src="/flags/20x15/qa.png" alt="Qatar" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Qatar</a></td>
           <td>2</td><td>0</td><td>1</td><td>1</td>
           <td>1</td><td>7</td>
           <td><span class="dg-n">-6</span></td><td><span class="pts">1</span></td>
@@ -345,25 +347,25 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/br.png" alt="Brasil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Brasil</td>
+          <td>1</td><td><a class="team-link" href="/plantel.html?t=Brazil"><img src="/flags/20x15/br.png" alt="Brasil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Brasil</a></td>
           <td>2</td><td>1</td><td>1</td><td>0</td>
           <td>4</td><td>1</td>
           <td><span class="dg-p">+3</span></td><td><span class="pts">4</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/ma.png" alt="Marruecos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Marruecos</td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=Morocco"><img src="/flags/20x15/ma.png" alt="Marruecos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Marruecos</a></td>
           <td>2</td><td>1</td><td>1</td><td>0</td>
           <td>2</td><td>1</td>
           <td><span class="dg-p">+1</span></td><td><span class="pts">4</span></td>
         </tr>
         <tr class="tercero">
-          <td>3</td><td><img src="/flags/20x15/gb-sct.png" alt="Escocia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Escocia</td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Scotland"><img src="/flags/20x15/gb-sct.png" alt="Escocia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Escocia</a></td>
           <td>2</td><td>1</td><td>0</td><td>1</td>
           <td>1</td><td>1</td>
           <td>0</td><td><span class="pts">3</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><img src="/flags/20x15/ht.png" alt="Haití" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Haití</td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=Haiti"><img src="/flags/20x15/ht.png" alt="Haití" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Haití</a></td>
           <td>2</td><td>0</td><td>0</td><td>2</td>
           <td>0</td><td>4</td>
           <td><span class="dg-n">-4</span></td><td><span class="pts">0</span></td>
@@ -376,25 +378,25 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/us.png" alt="Estados Unidos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Estados Unidos</td>
+          <td>1</td><td><a class="team-link" href="/plantel.html?t=USA"><img src="/flags/20x15/us.png" alt="Estados Unidos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Estados Unidos</a></td>
           <td>2</td><td>2</td><td>0</td><td>0</td>
           <td>6</td><td>1</td>
           <td><span class="dg-p">+5</span></td><td><span class="pts">6</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/au.png" alt="Australia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Australia</td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=Australia"><img src="/flags/20x15/au.png" alt="Australia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Australia</a></td>
           <td>2</td><td>1</td><td>0</td><td>1</td>
           <td>2</td><td>2</td>
           <td>0</td><td><span class="pts">3</span></td>
         </tr>
         <tr class="tercero">
-          <td>3</td><td><img src="/flags/20x15/py.png" alt="Paraguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Paraguay</td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Paraguay"><img src="/flags/20x15/py.png" alt="Paraguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Paraguay</a></td>
           <td>2</td><td>1</td><td>0</td><td>1</td>
           <td>2</td><td>4</td>
           <td><span class="dg-n">-2</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><img src="/flags/20x15/tr.png" alt="Turquía" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Turquía</td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=Turkey"><img src="/flags/20x15/tr.png" alt="Turquía" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Turquía</a></td>
           <td>2</td><td>0</td><td>0</td><td>2</td>
           <td>0</td><td>3</td>
           <td><span class="dg-n">-3</span></td><td><span class="pts">0</span></td>
@@ -407,25 +409,25 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania</td>
+          <td>1</td><td><a class="team-link" href="/plantel.html?t=Germany"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania</a></td>
           <td>1</td><td>1</td><td>0</td><td>0</td>
           <td>7</td><td>1</td>
           <td><span class="dg-p">+6</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/ci.png" alt="Costa de Marfil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Costa de Marfil</td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=Ivory%20Coast"><img src="/flags/20x15/ci.png" alt="Costa de Marfil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Costa de Marfil</a></td>
           <td>1</td><td>1</td><td>0</td><td>0</td>
           <td>1</td><td>0</td>
           <td><span class="dg-p">+1</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="eliminado">
-          <td>3</td><td><img src="/flags/20x15/ec.png" alt="Ecuador" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ecuador</td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Ecuador"><img src="/flags/20x15/ec.png" alt="Ecuador" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ecuador</a></td>
           <td>1</td><td>0</td><td>0</td><td>1</td>
           <td>0</td><td>1</td>
           <td><span class="dg-n">-1</span></td><td><span class="pts">0</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><img src="/flags/20x15/cw.png" alt="Curazao" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Curazao</td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=Cura%C3%A7ao"><img src="/flags/20x15/cw.png" alt="Curazao" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Curazao</a></td>
           <td>1</td><td>0</td><td>0</td><td>1</td>
           <td>1</td><td>7</td>
           <td><span class="dg-n">-6</span></td><td><span class="pts">0</span></td>
@@ -438,25 +440,25 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/se.png" alt="Suecia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suecia</td>
+          <td>1</td><td><a class="team-link" href="/plantel.html?t=Sweden"><img src="/flags/20x15/se.png" alt="Suecia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suecia</a></td>
           <td>1</td><td>1</td><td>0</td><td>0</td>
           <td>5</td><td>1</td>
           <td><span class="dg-p">+4</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/jp.png" alt="Japón" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Japón</td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=Japan"><img src="/flags/20x15/jp.png" alt="Japón" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Japón</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>2</td><td>2</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="tercero">
-          <td>3</td><td><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Netherlands"><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>2</td><td>2</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><img src="/flags/20x15/tn.png" alt="Túnez" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Túnez</td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=Tunisia"><img src="/flags/20x15/tn.png" alt="Túnez" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Túnez</a></td>
           <td>1</td><td>0</td><td>0</td><td>1</td>
           <td>1</td><td>5</td>
           <td><span class="dg-n">-4</span></td><td><span class="pts">0</span></td>
@@ -469,25 +471,25 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/nz.png" alt="Nueva Zelanda" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Nueva Zelanda</td>
+          <td>1</td><td><a class="team-link" href="/plantel.html?t=New%20Zealand"><img src="/flags/20x15/nz.png" alt="Nueva Zelanda" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Nueva Zelanda</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>2</td><td>2</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/ir.png" alt="Irán" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irán</td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=Iran"><img src="/flags/20x15/ir.png" alt="Irán" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irán</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>2</td><td>2</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="tercero">
-          <td>3</td><td><img src="/flags/20x15/be.png" alt="Bélgica" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bélgica</td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Egypt"><img src="/flags/20x15/eg.png" alt="Egipto" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Egipto</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>1</td><td>1</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><img src="/flags/20x15/eg.png" alt="Egipto" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Egipto</td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=Belgium"><img src="/flags/20x15/be.png" alt="Bélgica" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bélgica</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>1</td><td>1</td>
           <td>0</td><td><span class="pts">1</span></td>
@@ -500,25 +502,25 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/sa.png" alt="Arabia Saudita" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Arabia Saudita</td>
+          <td>1</td><td><a class="team-link" href="/plantel.html?t=Uruguay"><img src="/flags/20x15/uy.png" alt="Uruguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Uruguay</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>1</td><td>1</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/uy.png" alt="Uruguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Uruguay</td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=Saudi%20Arabia"><img src="/flags/20x15/sa.png" alt="Arabia Saudita" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Arabia Saudita</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>1</td><td>1</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="tercero">
-          <td>3</td><td><img src="/flags/20x15/es.png" alt="España" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">España</td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Cape%20Verde"><img src="/flags/20x15/cv.png" alt="Cabo Verde" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Cabo Verde</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>0</td><td>0</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><img src="/flags/20x15/cv.png" alt="Cabo Verde" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Cabo Verde</td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=Spain"><img src="/flags/20x15/es.png" alt="España" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">España</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>0</td><td>0</td>
           <td>0</td><td><span class="pts">1</span></td>
@@ -531,25 +533,25 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/no.png" alt="Noruega" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Noruega</td>
+          <td>1</td><td><a class="team-link" href="/plantel.html?t=Norway"><img src="/flags/20x15/no.png" alt="Noruega" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Noruega</a></td>
           <td>1</td><td>1</td><td>0</td><td>0</td>
           <td>4</td><td>1</td>
           <td><span class="dg-p">+3</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/fr.png" alt="Francia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Francia</td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=France"><img src="/flags/20x15/fr.png" alt="Francia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Francia</a></td>
           <td>1</td><td>1</td><td>0</td><td>0</td>
           <td>3</td><td>1</td>
           <td><span class="dg-p">+2</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="eliminado">
-          <td>3</td><td><img src="/flags/20x15/sn.png" alt="Senegal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Senegal</td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Senegal"><img src="/flags/20x15/sn.png" alt="Senegal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Senegal</a></td>
           <td>1</td><td>0</td><td>0</td><td>1</td>
           <td>1</td><td>3</td>
           <td><span class="dg-n">-2</span></td><td><span class="pts">0</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><img src="/flags/20x15/iq.png" alt="Irak" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irak</td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=Iraq"><img src="/flags/20x15/iq.png" alt="Irak" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irak</a></td>
           <td>1</td><td>0</td><td>0</td><td>1</td>
           <td>1</td><td>4</td>
           <td><span class="dg-n">-3</span></td><td><span class="pts">0</span></td>
@@ -562,25 +564,25 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/ar.png" alt="Argentina" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Argentina</td>
+          <td>1</td><td><a class="team-link" href="/plantel.html?t=Argentina"><img src="/flags/20x15/ar.png" alt="Argentina" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Argentina</a></td>
           <td>1</td><td>1</td><td>0</td><td>0</td>
           <td>3</td><td>0</td>
           <td><span class="dg-p">+3</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/at.png" alt="Austria" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Austria</td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=Austria"><img src="/flags/20x15/at.png" alt="Austria" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Austria</a></td>
           <td>1</td><td>1</td><td>0</td><td>0</td>
           <td>3</td><td>1</td>
           <td><span class="dg-p">+2</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="eliminado">
-          <td>3</td><td><img src="/flags/20x15/jo.png" alt="Jordania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Jordania</td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Jordan"><img src="/flags/20x15/jo.png" alt="Jordania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Jordania</a></td>
           <td>1</td><td>0</td><td>0</td><td>1</td>
           <td>1</td><td>3</td>
           <td><span class="dg-n">-2</span></td><td><span class="pts">0</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><img src="/flags/20x15/dz.png" alt="Argelia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Argelia</td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=Algeria"><img src="/flags/20x15/dz.png" alt="Argelia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Argelia</a></td>
           <td>1</td><td>0</td><td>0</td><td>1</td>
           <td>0</td><td>3</td>
           <td><span class="dg-n">-3</span></td><td><span class="pts">0</span></td>
@@ -593,25 +595,25 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/co.png" alt="Colombia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Colombia</td>
+          <td>1</td><td><a class="team-link" href="/plantel.html?t=Colombia"><img src="/flags/20x15/co.png" alt="Colombia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Colombia</a></td>
           <td>1</td><td>1</td><td>0</td><td>0</td>
           <td>3</td><td>1</td>
           <td><span class="dg-p">+2</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=Portugal"><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>1</td><td>1</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="tercero">
-          <td>3</td><td><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Congo%20DR"><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</a></td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>1</td><td>1</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><img src="/flags/20x15/uz.png" alt="Uzbekistán" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Uzbekistán</td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=Uzbekistan"><img src="/flags/20x15/uz.png" alt="Uzbekistán" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Uzbekistán</a></td>
           <td>1</td><td>0</td><td>0</td><td>1</td>
           <td>1</td><td>3</td>
           <td><span class="dg-n">-2</span></td><td><span class="pts">0</span></td>
@@ -624,25 +626,25 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/gb-eng.png" alt="Inglaterra" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Inglaterra</td>
+          <td>1</td><td><a class="team-link" href="/plantel.html?t=England"><img src="/flags/20x15/gb-eng.png" alt="Inglaterra" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Inglaterra</a></td>
           <td>1</td><td>1</td><td>0</td><td>0</td>
           <td>4</td><td>2</td>
           <td><span class="dg-p">+2</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/gh.png" alt="Ghana" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ghana</td>
+          <td>2</td><td><a class="team-link" href="/plantel.html?t=Ghana"><img src="/flags/20x15/gh.png" alt="Ghana" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ghana</a></td>
           <td>1</td><td>1</td><td>0</td><td>0</td>
           <td>1</td><td>0</td>
           <td><span class="dg-p">+1</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="eliminado">
-          <td>3</td><td><img src="/flags/20x15/pa.png" alt="Panamá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Panamá</td>
+          <td>3</td><td><a class="team-link" href="/plantel.html?t=Panama"><img src="/flags/20x15/pa.png" alt="Panamá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Panamá</a></td>
           <td>1</td><td>0</td><td>0</td><td>1</td>
           <td>0</td><td>1</td>
           <td><span class="dg-n">-1</span></td><td><span class="pts">0</span></td>
         </tr>
         <tr class="eliminado">
-          <td>4</td><td><img src="/flags/20x15/hr.png" alt="Croacia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Croacia</td>
+          <td>4</td><td><a class="team-link" href="/plantel.html?t=Croatia"><img src="/flags/20x15/hr.png" alt="Croacia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Croacia</a></td>
           <td>1</td><td>0</td><td>0</td><td>1</td>
           <td>2</td><td>4</td>
           <td><span class="dg-n">-2</span></td><td><span class="pts">0</span></td>
@@ -683,7 +685,7 @@
       <td>0</td><td><span class="pts">1</span></td>
     </tr>
     <tr class="clasifica">
-      <td>4</td><td><img src="/flags/20x15/be.png" alt="Bélgica" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bélgica</td>
+      <td>4</td><td><img src="/flags/20x15/eg.png" alt="Egipto" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Egipto</td>
       <td>G</td>
       <td>1</td><td>1</td><td>1</td>
       <td>0</td><td><span class="pts">1</span></td>
@@ -1027,7 +1029,7 @@
     </div></div><div class="par">
     <div class="mc" data-mid="85">
       <div class="mc-label"><span>Partido 85</span></div>
-      <div class="team-row" data-mid="85" data-name="Canada" data-html="<img src=&quot;/flags/20x15/ca.png&quot; alt=&quot;Canadá&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Canadá" onclick="pickWinner(this)"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</div><div class="team-row" data-mid="85" data-name="Belgium" data-html="<img src=&quot;/flags/20x15/be.png&quot; alt=&quot;Bélgica&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Bélgica" onclick="pickWinner(this)"><img src="/flags/20x15/be.png" alt="Bélgica" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bélgica</div>
+      <div class="team-row" data-mid="85" data-name="Canada" data-html="<img src=&quot;/flags/20x15/ca.png&quot; alt=&quot;Canadá&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Canadá" onclick="pickWinner(this)"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</div><div class="team-row" data-mid="85" data-name="Egypt" data-html="<img src=&quot;/flags/20x15/eg.png&quot; alt=&quot;Egipto&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Egipto" onclick="pickWinner(this)"><img src="/flags/20x15/eg.png" alt="Egipto" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Egipto</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-05T22:00:00Z"></span>
         <span class="venue">Estadio Akron, Guadalajara</span>
@@ -1158,7 +1160,7 @@
     </div>
     <div class="mc" data-mid="85">
       <div class="mc-label"><span>Partido 85</span></div>
-      <div class="team-row" data-mid="85" data-name="Canada" data-html="<img src=&quot;/flags/20x15/ca.png&quot; alt=&quot;Canadá&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Canadá" onclick="pickWinner(this)"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</div><div class="team-row" data-mid="85" data-name="Belgium" data-html="<img src=&quot;/flags/20x15/be.png&quot; alt=&quot;Bélgica&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Bélgica" onclick="pickWinner(this)"><img src="/flags/20x15/be.png" alt="Bélgica" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bélgica</div>
+      <div class="team-row" data-mid="85" data-name="Canada" data-html="<img src=&quot;/flags/20x15/ca.png&quot; alt=&quot;Canadá&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Canadá" onclick="pickWinner(this)"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</div><div class="team-row" data-mid="85" data-name="Egypt" data-html="<img src=&quot;/flags/20x15/eg.png&quot; alt=&quot;Egipto&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Egipto" onclick="pickWinner(this)"><img src="/flags/20x15/eg.png" alt="Egipto" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Egipto</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-05T22:00:00Z"></span>
         <span class="venue">Estadio Akron, Guadalajara</span>
