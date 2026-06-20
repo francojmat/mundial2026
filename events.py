@@ -122,6 +122,8 @@ def _ensure_fixture_map(cache: dict, client, matches: list, state: dict) -> None
     matchea por timestamp de kickoff (tolerancia 5 min). Cachea el mapeo (no cambia).
     `state` evita pedir la lista más de una vez por corrida.
     """
+    from apifootball_client import resolve_fixture
+
     pending = [m for m in matches if str(m.get("match_id")) not in cache["fixture_map"]]
     if not pending or state.get("fixtures_fetched"):
         return
@@ -135,21 +137,9 @@ def _ensure_fixture_map(cache: dict, client, matches: list, state: dict) -> None
         return
 
     for m in pending:
-        utc_dt = _parse_iso(m.get("utc_date", ""))
-        if not utc_dt:
-            continue
-        for fx in fixtures:
-            fx_dt = _parse_iso((fx.get("fixture") or {}).get("date", ""))
-            if not fx_dt:
-                continue
-            if abs((fx_dt - utc_dt).total_seconds()) <= 300:
-                teams = fx.get("teams") or {}
-                cache["fixture_map"][str(m.get("match_id"))] = {
-                    "fixture_id": (fx.get("fixture") or {}).get("id"),
-                    "home_id":    (teams.get("home") or {}).get("id"),
-                    "away_id":    (teams.get("away") or {}).get("id"),
-                }
-                break
+        mapping = resolve_fixture(m, fixtures)  # matchea por timestamp + equipos
+        if mapping and mapping.get("fixture_id"):
+            cache["fixture_map"][str(m.get("match_id"))] = mapping
 
 
 def enrich_with_events(matches_by_date: dict, client, cache_path: str = "events_cache.json") -> None:

@@ -9,10 +9,72 @@ Endpoint directo (NO RapidAPI):
   header = x-apisports-key
 """
 
+from datetime import datetime
+
 import requests
+
+from countries import nombre_es
 
 APIFOOTBALL_BASE = "https://v3.football.api-sports.io"
 WORLD_CUP_LEAGUE_ID = 1  # "World Cup" en API-Football
+
+
+def _parse_iso(s: str):
+    try:
+        return datetime.fromisoformat((s or "").replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def resolve_fixture(match: dict, fixtures: list, tolerance: int = 300) -> dict:
+    """
+    Matchea un partido de football-data con su fixture de API-Football por
+    timestamp de kickoff Y nombres de equipo (normalizados con nombre_es), para
+    NO cruzar partidos simultáneos. Devuelve {fixture_id, home_id, away_id}
+    alineado al home/away de football-data, o None si no se puede mapear.
+    """
+    utc = _parse_iso(match.get("utc_date", ""))
+    if not utc:
+        return None
+    fd_home = nombre_es(match.get("home", ""))
+    fd_away = nombre_es(match.get("away", ""))
+
+    in_window = []
+    for fx in fixtures:
+        fxd = _parse_iso((fx.get("fixture") or {}).get("date", ""))
+        if fxd and abs((fxd - utc).total_seconds()) <= tolerance:
+            in_window.append(fx)
+
+    chosen = None
+    for fx in in_window:
+        teams = fx.get("teams") or {}
+        names = {
+            nombre_es((teams.get("home") or {}).get("name", "")),
+            nombre_es((teams.get("away") or {}).get("name", "")),
+        }
+        if names == {fd_home, fd_away}:
+            chosen = fx
+            break
+    if chosen is None and len(in_window) == 1:
+        chosen = in_window[0]  # único en la ventana → timestamp inequívoco
+    if chosen is None:
+        return None
+
+    teams = chosen.get("teams") or {}
+    by_name = {
+        nombre_es((teams.get("home") or {}).get("name", "")): (teams.get("home") or {}).get("id"),
+        nombre_es((teams.get("away") or {}).get("name", "")): (teams.get("away") or {}).get("id"),
+    }
+    home_id = by_name.get(fd_home)
+    away_id = by_name.get(fd_away)
+    if home_id is None or away_id is None:  # fallback posicional (nombres no normalizaron)
+        home_id = (teams.get("home") or {}).get("id")
+        away_id = (teams.get("away") or {}).get("id")
+    return {
+        "fixture_id": (chosen.get("fixture") or {}).get("id"),
+        "home_id":    home_id,
+        "away_id":    away_id,
+    }
 
 
 def _player_ranking(raw: dict, value_fn) -> list:

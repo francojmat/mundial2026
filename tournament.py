@@ -137,24 +137,18 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
 
 
 def _build_team_id_map(matches_by_date: dict, fixtures: list) -> dict:
-    """Mapea nombre de equipo (football-data) → team_id (API-Football) por timestamp de kickoff."""
+    """Mapea nombre de equipo (football-data) → team_id (API-Football) por timestamp + equipos."""
+    from apifootball_client import resolve_fixture
     out = {}
     for matches in matches_by_date.values():
         for m in matches:
-            utc = _parse_iso(m.get("utc_date", ""))
-            if not utc:
+            mapping = resolve_fixture(m, fixtures)  # robusto ante partidos simultáneos
+            if not mapping:
                 continue
-            for fx in fixtures:
-                fxd = _parse_iso((fx.get("fixture") or {}).get("date", ""))
-                if fxd and abs((fxd - utc).total_seconds()) <= 300:
-                    teams = fx.get("teams") or {}
-                    h = (teams.get("home") or {}).get("id")
-                    a = (teams.get("away") or {}).get("id")
-                    if m.get("home") and h:
-                        out[m["home"]] = h
-                    if m.get("away") and a:
-                        out[m["away"]] = a
-                    break
+            if m.get("home") and mapping.get("home_id"):
+                out[m["home"]] = mapping["home_id"]
+            if m.get("away") and mapping.get("away_id"):
+                out[m["away"]] = mapping["away_id"]
     return out
 
 
