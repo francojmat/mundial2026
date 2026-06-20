@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Mundial 2026</title>
+  <title>Mejor Tercero · Mundial 2026</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+  <script>!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+" (stub)"},n="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep".split(" "),o=0;o<n.length;o++)g(u,n[o]);e._i.push([i,s,a])},(e.__SV=1))}(document,window.posthog||[]);posthog.init('phc_oJ2GTZXyfDHXr3dmKGnEww3n3bNSQ4SRAvbQa43eVZZ5',{api_host:'https://us.i.posthog.com',person_profiles:'identified_only'})</script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#faf8f4;color:#211c14;padding:28px 24px}
@@ -70,8 +72,8 @@
       .grupos{grid-template-columns:1fr}
       td{font-size:.74rem;padding:5px 6px}
       th{font-size:.55rem;padding:4px 6px}
-      .fab-sug{bottom:14px;right:14px;padding:8px 14px;font-size:.72rem}
       .reset-btn{font-size:.68rem}
+      .fab-sug{bottom:14px;right:14px;padding:8px 14px;font-size:.72rem}
     }
 
     .mitad{display:flex;flex:1}
@@ -149,6 +151,49 @@
     .reset-btn:hover{border-color:#c2410c;color:#c2410c}
     @keyframes fadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
     .fade-in{animation:fadeIn .22s ease}
+
+    /* ── Partidos de hoy ── */
+    .hoy-nav{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:10px}
+    .hoy-nav-btn{background:none;border:1px solid #e8ddd0;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:1.1rem;line-height:1;display:flex;align-items:center;justify-content:center;color:#b09880;padding:0;flex-shrink:0}
+    .hoy-nav-btn:hover{background:#f0ebe4}
+    .hoy-nav-btn:disabled{opacity:.3;cursor:default}
+    .hoy-lista{display:flex;flex-direction:column;gap:6px;max-width:600px;margin:0 auto}
+    .hoy-fila{background:#ffffff;border:1px solid #e8ddd0;padding:7px 12px}
+    .hoy-etiqueta{font-size:.6rem;font-weight:700;color:#b09880;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:5px;text-align:center}
+    .hoy-match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%}
+    .hoy-home{display:flex;align-items:center;justify-content:flex-start;flex-direction:row-reverse;gap:6px;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden}
+    .hoy-away{display:flex;align-items:center;justify-content:flex-start;gap:6px;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden}
+    .hoy-home img,.hoy-away img{margin-right:0;flex-shrink:0}
+    .hoy-centro{display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap}
+    .hoy-score{font-size:.85rem;font-weight:700;color:#211c14}
+    .hoy-hora{font-size:.78rem;font-weight:600;color:#7c6a58}
+    .hoy-vs{font-size:.65rem;color:#b09880;font-weight:600}
+    .hoy-badge-live{color:#c2410c;font-size:.6rem;font-weight:700;text-transform:uppercase;display:inline-flex;align-items:center;gap:2px;letter-spacing:.04em}
+    .hoy-badge-live .dot{width:5px;height:5px}
+    .hoy-badge-fin{color:#7c6a58;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+    @media(max-width:480px){
+      .hoy-home,.hoy-away{font-size:.72rem}
+      .hoy-score{font-size:.9rem}
+      .hoy-match{gap:6px}
+    }
+
+    /* ── Secciones colapsables ── */
+    .sec-hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:7px;border-bottom:1px solid #e8ddd0;margin-bottom:12px;cursor:pointer;user-select:none}
+    .sec-hdr:hover .sec-toggle{color:#c2410c}
+    .sec-body.sec-collapsed{display:none}
+    .sec-toggle{background:none;border:none;color:#b09880;font-size:.7rem;cursor:pointer;padding:0;line-height:1;font-family:inherit}
+
+    /* ── Mobile bracket ── */
+    .mobile-bracket{display:none}
+    @media(max-width:900px){
+      .llaves-wrap{display:none!important}
+      .mobile-bracket{display:block}
+      .mb-tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:14px;padding-bottom:4px}
+      .mb-tab{flex-shrink:0;border:1px solid #e8ddd0;background:#ffffff;color:#7c6a58;font-size:.75rem;font-weight:700;padding:7px 18px;cursor:pointer;letter-spacing:.05em;text-transform:uppercase;font-family:inherit;transition:background .12s,color .12s}
+      .mb-tab.mb-active{background:#c2410c;color:#ffffff;border-color:#c2410c}
+      .mb-panel .mc{margin-bottom:8px}
+      .mb-panel .par{display:contents}
+    }
   </style>
 </head>
 <body>
@@ -157,16 +202,37 @@
   <h1>Mundial 2026</h1>
   <span class="pill"><span class="dot"></span>En vivo</span>
 </div>
-<p class="upd">Última actualización: <span id="upd">20/06/2026 02:35:57</span></p>
+<p class="upd">Última actualización: <span id="upd">20/06/2026 13:09:28</span></p>
+
+<div id="today-container">
+<div class="sec">
+  <div style="position:relative">
+    <div class="hoy-nav">
+      <button class="hoy-nav-btn" id="hoy-prev" onclick="navDay(-1)">&#8249;</button>
+      <p class="sec-t" id="hoy-nav-label" style="margin:0;border:none;padding-bottom:0">Partidos de hoy</p>
+      <button class="hoy-nav-btn" id="hoy-next" onclick="navDay(+1)">&#8250;</button>
+    </div>
+    <button class="sec-toggle" id="st-hoy" onclick="toggleSec('hoy')" style="position:absolute;right:0;top:50%;transform:translateY(-50%)">▲ CERRAR</button>
+  </div>
+  <div class="sec-body" id="sb-hoy">
+    <div id="today-body"><div class="hoy-lista"><div class="hoy-fila"><span class="hoy-etiqueta">Grupo D · Fecha 2</span><div style="text-align:center;margin-bottom:3px"><span class="hoy-badge-fin">FIN</span></div><div class="hoy-match"><div class="hoy-home"><img src="/flags/20x15/tr.png" alt="Turquía" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Turquía</div><div class="hoy-centro"><span class="hoy-score">0 - 1</span></div><div class="hoy-away"><img src="/flags/20x15/py.png" alt="Paraguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Paraguay</div></div><div style="text-align:center;font-size:.57rem;color:#b09880;margin-top:4px">Árbitro: Ivan Barton</div></div><div class="hoy-fila"><span class="hoy-etiqueta">Grupo F · Fecha 2</span><div class="hoy-match"><div class="hoy-home"><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</div><div class="hoy-centro"><span class="hoy-hora" data-utc="2026-06-20T17:00:00Z" data-format="time"></span></div><div class="hoy-away"><img src="/flags/20x15/se.png" alt="Suecia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suecia</div></div></div><div class="hoy-fila"><span class="hoy-etiqueta">Grupo E · Fecha 2</span><div class="hoy-match"><div class="hoy-home"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania</div><div class="hoy-centro"><span class="hoy-hora" data-utc="2026-06-20T20:00:00Z" data-format="time"></span></div><div class="hoy-away"><img src="/flags/20x15/ci.png" alt="Costa de Marfil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Costa de Marfil</div></div></div><div class="hoy-fila"><span class="hoy-etiqueta">Grupo E · Fecha 2</span><div class="hoy-match"><div class="hoy-home"><img src="/flags/20x15/ec.png" alt="Ecuador" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ecuador</div><div class="hoy-centro"><span class="hoy-hora" data-utc="2026-06-21T00:00:00Z" data-format="time"></span></div><div class="hoy-away"><img src="/flags/20x15/cw.png" alt="Curazao" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Curazao</div></div></div></div></div>
+  </div>
+</div>
+<div class="divider"></div>
+</div>
 
 <div class="sec">
-  <p class="sec-t">Posiciones — Fase de grupos</p>
-  <div class="leyenda">
-    <span class="ley-item"><span class="ley-dot" style="background:#ffffff;border:1px solid #e8ddd0;border-left:3px solid #0d9488"></span>Clasifica directo</span>
-    <span class="ley-item"><span class="ley-dot" style="background:#ffffff;border:1px solid #e8ddd0;border-left:3px solid #c2410c"></span>Mejor 3ro (top 8)</span>
-    <span class="ley-item"><span class="ley-dot" style="background:#f0ebe4;border:1px solid #e8ddd0"></span>Eliminado / fuera del top 8</span>
+  <div class="sec-hdr" onclick="toggleSec('grupos')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Posiciones — Fase de grupos</p>
+    <button class="sec-toggle" id="st-grupos">▲ CERRAR</button>
   </div>
-  <div class="grupos" id="groups-inner">
+  <div class="sec-body" id="sb-grupos">
+    <div class="leyenda">
+      <span class="ley-item"><span class="ley-dot" style="background:#ffffff;border:1px solid #e8ddd0;border-left:3px solid #0d9488"></span>Clasifica directo</span>
+      <span class="ley-item"><span class="ley-dot" style="background:#ffffff;border:1px solid #e8ddd0;border-left:3px solid #c2410c"></span>Mejor 3ro (top 8)</span>
+      <span class="ley-item"><span class="ley-dot" style="background:#f0ebe4;border:1px solid #e8ddd0"></span>Eliminado / fuera del top 8</span>
+    </div>
+    <div class="grupos" id="groups-inner">
   <div class="grupo">
     <div class="grupo-h"><span class="grupo-t">Grupo A</span><span class="badge b-vivo">En curso</span></div>
     <table>
@@ -334,13 +400,13 @@
           <td><span class="dg-p">+4</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</td>
+          <td>2</td><td><img src="/flags/20x15/jp.png" alt="Japón" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Japón</td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>2</td><td>2</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="tercero">
-          <td>3</td><td><img src="/flags/20x15/jp.png" alt="Japón" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Japón</td>
+          <td>3</td><td><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>2</td><td>2</td>
           <td>0</td><td><span class="pts">1</span></td>
@@ -359,13 +425,13 @@
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>
         <tr class="clasifica">
-          <td>1</td><td><img src="/flags/20x15/nz.png" alt="Nueva Zelanda" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Nueva Zelanda</td>
+          <td>1</td><td><img src="/flags/20x15/ir.png" alt="Irán" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irán</td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>2</td><td>2</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/ir.png" alt="Irán" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irán</td>
+          <td>2</td><td><img src="/flags/20x15/nz.png" alt="Nueva Zelanda" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Nueva Zelanda</td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>2</td><td>2</td>
           <td>0</td><td><span class="pts">1</span></td>
@@ -489,13 +555,13 @@
           <td><span class="dg-p">+2</span></td><td><span class="pts">3</span></td>
         </tr>
         <tr class="clasifica">
-          <td>2</td><td><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</td>
+          <td>2</td><td><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>1</td><td>1</td>
           <td>0</td><td><span class="pts">1</span></td>
         </tr>
         <tr class="tercero">
-          <td>3</td><td><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</td>
+          <td>3</td><td><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</td>
           <td>1</td><td>0</td><td>1</td><td>0</td>
           <td>1</td><td>1</td>
           <td>0</td><td><span class="pts">1</span></td>
@@ -539,11 +605,16 @@
         </tr></tbody>
     </table>
   </div></div>
+  </div>
 </div>
 
-<div id="thirds-container">
-  <div class="sec">
-    <p class="sec-t">Mejor Tercero — Mundial 2026</p>
+<div class="sec">
+  <div class="sec-hdr" onclick="toggleSec('terceros')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Mejor Tercero — Mundial 2026</p>
+    <button class="sec-toggle" id="st-terceros">▲ CERRAR</button>
+  </div>
+  <div class="sec-body" id="sb-terceros">
+    <div id="thirds-inner">
     <div style="max-width:660px;margin:0 auto">
       <div class="grupo">
         <table>
@@ -562,7 +633,7 @@
       <td><span class="dg-n">-2</span></td><td><span class="pts">3</span></td>
     </tr>
     <tr class="clasifica">
-      <td>3</td><td><img src="/flags/20x15/jp.png" alt="Japón" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Japón</td>
+      <td>3</td><td><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</td>
       <td>F</td>
       <td>1</td><td>2</td><td>2</td>
       <td>0</td><td><span class="pts">1</span></td>
@@ -574,7 +645,7 @@
       <td>0</td><td><span class="pts">1</span></td>
     </tr>
     <tr class="clasifica">
-      <td>5</td><td><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</td>
+      <td>5</td><td><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</td>
       <td>K</td>
       <td>1</td><td>1</td><td>1</td>
       <td>0</td><td><span class="pts">1</span></td>
@@ -623,75 +694,80 @@
     </tr></tbody>
         </table>
       </div>
-    </div>
-  </div></div>
+    </div></div>
+  </div>
+</div>
 <div class="divider"></div>
 
 <div class="sec">
-  <p class="sec-t">Round of 32 — Hacé clic en un equipo para simular el avance</p>
-  <div class="llaves-wrap">
-    
+  <div class="sec-hdr" onclick="toggleSec('bracket')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Bracket — Hacé clic para simular el avance</p>
+    <button class="sec-toggle" id="st-bracket">▲ CERRAR</button>
+  </div>
+  <div class="sec-body" id="sb-bracket">
+    <div class="llaves-wrap">
+      
 <div class="llaves">
   <div class="mitad izq"><div class="col r32" id="r32-left"><div class="par">
-    <div class="mc" data-mid="1">
-      <div class="mc-label"><span>Partido 01</span></div>
-      <div class="team-row" data-mid="1" data-name="Canada" data-html="<img src=&quot;/flags/20x15/ca.png&quot; alt=&quot;Canadá&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Canadá" onclick="pickWinner(this)"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</div><div class="team-row" data-mid="1" data-name="Korea Republic" data-html="<img src=&quot;/flags/20x15/kr.png&quot; alt=&quot;Corea del Sur&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Corea del Sur" onclick="pickWinner(this)"><img src="/flags/20x15/kr.png" alt="Corea del Sur" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Corea del Sur</div>
+    <div class="mc" data-mid="74">
+      <div class="mc-label"><span>Partido 74</span></div>
+      <div class="team-row" data-mid="74" data-name="Germany" data-html="<img src=&quot;/flags/20x15/de.png&quot; alt=&quot;Alemania&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Alemania" onclick="pickWinner(this)"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania</div><div class="team-row" data-mid="74" data-name="Scotland" data-html="<img src=&quot;/flags/20x15/gb-sct.png&quot; alt=&quot;Escocia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Escocia" onclick="pickWinner(this)"><img src="/flags/20x15/gb-sct.png" alt="Escocia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Escocia</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-06-28T22:00:00Z"></span>
         <span class="venue">MetLife Stadium, New Jersey</span>
       </div>
     </div>
-    <div class="mc" data-mid="2">
-      <div class="mc-label"><span>Partido 02</span></div>
-      <div class="team-row" data-mid="2" data-name="Sweden" data-html="<img src=&quot;/flags/20x15/se.png&quot; alt=&quot;Suecia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Suecia" onclick="pickWinner(this)"><img src="/flags/20x15/se.png" alt="Suecia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suecia</div><div class="team-row" data-mid="2" data-name="Ivory Coast" data-html="<img src=&quot;/flags/20x15/ci.png&quot; alt=&quot;Costa de Marfil&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Costa de Marfil" onclick="pickWinner(this)"><img src="/flags/20x15/ci.png" alt="Costa de Marfil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Costa de Marfil</div>
+    <div class="mc" data-mid="77">
+      <div class="mc-label"><span>Partido 77</span></div>
+      <div class="team-row" data-mid="77" data-name="Norway" data-html="<img src=&quot;/flags/20x15/no.png&quot; alt=&quot;Noruega&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Noruega" onclick="pickWinner(this)"><img src="/flags/20x15/no.png" alt="Noruega" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Noruega</div><div class="team-row" data-mid="77" data-name="Netherlands" data-html="<img src=&quot;/flags/20x15/nl.png&quot; alt=&quot;Países Bajos&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Países Bajos" onclick="pickWinner(this)"><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-06-29T02:00:00Z"></span>
         <span class="venue">Estadio Azteca, CDMX</span>
       </div>
     </div></div><div class="par">
-    <div class="mc" data-mid="3">
-      <div class="mc-label"><span>Partido 03</span></div>
-      <div class="team-row" data-mid="3" data-name="Uruguay" data-html="<img src=&quot;/flags/20x15/uy.png&quot; alt=&quot;Uruguay&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Uruguay" onclick="pickWinner(this)"><img src="/flags/20x15/uy.png" alt="Uruguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Uruguay</div><div class="team-row" data-mid="3" data-name="Iran" data-html="<img src=&quot;/flags/20x15/ir.png&quot; alt=&quot;Irán&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Irán" onclick="pickWinner(this)"><img src="/flags/20x15/ir.png" alt="Irán" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irán</div>
+    <div class="mc" data-mid="73">
+      <div class="mc-label"><span>Partido 73</span></div>
+      <div class="team-row" data-mid="73" data-name="Korea Republic" data-html="<img src=&quot;/flags/20x15/kr.png&quot; alt=&quot;Corea del Sur&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Corea del Sur" onclick="pickWinner(this)"><img src="/flags/20x15/kr.png" alt="Corea del Sur" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Corea del Sur</div><div class="team-row" data-mid="73" data-name="Switzerland" data-html="<img src=&quot;/flags/20x15/ch.png&quot; alt=&quot;Suiza&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Suiza" onclick="pickWinner(this)"><img src="/flags/20x15/ch.png" alt="Suiza" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suiza</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-06-29T22:00:00Z"></span>
         <span class="venue">AT&T Stadium, Dallas</span>
       </div>
     </div>
-    <div class="mc" data-mid="4">
-      <div class="mc-label"><span>Partido 04</span></div>
-      <div class="team-row" data-mid="4" data-name="Argentina" data-html="<img src=&quot;/flags/20x15/ar.png&quot; alt=&quot;Argentina&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Argentina" onclick="pickWinner(this)"><img src="/flags/20x15/ar.png" alt="Argentina" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Argentina</div><div class="team-row" data-mid="4" data-name="France" data-html="<img src=&quot;/flags/20x15/fr.png&quot; alt=&quot;Francia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Francia" onclick="pickWinner(this)"><img src="/flags/20x15/fr.png" alt="Francia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Francia</div>
+    <div class="mc" data-mid="75">
+      <div class="mc-label"><span>Partido 75</span></div>
+      <div class="team-row" data-mid="75" data-name="Sweden" data-html="<img src=&quot;/flags/20x15/se.png&quot; alt=&quot;Suecia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Suecia" onclick="pickWinner(this)"><img src="/flags/20x15/se.png" alt="Suecia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suecia</div><div class="team-row" data-mid="75" data-name="Morocco" data-html="<img src=&quot;/flags/20x15/ma.png&quot; alt=&quot;Marruecos&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Marruecos" onclick="pickWinner(this)"><img src="/flags/20x15/ma.png" alt="Marruecos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Marruecos</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-06-30T02:00:00Z"></span>
         <span class="venue">Hard Rock Stadium, Miami</span>
       </div>
     </div></div><div class="par">
-    <div class="mc" data-mid="5">
-      <div class="mc-label"><span>Partido 05</span></div>
-      <div class="team-row" data-mid="5" data-name="Switzerland" data-html="<img src=&quot;/flags/20x15/ch.png&quot; alt=&quot;Suiza&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Suiza" onclick="pickWinner(this)"><img src="/flags/20x15/ch.png" alt="Suiza" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suiza</div><div class="team-row" data-mid="5" data-name="Morocco" data-html="<img src=&quot;/flags/20x15/ma.png&quot; alt=&quot;Marruecos&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Marruecos" onclick="pickWinner(this)"><img src="/flags/20x15/ma.png" alt="Marruecos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Marruecos</div>
+    <div class="mc" data-mid="83">
+      <div class="mc-label"><span>Partido 83</span></div>
+      <div class="team-row" data-mid="83" data-name="Portugal" data-html="<img src=&quot;/flags/20x15/pt.png&quot; alt=&quot;Portugal&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Portugal" onclick="pickWinner(this)"><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</div><div class="team-row" data-mid="83" data-name="Ghana" data-html="<img src=&quot;/flags/20x15/gh.png&quot; alt=&quot;Ghana&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Ghana" onclick="pickWinner(this)"><img src="/flags/20x15/gh.png" alt="Ghana" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ghana</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-06-30T22:00:00Z"></span>
         <span class="venue">Mercedes-Benz Stadium, Atlanta</span>
       </div>
     </div>
-    <div class="mc" data-mid="6">
-      <div class="mc-label"><span>Partido 06</span></div>
-      <div class="team-row" data-mid="6" data-name="Australia" data-html="<img src=&quot;/flags/20x15/au.png&quot; alt=&quot;Australia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Australia" onclick="pickWinner(this)"><img src="/flags/20x15/au.png" alt="Australia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Australia</div><div class="team-row" data-mid="6" data-name="Netherlands" data-html="<img src=&quot;/flags/20x15/nl.png&quot; alt=&quot;Países Bajos&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Países Bajos" onclick="pickWinner(this)"><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</div>
+    <div class="mc" data-mid="84">
+      <div class="mc-label"><span>Partido 84</span></div>
+      <div class="team-row" data-mid="84" data-name="Uruguay" data-html="<img src=&quot;/flags/20x15/uy.png&quot; alt=&quot;Uruguay&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Uruguay" onclick="pickWinner(this)"><img src="/flags/20x15/uy.png" alt="Uruguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Uruguay</div><div class="team-row" data-mid="84" data-name="Austria" data-html="<img src=&quot;/flags/20x15/at.png&quot; alt=&quot;Austria&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Austria" onclick="pickWinner(this)"><img src="/flags/20x15/at.png" alt="Austria" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Austria</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-01T02:00:00Z"></span>
         <span class="venue">BC Place, Vancouver</span>
       </div>
     </div></div><div class="par">
-    <div class="mc" data-mid="7">
-      <div class="mc-label"><span>Partido 07</span></div>
-      <div class="team-row" data-mid="7" data-name="Saudi Arabia" data-html="<img src=&quot;/flags/20x15/sa.png&quot; alt=&quot;Arabia Saudita&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Arabia Saudita" onclick="pickWinner(this)"><img src="/flags/20x15/sa.png" alt="Arabia Saudita" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Arabia Saudita</div><div class="team-row" data-mid="7" data-name="Congo DR" data-html="<img src=&quot;/flags/20x15/cd.png&quot; alt=&quot;Congo RD&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Congo RD" onclick="pickWinner(this)"><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</div>
+    <div class="mc" data-mid="81">
+      <div class="mc-label"><span>Partido 81</span></div>
+      <div class="team-row" data-mid="81" data-name="USA" data-html="<img src=&quot;/flags/20x15/us.png&quot; alt=&quot;Estados Unidos&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Estados Unidos" onclick="pickWinner(this)"><img src="/flags/20x15/us.png" alt="Estados Unidos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Estados Unidos</div><div class="team-row" data-mid="81" data-name="Bosnia-H." data-html="<img src=&quot;/flags/20x15/ba.png&quot; alt=&quot;Bosnia y Herz.&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Bosnia y Herz." onclick="pickWinner(this)"><img src="/flags/20x15/ba.png" alt="Bosnia y Herz." width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bosnia y Herz.</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-01T22:00:00Z"></span>
         <span class="venue">SoFi Stadium, Los Ángeles</span>
       </div>
     </div>
-    <div class="mc" data-mid="8">
-      <div class="mc-label"><span>Partido 08</span></div>
-      <div class="team-row" data-mid="8" data-name="Austria" data-html="<img src=&quot;/flags/20x15/at.png&quot; alt=&quot;Austria&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Austria" onclick="pickWinner(this)"><img src="/flags/20x15/at.png" alt="Austria" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Austria</div><div class="team-row" data-mid="8" data-name="Ghana" data-html="<img src=&quot;/flags/20x15/gh.png&quot; alt=&quot;Ghana&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Ghana" onclick="pickWinner(this)"><img src="/flags/20x15/gh.png" alt="Ghana" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ghana</div>
+    <div class="mc" data-mid="82">
+      <div class="mc-label"><span>Partido 82</span></div>
+      <div class="team-row" data-mid="82" data-name="Iran" data-html="<img src=&quot;/flags/20x15/ir.png&quot; alt=&quot;Irán&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Irán" onclick="pickWinner(this)"><img src="/flags/20x15/ir.png" alt="Irán" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irán</div><div class="team-row" data-mid="82" data-name="Czechia" data-html="<img src=&quot;/flags/20x15/cz.png&quot; alt=&quot;Rep. Checa&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Rep. Checa" onclick="pickWinner(this)"><img src="/flags/20x15/cz.png" alt="Rep. Checa" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Rep. Checa</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-02T02:00:00Z"></span>
         <span class="venue">Lumen Field, Seattle</span>
@@ -857,79 +933,233 @@
           <span class="venue">Lumen Field, Seattle</span>
         </div>
       </div></div><div class="conn"><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div></div><div class="col r32" id="r32-right"><div class="par">
-    <div class="mc" data-mid="9">
-      <div class="mc-label"><span>Partido 09</span></div>
-      <div class="team-row" data-mid="9" data-name="Mexico" data-html="<img src=&quot;/flags/20x15/mx.png&quot; alt=&quot;México&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>México" onclick="pickWinner(this)"><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México</div><div class="team-row" data-mid="9" data-name="Scotland" data-html="<img src=&quot;/flags/20x15/gb-sct.png&quot; alt=&quot;Escocia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Escocia" onclick="pickWinner(this)"><img src="/flags/20x15/gb-sct.png" alt="Escocia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Escocia</div>
+    <div class="mc" data-mid="76">
+      <div class="mc-label"><span>Partido 76</span></div>
+      <div class="team-row" data-mid="76" data-name="Brazil" data-html="<img src=&quot;/flags/20x15/br.png&quot; alt=&quot;Brasil&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Brasil" onclick="pickWinner(this)"><img src="/flags/20x15/br.png" alt="Brasil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Brasil</div><div class="team-row" data-mid="76" data-name="Japan" data-html="<img src=&quot;/flags/20x15/jp.png&quot; alt=&quot;Japón&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Japón" onclick="pickWinner(this)"><img src="/flags/20x15/jp.png" alt="Japón" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Japón</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-02T22:00:00Z"></span>
         <span class="venue">Lincoln Financial Field, Filadelfia</span>
       </div>
     </div>
-    <div class="mc" data-mid="10">
-      <div class="mc-label"><span>Partido 10</span></div>
-      <div class="team-row" data-mid="10" data-name="Brazil" data-html="<img src=&quot;/flags/20x15/br.png&quot; alt=&quot;Brasil&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Brasil" onclick="pickWinner(this)"><img src="/flags/20x15/br.png" alt="Brasil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Brasil</div><div class="team-row" data-mid="10" data-name="Paraguay" data-html="<img src=&quot;/flags/20x15/py.png&quot; alt=&quot;Paraguay&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Paraguay" onclick="pickWinner(this)"><img src="/flags/20x15/py.png" alt="Paraguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Paraguay</div>
+    <div class="mc" data-mid="78">
+      <div class="mc-label"><span>Partido 78</span></div>
+      <div class="team-row" data-mid="78" data-name="Ivory Coast" data-html="<img src=&quot;/flags/20x15/ci.png&quot; alt=&quot;Costa de Marfil&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Costa de Marfil" onclick="pickWinner(this)"><img src="/flags/20x15/ci.png" alt="Costa de Marfil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Costa de Marfil</div><div class="team-row" data-mid="78" data-name="France" data-html="<img src=&quot;/flags/20x15/fr.png&quot; alt=&quot;Francia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Francia" onclick="pickWinner(this)"><img src="/flags/20x15/fr.png" alt="Francia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Francia</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-03T02:00:00Z"></span>
         <span class="venue">Arrowhead Stadium, Kansas City</span>
       </div>
     </div></div><div class="par">
-    <div class="mc" data-mid="11">
-      <div class="mc-label"><span>Partido 11</span></div>
-      <div class="team-row" data-mid="11" data-name="USA" data-html="<img src=&quot;/flags/20x15/us.png&quot; alt=&quot;Estados Unidos&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Estados Unidos" onclick="pickWinner(this)"><img src="/flags/20x15/us.png" alt="Estados Unidos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Estados Unidos</div><div class="team-row" data-mid="11" data-name="Japan" data-html="<img src=&quot;/flags/20x15/jp.png&quot; alt=&quot;Japón&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Japón" onclick="pickWinner(this)"><img src="/flags/20x15/jp.png" alt="Japón" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Japón</div>
+    <div class="mc" data-mid="79">
+      <div class="mc-label"><span>Partido 79</span></div>
+      <div class="team-row" data-mid="79" data-name="Mexico" data-html="<img src=&quot;/flags/20x15/mx.png&quot; alt=&quot;México&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>México" onclick="pickWinner(this)"><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México</div><div class="team-row" data-mid="79" data-name="Spain" data-html="<img src=&quot;/flags/20x15/es.png&quot; alt=&quot;España&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>España" onclick="pickWinner(this)"><img src="/flags/20x15/es.png" alt="España" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">España</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-03T22:00:00Z"></span>
         <span class="venue">Levi's Stadium, San Francisco</span>
       </div>
     </div>
-    <div class="mc" data-mid="12">
-      <div class="mc-label"><span>Partido 12</span></div>
-      <div class="team-row" data-mid="12" data-name="Germany" data-html="<img src=&quot;/flags/20x15/de.png&quot; alt=&quot;Alemania&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Alemania" onclick="pickWinner(this)"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania</div><div class="team-row" data-mid="12" data-name="Belgium" data-html="<img src=&quot;/flags/20x15/be.png&quot; alt=&quot;Bélgica&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Bélgica" onclick="pickWinner(this)"><img src="/flags/20x15/be.png" alt="Bélgica" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bélgica</div>
+    <div class="mc" data-mid="80">
+      <div class="mc-label"><span>Partido 80</span></div>
+      <div class="team-row" data-mid="80" data-name="England" data-html="<img src=&quot;/flags/20x15/gb-eng.png&quot; alt=&quot;Inglaterra&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Inglaterra" onclick="pickWinner(this)"><img src="/flags/20x15/gb-eng.png" alt="Inglaterra" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Inglaterra</div><div class="team-row" data-mid="80" data-name="Congo DR" data-html="<img src=&quot;/flags/20x15/cd.png&quot; alt=&quot;Congo RD&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Congo RD" onclick="pickWinner(this)"><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-04T02:00:00Z"></span>
         <span class="venue">Gillette Stadium, Boston</span>
       </div>
     </div></div><div class="par">
-    <div class="mc" data-mid="13">
-      <div class="mc-label"><span>Partido 13</span></div>
-      <div class="team-row" data-mid="13" data-name="New Zealand" data-html="<img src=&quot;/flags/20x15/nz.png&quot; alt=&quot;Nueva Zelanda&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Nueva Zelanda" onclick="pickWinner(this)"><img src="/flags/20x15/nz.png" alt="Nueva Zelanda" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Nueva Zelanda</div><div class="team-row" data-mid="13" data-name="Portugal" data-html="<img src=&quot;/flags/20x15/pt.png&quot; alt=&quot;Portugal&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Portugal" onclick="pickWinner(this)"><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</div>
+    <div class="mc" data-mid="86">
+      <div class="mc-label"><span>Partido 86</span></div>
+      <div class="team-row" data-mid="86" data-name="Argentina" data-html="<img src=&quot;/flags/20x15/ar.png&quot; alt=&quot;Argentina&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Argentina" onclick="pickWinner(this)"><img src="/flags/20x15/ar.png" alt="Argentina" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Argentina</div><div class="team-row" data-mid="86" data-name="Saudi Arabia" data-html="<img src=&quot;/flags/20x15/sa.png&quot; alt=&quot;Arabia Saudita&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Arabia Saudita" onclick="pickWinner(this)"><img src="/flags/20x15/sa.png" alt="Arabia Saudita" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Arabia Saudita</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-04T22:00:00Z"></span>
         <span class="venue">BMO Field, Toronto</span>
       </div>
     </div>
-    <div class="mc" data-mid="14">
-      <div class="mc-label"><span>Partido 14</span></div>
-      <div class="team-row" data-mid="14" data-name="Norway" data-html="<img src=&quot;/flags/20x15/no.png&quot; alt=&quot;Noruega&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Noruega" onclick="pickWinner(this)"><img src="/flags/20x15/no.png" alt="Noruega" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Noruega</div><div class="team-row" data-mid="14" data-name="Spain" data-html="<img src=&quot;/flags/20x15/es.png&quot; alt=&quot;España&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>España" onclick="pickWinner(this)"><img src="/flags/20x15/es.png" alt="España" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">España</div>
+    <div class="mc" data-mid="88">
+      <div class="mc-label"><span>Partido 88</span></div>
+      <div class="team-row" data-mid="88" data-name="Australia" data-html="<img src=&quot;/flags/20x15/au.png&quot; alt=&quot;Australia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Australia" onclick="pickWinner(this)"><img src="/flags/20x15/au.png" alt="Australia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Australia</div><div class="team-row" data-mid="88" data-name="New Zealand" data-html="<img src=&quot;/flags/20x15/nz.png&quot; alt=&quot;Nueva Zelanda&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Nueva Zelanda" onclick="pickWinner(this)"><img src="/flags/20x15/nz.png" alt="Nueva Zelanda" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Nueva Zelanda</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-05T02:00:00Z"></span>
         <span class="venue">Estadio BBVA, Monterrey</span>
       </div>
     </div></div><div class="par">
-    <div class="mc" data-mid="15">
-      <div class="mc-label"><span>Partido 15</span></div>
-      <div class="team-row" data-mid="15" data-name="Colombia" data-html="<img src=&quot;/flags/20x15/co.png&quot; alt=&quot;Colombia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Colombia" onclick="pickWinner(this)"><img src="/flags/20x15/co.png" alt="Colombia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Colombia</div><div class="team-row" data-mid="15" data-name="Czechia" data-html="<img src=&quot;/flags/20x15/cz.png&quot; alt=&quot;Rep. Checa&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Rep. Checa" onclick="pickWinner(this)"><img src="/flags/20x15/cz.png" alt="Rep. Checa" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Rep. Checa</div>
+    <div class="mc" data-mid="85">
+      <div class="mc-label"><span>Partido 85</span></div>
+      <div class="team-row" data-mid="85" data-name="Canada" data-html="<img src=&quot;/flags/20x15/ca.png&quot; alt=&quot;Canadá&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Canadá" onclick="pickWinner(this)"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</div><div class="team-row" data-mid="85" data-name="Belgium" data-html="<img src=&quot;/flags/20x15/be.png&quot; alt=&quot;Bélgica&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Bélgica" onclick="pickWinner(this)"><img src="/flags/20x15/be.png" alt="Bélgica" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bélgica</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-05T22:00:00Z"></span>
         <span class="venue">Estadio Akron, Guadalajara</span>
       </div>
     </div>
-    <div class="mc" data-mid="16">
-      <div class="mc-label"><span>Partido 16</span></div>
-      <div class="team-row" data-mid="16" data-name="England" data-html="<img src=&quot;/flags/20x15/gb-eng.png&quot; alt=&quot;Inglaterra&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Inglaterra" onclick="pickWinner(this)"><img src="/flags/20x15/gb-eng.png" alt="Inglaterra" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Inglaterra</div><div class="team-row" data-mid="16" data-name="Bosnia-H." data-html="<img src=&quot;/flags/20x15/ba.png&quot; alt=&quot;Bosnia y Herz.&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Bosnia y Herz." onclick="pickWinner(this)"><img src="/flags/20x15/ba.png" alt="Bosnia y Herz." width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bosnia y Herz.</div>
+    <div class="mc" data-mid="87">
+      <div class="mc-label"><span>Partido 87</span></div>
+      <div class="team-row" data-mid="87" data-name="Colombia" data-html="<img src=&quot;/flags/20x15/co.png&quot; alt=&quot;Colombia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Colombia" onclick="pickWinner(this)"><img src="/flags/20x15/co.png" alt="Colombia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Colombia</div><div class="team-row" data-mid="87" data-name="Paraguay" data-html="<img src=&quot;/flags/20x15/py.png&quot; alt=&quot;Paraguay&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Paraguay" onclick="pickWinner(this)"><img src="/flags/20x15/py.png" alt="Paraguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Paraguay</div>
       <div class="mc-meta">
         <span class="r32-dt" data-utc="2026-07-06T02:00:00Z"></span>
         <span class="venue">MetLife Stadium, New Jersey</span>
       </div>
     </div></div></div></div>
 </div>
+    </div>
+    <div class="mobile-bracket"><div class="mb-tabs"><button class="mb-tab mb-active" onclick="mbSetRound(this,'r32')">R32</button><button class="mb-tab" onclick="mbSetRound(this,'r16')">R16</button><button class="mb-tab" onclick="mbSetRound(this,'qf')">QF</button><button class="mb-tab" onclick="mbSetRound(this,'sf')">SF</button><button class="mb-tab" onclick="mbSetRound(this,'f')">Final</button></div><div class="mb-panel" id="mb-r32">
+    <div class="mc" data-mid="74">
+      <div class="mc-label"><span>Partido 74</span></div>
+      <div class="team-row" data-mid="74" data-name="Germany" data-html="<img src=&quot;/flags/20x15/de.png&quot; alt=&quot;Alemania&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Alemania" onclick="pickWinner(this)"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania</div><div class="team-row" data-mid="74" data-name="Scotland" data-html="<img src=&quot;/flags/20x15/gb-sct.png&quot; alt=&quot;Escocia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Escocia" onclick="pickWinner(this)"><img src="/flags/20x15/gb-sct.png" alt="Escocia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Escocia</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-28T22:00:00Z"></span>
+        <span class="venue">MetLife Stadium, New Jersey</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="77">
+      <div class="mc-label"><span>Partido 77</span></div>
+      <div class="team-row" data-mid="77" data-name="Norway" data-html="<img src=&quot;/flags/20x15/no.png&quot; alt=&quot;Noruega&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Noruega" onclick="pickWinner(this)"><img src="/flags/20x15/no.png" alt="Noruega" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Noruega</div><div class="team-row" data-mid="77" data-name="Netherlands" data-html="<img src=&quot;/flags/20x15/nl.png&quot; alt=&quot;Países Bajos&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Países Bajos" onclick="pickWinner(this)"><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-29T02:00:00Z"></span>
+        <span class="venue">Estadio Azteca, CDMX</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="73">
+      <div class="mc-label"><span>Partido 73</span></div>
+      <div class="team-row" data-mid="73" data-name="Korea Republic" data-html="<img src=&quot;/flags/20x15/kr.png&quot; alt=&quot;Corea del Sur&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Corea del Sur" onclick="pickWinner(this)"><img src="/flags/20x15/kr.png" alt="Corea del Sur" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Corea del Sur</div><div class="team-row" data-mid="73" data-name="Switzerland" data-html="<img src=&quot;/flags/20x15/ch.png&quot; alt=&quot;Suiza&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Suiza" onclick="pickWinner(this)"><img src="/flags/20x15/ch.png" alt="Suiza" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suiza</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-29T22:00:00Z"></span>
+        <span class="venue">AT&T Stadium, Dallas</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="75">
+      <div class="mc-label"><span>Partido 75</span></div>
+      <div class="team-row" data-mid="75" data-name="Sweden" data-html="<img src=&quot;/flags/20x15/se.png&quot; alt=&quot;Suecia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Suecia" onclick="pickWinner(this)"><img src="/flags/20x15/se.png" alt="Suecia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suecia</div><div class="team-row" data-mid="75" data-name="Morocco" data-html="<img src=&quot;/flags/20x15/ma.png&quot; alt=&quot;Marruecos&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Marruecos" onclick="pickWinner(this)"><img src="/flags/20x15/ma.png" alt="Marruecos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Marruecos</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-30T02:00:00Z"></span>
+        <span class="venue">Hard Rock Stadium, Miami</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="83">
+      <div class="mc-label"><span>Partido 83</span></div>
+      <div class="team-row" data-mid="83" data-name="Portugal" data-html="<img src=&quot;/flags/20x15/pt.png&quot; alt=&quot;Portugal&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Portugal" onclick="pickWinner(this)"><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</div><div class="team-row" data-mid="83" data-name="Ghana" data-html="<img src=&quot;/flags/20x15/gh.png&quot; alt=&quot;Ghana&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Ghana" onclick="pickWinner(this)"><img src="/flags/20x15/gh.png" alt="Ghana" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ghana</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-30T22:00:00Z"></span>
+        <span class="venue">Mercedes-Benz Stadium, Atlanta</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="84">
+      <div class="mc-label"><span>Partido 84</span></div>
+      <div class="team-row" data-mid="84" data-name="Uruguay" data-html="<img src=&quot;/flags/20x15/uy.png&quot; alt=&quot;Uruguay&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Uruguay" onclick="pickWinner(this)"><img src="/flags/20x15/uy.png" alt="Uruguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Uruguay</div><div class="team-row" data-mid="84" data-name="Austria" data-html="<img src=&quot;/flags/20x15/at.png&quot; alt=&quot;Austria&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Austria" onclick="pickWinner(this)"><img src="/flags/20x15/at.png" alt="Austria" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Austria</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-01T02:00:00Z"></span>
+        <span class="venue">BC Place, Vancouver</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="81">
+      <div class="mc-label"><span>Partido 81</span></div>
+      <div class="team-row" data-mid="81" data-name="USA" data-html="<img src=&quot;/flags/20x15/us.png&quot; alt=&quot;Estados Unidos&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Estados Unidos" onclick="pickWinner(this)"><img src="/flags/20x15/us.png" alt="Estados Unidos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Estados Unidos</div><div class="team-row" data-mid="81" data-name="Bosnia-H." data-html="<img src=&quot;/flags/20x15/ba.png&quot; alt=&quot;Bosnia y Herz.&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Bosnia y Herz." onclick="pickWinner(this)"><img src="/flags/20x15/ba.png" alt="Bosnia y Herz." width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bosnia y Herz.</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-01T22:00:00Z"></span>
+        <span class="venue">SoFi Stadium, Los Ángeles</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="82">
+      <div class="mc-label"><span>Partido 82</span></div>
+      <div class="team-row" data-mid="82" data-name="Iran" data-html="<img src=&quot;/flags/20x15/ir.png&quot; alt=&quot;Irán&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Irán" onclick="pickWinner(this)"><img src="/flags/20x15/ir.png" alt="Irán" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irán</div><div class="team-row" data-mid="82" data-name="Czechia" data-html="<img src=&quot;/flags/20x15/cz.png&quot; alt=&quot;Rep. Checa&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Rep. Checa" onclick="pickWinner(this)"><img src="/flags/20x15/cz.png" alt="Rep. Checa" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Rep. Checa</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-02T02:00:00Z"></span>
+        <span class="venue">Lumen Field, Seattle</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="76">
+      <div class="mc-label"><span>Partido 76</span></div>
+      <div class="team-row" data-mid="76" data-name="Brazil" data-html="<img src=&quot;/flags/20x15/br.png&quot; alt=&quot;Brasil&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Brasil" onclick="pickWinner(this)"><img src="/flags/20x15/br.png" alt="Brasil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Brasil</div><div class="team-row" data-mid="76" data-name="Japan" data-html="<img src=&quot;/flags/20x15/jp.png&quot; alt=&quot;Japón&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Japón" onclick="pickWinner(this)"><img src="/flags/20x15/jp.png" alt="Japón" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Japón</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-02T22:00:00Z"></span>
+        <span class="venue">Lincoln Financial Field, Filadelfia</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="78">
+      <div class="mc-label"><span>Partido 78</span></div>
+      <div class="team-row" data-mid="78" data-name="Ivory Coast" data-html="<img src=&quot;/flags/20x15/ci.png&quot; alt=&quot;Costa de Marfil&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Costa de Marfil" onclick="pickWinner(this)"><img src="/flags/20x15/ci.png" alt="Costa de Marfil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Costa de Marfil</div><div class="team-row" data-mid="78" data-name="France" data-html="<img src=&quot;/flags/20x15/fr.png&quot; alt=&quot;Francia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Francia" onclick="pickWinner(this)"><img src="/flags/20x15/fr.png" alt="Francia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Francia</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-03T02:00:00Z"></span>
+        <span class="venue">Arrowhead Stadium, Kansas City</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="79">
+      <div class="mc-label"><span>Partido 79</span></div>
+      <div class="team-row" data-mid="79" data-name="Mexico" data-html="<img src=&quot;/flags/20x15/mx.png&quot; alt=&quot;México&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>México" onclick="pickWinner(this)"><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México</div><div class="team-row" data-mid="79" data-name="Spain" data-html="<img src=&quot;/flags/20x15/es.png&quot; alt=&quot;España&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>España" onclick="pickWinner(this)"><img src="/flags/20x15/es.png" alt="España" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">España</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-03T22:00:00Z"></span>
+        <span class="venue">Levi's Stadium, San Francisco</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="80">
+      <div class="mc-label"><span>Partido 80</span></div>
+      <div class="team-row" data-mid="80" data-name="England" data-html="<img src=&quot;/flags/20x15/gb-eng.png&quot; alt=&quot;Inglaterra&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Inglaterra" onclick="pickWinner(this)"><img src="/flags/20x15/gb-eng.png" alt="Inglaterra" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Inglaterra</div><div class="team-row" data-mid="80" data-name="Congo DR" data-html="<img src=&quot;/flags/20x15/cd.png&quot; alt=&quot;Congo RD&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Congo RD" onclick="pickWinner(this)"><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-04T02:00:00Z"></span>
+        <span class="venue">Gillette Stadium, Boston</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="86">
+      <div class="mc-label"><span>Partido 86</span></div>
+      <div class="team-row" data-mid="86" data-name="Argentina" data-html="<img src=&quot;/flags/20x15/ar.png&quot; alt=&quot;Argentina&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Argentina" onclick="pickWinner(this)"><img src="/flags/20x15/ar.png" alt="Argentina" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Argentina</div><div class="team-row" data-mid="86" data-name="Saudi Arabia" data-html="<img src=&quot;/flags/20x15/sa.png&quot; alt=&quot;Arabia Saudita&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Arabia Saudita" onclick="pickWinner(this)"><img src="/flags/20x15/sa.png" alt="Arabia Saudita" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Arabia Saudita</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-04T22:00:00Z"></span>
+        <span class="venue">BMO Field, Toronto</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="88">
+      <div class="mc-label"><span>Partido 88</span></div>
+      <div class="team-row" data-mid="88" data-name="Australia" data-html="<img src=&quot;/flags/20x15/au.png&quot; alt=&quot;Australia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Australia" onclick="pickWinner(this)"><img src="/flags/20x15/au.png" alt="Australia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Australia</div><div class="team-row" data-mid="88" data-name="New Zealand" data-html="<img src=&quot;/flags/20x15/nz.png&quot; alt=&quot;Nueva Zelanda&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Nueva Zelanda" onclick="pickWinner(this)"><img src="/flags/20x15/nz.png" alt="Nueva Zelanda" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Nueva Zelanda</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-05T02:00:00Z"></span>
+        <span class="venue">Estadio BBVA, Monterrey</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="85">
+      <div class="mc-label"><span>Partido 85</span></div>
+      <div class="team-row" data-mid="85" data-name="Canada" data-html="<img src=&quot;/flags/20x15/ca.png&quot; alt=&quot;Canadá&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Canadá" onclick="pickWinner(this)"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</div><div class="team-row" data-mid="85" data-name="Belgium" data-html="<img src=&quot;/flags/20x15/be.png&quot; alt=&quot;Bélgica&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Bélgica" onclick="pickWinner(this)"><img src="/flags/20x15/be.png" alt="Bélgica" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bélgica</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-05T22:00:00Z"></span>
+        <span class="venue">Estadio Akron, Guadalajara</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="87">
+      <div class="mc-label"><span>Partido 87</span></div>
+      <div class="team-row" data-mid="87" data-name="Colombia" data-html="<img src=&quot;/flags/20x15/co.png&quot; alt=&quot;Colombia&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Colombia" onclick="pickWinner(this)"><img src="/flags/20x15/co.png" alt="Colombia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Colombia</div><div class="team-row" data-mid="87" data-name="Paraguay" data-html="<img src=&quot;/flags/20x15/py.png&quot; alt=&quot;Paraguay&quot; width=&quot;20&quot; height=&quot;15&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Paraguay" onclick="pickWinner(this)"><img src="/flags/20x15/py.png" alt="Paraguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Paraguay</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-06T02:00:00Z"></span>
+        <span class="venue">MetLife Stadium, New Jersey</span>
+      </div>
+    </div></div><div class="mb-panel" id="mb-r16" style="display:none"><div class="mc" id="m-r16-L-0"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-08T22:00:00Z"></span><span class="venue">MetLife Stadium, New Jersey</span></div></div><div class="mc" id="m-r16-L-1"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-09T02:00:00Z"></span><span class="venue">AT&T Stadium, Dallas</span></div></div><div class="mc" id="m-r16-L-2"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-09T22:00:00Z"></span><span class="venue">Estadio Azteca, CDMX</span></div></div><div class="mc" id="m-r16-L-3"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-10T02:00:00Z"></span><span class="venue">SoFi Stadium, Los Ángeles</span></div></div><div class="mc" id="m-r16-R-0"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-10T22:00:00Z"></span><span class="venue">Hard Rock Stadium, Miami</span></div></div><div class="mc" id="m-r16-R-1"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-11T02:00:00Z"></span><span class="venue">Mercedes-Benz Stadium, Atlanta</span></div></div><div class="mc" id="m-r16-R-2"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-11T22:00:00Z"></span><span class="venue">BC Place, Vancouver</span></div></div><div class="mc" id="m-r16-R-3"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-12T02:00:00Z"></span><span class="venue">Lumen Field, Seattle</span></div></div></div><div class="mb-panel" id="mb-qf" style="display:none"><div class="mc" id="m-qf-L-0"><div class="mc-label"><span>Cuartos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-14T22:00:00Z"></span><span class="venue">MetLife Stadium, New Jersey</span></div></div><div class="mc" id="m-qf-L-1"><div class="mc-label"><span>Cuartos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-15T02:00:00Z"></span><span class="venue">AT&T Stadium, Dallas</span></div></div><div class="mc" id="m-qf-R-0"><div class="mc-label"><span>Cuartos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-15T22:00:00Z"></span><span class="venue">Estadio Azteca, CDMX</span></div></div><div class="mc" id="m-qf-R-1"><div class="mc-label"><span>Cuartos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-16T02:00:00Z"></span><span class="venue">SoFi Stadium, Los Ángeles</span></div></div></div><div class="mb-panel" id="mb-sf" style="display:none"><div class="mc" id="m-sf-L-0"><div class="mc-label"><span>Semifinal</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-18T22:00:00Z"></span><span class="venue">MetLife Stadium, New Jersey</span></div></div><div class="mc" id="m-sf-R-0"><div class="mc-label"><span>Semifinal</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-19T22:00:00Z"></span><span class="venue">AT&T Stadium, Dallas</span></div></div></div><div class="mb-panel" id="mb-f" style="display:none"><div class="mc" style="border-top:2px solid #c2410c;margin-bottom:8px"><div class="mc-label" style="color:#c2410c"><span>Final</span></div><div id="m-final-rows"><div class="team-row ph" style="justify-content:center">— Por definir</div><div class="team-row ph" style="justify-content:center">— Por definir</div></div><div class="mc-meta"><span data-utc="2026-07-23T22:00:00Z"></span><span class="venue">MetLife Stadium, New Jersey</span></div></div><div class="mc" style="border-top:2px solid #0d9488"><div class="mc-label" style="color:#0d9488"><span>3er y 4to Puesto</span></div><div id="m-tercer-rows"><div class="team-row ph" style="justify-content:center">— Por definir</div><div class="team-row ph" style="justify-content:center">— Por definir</div></div><div class="mc-meta"><span data-utc="2026-07-22T22:00:00Z"></span><span class="venue">MetLife Stadium, New Jersey</span></div></div></div></div>
+    <button class="reset-btn" onclick="resetBracket()">↺ Resetear simulación</button>
   </div>
-  <button class="reset-btn" onclick="resetBracket()">↺ Resetear simulación</button>
+</div>
+
+<div class="divider"></div>
+<div class="sec">
+  <div class="sec-hdr" onclick="toggleSec('goleadores')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Goleadores — Mundial 2026</p>
+    <button class="sec-toggle" id="st-goleadores">▲ CERRAR</button>
+  </div>
+  <div class="sec-body" id="sb-goleadores">
+    <div id="scorers-inner">
+    <div style="max-width:500px;margin:0 auto">
+      <div class="grupo">
+        <table>
+          <thead><tr>
+            <th>#</th>
+            <th style="text-align:left">Jugador</th>
+            <th style="text-align:left">País</th>
+            <th>Goles</th>
+          </tr></thead>
+          <tbody><tr ><td>1</td><td style="text-align:left;white-space:nowrap">Lionel Messi</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/ar.png" alt="Argentina" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Argentina</td><td><span class="pts">3</span></td></tr><tr style="background:#f0ebe4"><td>2</td><td style="text-align:left;white-space:nowrap">Jonathan David</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</td><td><span class="pts">3</span></td></tr><tr ><td>3</td><td style="text-align:left;white-space:nowrap">Cyle Larin</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</td><td><span class="pts">2</span></td></tr><tr style="background:#f0ebe4"><td>4</td><td style="text-align:left;white-space:nowrap">Folarin Balogun</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/us.png" alt="Estados Unidos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Estados Unidos</td><td><span class="pts">2</span></td></tr><tr ><td>5</td><td style="text-align:left;white-space:nowrap">Ismael Saibari</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/ma.png" alt="Marruecos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Marruecos</td><td><span class="pts">2</span></td></tr><tr style="background:#f0ebe4"><td>6</td><td style="text-align:left;white-space:nowrap">Vinicius Junior</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/br.png" alt="Brasil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Brasil</td><td><span class="pts">2</span></td></tr><tr ><td>7</td><td style="text-align:left;white-space:nowrap">Kai Havertz</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania</td><td><span class="pts">2</span></td></tr><tr style="background:#f0ebe4"><td>8</td><td style="text-align:left;white-space:nowrap">Yasin Ayari</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/se.png" alt="Suecia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suecia</td><td><span class="pts">2</span></td></tr><tr ><td>9</td><td style="text-align:left;white-space:nowrap">Elijah Just</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/nz.png" alt="Nueva Zelanda" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Nueva Zelanda</td><td><span class="pts">2</span></td></tr><tr style="background:#f0ebe4"><td>10</td><td style="text-align:left;white-space:nowrap">Kylian Mbappé</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/fr.png" alt="Francia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Francia</td><td><span class="pts">2</span></td></tr></tbody>
+          <tbody id="scorers-extra" style="display:none"><tr ><td>11</td><td style="text-align:left;white-space:nowrap">Erling Haaland</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/no.png" alt="Noruega" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Noruega</td><td><span class="pts">2</span></td></tr><tr style="background:#f0ebe4"><td>12</td><td style="text-align:left;white-space:nowrap">Harry Kane</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/gb-eng.png" alt="Inglaterra" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Inglaterra</td><td><span class="pts">2</span></td></tr><tr ><td>13</td><td style="text-align:left;white-space:nowrap">Johan Manzambi</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/ch.png" alt="Suiza" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suiza</td><td><span class="pts">2</span></td></tr><tr style="background:#f0ebe4"><td>14</td><td style="text-align:left;white-space:nowrap">Matheus Cunha</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/br.png" alt="Brasil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Brasil</td><td><span class="pts">2</span></td></tr><tr ><td>15</td><td style="text-align:left;white-space:nowrap">Julián Quiñones</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>16</td><td style="text-align:left;white-space:nowrap">Raúl Jiménez</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México</td><td><span class="pts">1</span></td></tr><tr ><td>17</td><td style="text-align:left;white-space:nowrap">Ladislav Krejčí</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/cz.png" alt="Rep. Checa" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Rep. Checa</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>18</td><td style="text-align:left;white-space:nowrap">In-beom Hwang</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/kr.png" alt="Corea del Sur" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Corea del Sur</td><td><span class="pts">1</span></td></tr><tr ><td>19</td><td style="text-align:left;white-space:nowrap">Hyun-Gyu Oh</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/kr.png" alt="Corea del Sur" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Corea del Sur</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>20</td><td style="text-align:left;white-space:nowrap">Jovo Lukić</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/ba.png" alt="Bosnia y Herz." width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bosnia y Herz.</td><td><span class="pts">1</span></td></tr><tr ><td>21</td><td style="text-align:left;white-space:nowrap">Mauricio</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/py.png" alt="Paraguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Paraguay</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>22</td><td style="text-align:left;white-space:nowrap">Gio Reyna</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/us.png" alt="Estados Unidos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Estados Unidos</td><td><span class="pts">1</span></td></tr><tr ><td>23</td><td style="text-align:left;white-space:nowrap">Breel Embolo</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/ch.png" alt="Suiza" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suiza</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>24</td><td style="text-align:left;white-space:nowrap">Boualem Khoukhi</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/qa.png" alt="Qatar" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Qatar</td><td><span class="pts">1</span></td></tr><tr ><td>25</td><td style="text-align:left;white-space:nowrap">John McGinn</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/gb-sct.png" alt="Escocia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Escocia</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>26</td><td style="text-align:left;white-space:nowrap">Nestor Irankunda</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/au.png" alt="Australia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Australia</td><td><span class="pts">1</span></td></tr><tr ><td>27</td><td style="text-align:left;white-space:nowrap">Connor Metcalfe</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/au.png" alt="Australia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Australia</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>28</td><td style="text-align:left;white-space:nowrap">Felix Kalu Nmecha</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania</td><td><span class="pts">1</span></td></tr><tr ><td>29</td><td style="text-align:left;white-space:nowrap">Livano Comenencia</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/cw.png" alt="Curazao" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Curazao</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>30</td><td style="text-align:left;white-space:nowrap">Nico Schlotterbeck</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania</td><td><span class="pts">1</span></td></tr><tr ><td>31</td><td style="text-align:left;white-space:nowrap">Jamal Musiala</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>32</td><td style="text-align:left;white-space:nowrap">Nathaniel Brown</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania</td><td><span class="pts">1</span></td></tr><tr ><td>33</td><td style="text-align:left;white-space:nowrap">Deniz Undav</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>34</td><td style="text-align:left;white-space:nowrap">Virgil van Dijk</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</td><td><span class="pts">1</span></td></tr><tr ><td>35</td><td style="text-align:left;white-space:nowrap">Keito Nakamura</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/jp.png" alt="Japón" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Japón</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>36</td><td style="text-align:left;white-space:nowrap">Crysencio Summerville</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</td><td><span class="pts">1</span></td></tr><tr ><td>37</td><td style="text-align:left;white-space:nowrap">Daichi Kamada</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/jp.png" alt="Japón" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Japón</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>38</td><td style="text-align:left;white-space:nowrap">Amad Diallo</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/ci.png" alt="Costa de Marfil" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Costa de Marfil</td><td><span class="pts">1</span></td></tr><tr ><td>39</td><td style="text-align:left;white-space:nowrap">Alexander Isak</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/se.png" alt="Suecia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suecia</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>40</td><td style="text-align:left;white-space:nowrap">Omar Rekik</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/tn.png" alt="Túnez" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Túnez</td><td><span class="pts">1</span></td></tr><tr ><td>41</td><td style="text-align:left;white-space:nowrap">Viktor Gyökeres</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/se.png" alt="Suecia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suecia</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>42</td><td style="text-align:left;white-space:nowrap">Mattias Svanberg</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/se.png" alt="Suecia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suecia</td><td><span class="pts">1</span></td></tr><tr ><td>43</td><td style="text-align:left;white-space:nowrap">Emam Ashour</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/eg.png" alt="Egipto" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Egipto</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>44</td><td style="text-align:left;white-space:nowrap">Abdulelah Al Amri</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/sa.png" alt="Arabia Saudita" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Arabia Saudita</td><td><span class="pts">1</span></td></tr><tr ><td>45</td><td style="text-align:left;white-space:nowrap">Maximiliano Araújo</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/uy.png" alt="Uruguay" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Uruguay</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>46</td><td style="text-align:left;white-space:nowrap">Ramin Rezaeian</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/ir.png" alt="Irán" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irán</td><td><span class="pts">1</span></td></tr><tr ><td>47</td><td style="text-align:left;white-space:nowrap">Mohammad Mohebi</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/ir.png" alt="Irán" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irán</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>48</td><td style="text-align:left;white-space:nowrap">Bradley Barcola</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/fr.png" alt="Francia" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Francia</td><td><span class="pts">1</span></td></tr><tr ><td>49</td><td style="text-align:left;white-space:nowrap">Ibrahim M'Baye</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/sn.png" alt="Senegal" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Senegal</td><td><span class="pts">1</span></td></tr><tr style="background:#f0ebe4"><td>50</td><td style="text-align:left;white-space:nowrap">Aymen Hussein</td><td style="text-align:left;white-space:nowrap"><img src="/flags/20x15/iq.png" alt="Irak" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irak</td><td><span class="pts">1</span></td></tr></tbody>
+        </table>
+      </div>
+      <div style="text-align:center;margin-top:8px"><button class="reset-btn" id="scorers-btn" onclick="toggleScorers()">Ver todos los goleadores</button></div>
+    </div></div>
+  </div>
 </div>
 
 <!-- Botón flotante sugerencias -->
-<button class="fab-sug" onclick="openSug()" title="Enviar sugerencia">
-  ✉ Sugerencias
-</button>
+<button class="fab-sug" onclick="openSug()" title="Enviar sugerencia">Sugerencias</button>
 
 <!-- Modal sugerencias -->
 <div class="sug-overlay" id="sugOverlay" onclick="if(event.target===this)closeSug()">
@@ -943,8 +1173,8 @@
       <input id="sugName" class="sug-input" type="text" placeholder="Ej: Martín" maxlength="80" autocomplete="off">
       <label class="sug-label">Sugerencia *</label>
       <textarea id="sugMsg" class="sug-input" rows="4" placeholder="¿Qué mejorarías o agregarías?" maxlength="600"></textarea>
-      <button class="sug-send" onclick="sendSug()">Enviar sugerencia</button>
-      <p id="sugThanks" style="display:none;color:#0d9488;font-size:.8rem;margin-top:8px;font-weight:600">¡Gracias! Tu sugerencia fue registrada.</p>
+      <button class="sug-send" id="sugBtn" onclick="sendSug()">Enviar sugerencia</button>
+      <p id="sugThanks" style="display:none;color:#0d9488;font-size:.8rem;margin-top:8px;font-weight:600">¡Gracias! Tu sugerencia fue enviada.</p>
       <p id="sugErr" style="display:none;color:#dc2626;font-size:.78rem;margin-top:8px"></p>
     </div>
   </div>
@@ -964,64 +1194,54 @@
   .sug-input:focus{outline:1px solid #c2410c}
   .sug-send{margin-top:14px;width:100%;background:#c2410c;color:#fff;border:none;padding:10px;font-size:.78rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase}
   .sug-send:hover{background:#a83509}
+  .sug-send:disabled{background:#b09880;cursor:default}
 </style>
 
 <script>
-// ── Tracking de visitas ───────────────────────────────────────────────────
-(function(){
-  const visits = JSON.parse(localStorage.getItem('wc26_visits')||'[]');
-  visits.push({
-    ts: new Date().toISOString(),
-    tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    ua: navigator.userAgent.substring(0,120),
-  });
-  if(visits.length > 500) visits.splice(0, visits.length-500);
-  localStorage.setItem('wc26_visits', JSON.stringify(visits));
-})();
-
-// ── Modal de sugerencias ──────────────────────────────────────────────────
-function openSug(){ document.getElementById('sugOverlay').classList.add('open'); document.getElementById('sugErr').style.display='none'; }
-function closeSug(){ document.getElementById('sugOverlay').classList.remove('open'); document.getElementById('sugThanks').style.display='none'; document.getElementById('sugErr').style.display='none'; }
-
-function _sanitize(str, maxLen){
-  return str
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,'') // caracteres de control
-    .trim()
-    .slice(0, maxLen);
+// ── Goleadores expandibles ────────────────────────────────────────────────
+function toggleScorers() {
+  var extra = document.getElementById('scorers-extra');
+  var btn   = document.getElementById('scorers-btn');
+  if (!extra) return;
+  var hidden = extra.style.display === 'none';
+  extra.style.display = hidden ? '' : 'none';
+  if (btn) btn.textContent = hidden ? 'Ver menos' : 'Ver todos los goleadores';
 }
 
-function _canSug(){
-  const sugs = JSON.parse(localStorage.getItem('wc26_sugerencias')||'[]');
-  const since = Date.now() - 30*60*1000; // 30 min
-  return sugs.filter(s => new Date(s.ts).getTime() > since).length < 3;
+// ── Sugerencias → Worker ──────────────────────────────────────────────────
+const SUG_API = 'https://mejortercero.online/api/suggest';
+function openSug(){ document.getElementById('sugOverlay').classList.add('open'); }
+function closeSug(){
+  document.getElementById('sugOverlay').classList.remove('open');
+  document.getElementById('sugThanks').style.display='none';
+  document.getElementById('sugErr').style.display='none';
 }
-
-function sendSug(){
+async function sendSug(){
+  const btn   = document.getElementById('sugBtn');
   const errEl = document.getElementById('sugErr');
-  errEl.style.display='none';
-
-  if(!_canSug()){
-    errEl.textContent='Límite alcanzado. Podés enviar hasta 3 sugerencias cada 30 minutos.';
-    errEl.style.display='block';
-    return;
+  errEl.style.display = 'none';
+  const msg  = document.getElementById('sugMsg').value.trim().slice(0,600);
+  const name = document.getElementById('sugName').value.trim().slice(0,80);
+  if (!msg) { errEl.textContent='El campo sugerencia no puede estar vacío.'; errEl.style.display='block'; return; }
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  try {
+    const res = await fetch(SUG_API, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ msg, name, page: window.location.pathname }),
+    });
+    const data = await res.json();
+    if (!res.ok) { throw new Error(data.error || 'Error al enviar'); }
+    document.getElementById('sugMsg').value = '';
+    document.getElementById('sugName').value = '';
+    document.getElementById('sugThanks').style.display = 'block';
+    setTimeout(closeSug, 2000);
+  } catch(e) {
+    errEl.textContent = e.message || 'Error de red. Intentá de nuevo.';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Enviar sugerencia';
   }
-
-  const rawMsg  = document.getElementById('sugMsg').value;
-  const rawName = document.getElementById('sugName').value;
-  const msg  = _sanitize(rawMsg, 600);
-  const name = _sanitize(rawName, 80);
-
-  if(!msg){ errEl.textContent='El campo sugerencia no puede estar vacío.'; errEl.style.display='block'; return; }
-
-  const sugs = JSON.parse(localStorage.getItem('wc26_sugerencias')||'[]');
-  if(sugs.length >= 200){ sugs.splice(0, sugs.length - 199); } // cap total
-  sugs.push({ id: Date.now(), ts: new Date().toISOString(), name: name||'Anónimo', msg, read: false });
-  localStorage.setItem('wc26_sugerencias', JSON.stringify(sugs));
-
-  document.getElementById('sugMsg').value='';
-  document.getElementById('sugName').value='';
-  document.getElementById('sugThanks').style.display='block';
-  setTimeout(closeSug, 2000);
 }
 </script>
 
@@ -1047,6 +1267,21 @@ function fmtDate(utcStr) {
     }).format(d);
   }
 }
+function fmtTime(utcStr) {
+  if (!utcStr) return '';
+  const d = new Date(utcStr);
+  try {
+    return new Intl.DateTimeFormat('es-AR', {
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      hour:'2-digit', minute:'2-digit', hour12:false
+    }).format(d);
+  } catch(e) {
+    return new Intl.DateTimeFormat('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour:'2-digit', minute:'2-digit', hour12:false
+    }).format(d);
+  }
+}
 
 // ── State ──────────────────────────────────────────────────────────────────
 let S = {};
@@ -1055,14 +1290,14 @@ function save() { localStorage.setItem('wc26', JSON.stringify(S)); }
 
 // ── Feed map (src → {next_slot, position}) ───────────────────────────────
 const FEED = {
-  "1": {next:"r16-L-0",pos:0}, "2": {next:"r16-L-0",pos:1},
-  "3": {next:"r16-L-1",pos:0}, "4": {next:"r16-L-1",pos:1},
-  "5": {next:"r16-L-2",pos:0}, "6": {next:"r16-L-2",pos:1},
-  "7": {next:"r16-L-3",pos:0}, "8": {next:"r16-L-3",pos:1},
-  "9": {next:"r16-R-0",pos:0}, "10":{next:"r16-R-0",pos:1},
-  "11":{next:"r16-R-1",pos:0}, "12":{next:"r16-R-1",pos:1},
-  "13":{next:"r16-R-2",pos:0}, "14":{next:"r16-R-2",pos:1},
-  "15":{next:"r16-R-3",pos:0}, "16":{next:"r16-R-3",pos:1},
+  "74":{next:"r16-L-0",pos:0}, "77":{next:"r16-L-0",pos:1},  // → P89
+  "73":{next:"r16-L-1",pos:0}, "75":{next:"r16-L-1",pos:1},  // → P90
+  "83":{next:"r16-L-2",pos:0}, "84":{next:"r16-L-2",pos:1},  // → P93
+  "81":{next:"r16-L-3",pos:0}, "82":{next:"r16-L-3",pos:1},  // → P94
+  "76":{next:"r16-R-0",pos:0}, "78":{next:"r16-R-0",pos:1},  // → P91
+  "79":{next:"r16-R-1",pos:0}, "80":{next:"r16-R-1",pos:1},  // → P92
+  "86":{next:"r16-R-2",pos:0}, "88":{next:"r16-R-2",pos:1},  // → P95
+  "85":{next:"r16-R-3",pos:0}, "87":{next:"r16-R-3",pos:1},  // → P96
   "r16-L-0":{next:"qf-L-0",pos:0}, "r16-L-1":{next:"qf-L-0",pos:1},
   "r16-L-2":{next:"qf-L-1",pos:0}, "r16-L-3":{next:"qf-L-1",pos:1},
   "r16-R-0":{next:"qf-R-0",pos:0}, "r16-R-1":{next:"qf-R-0",pos:1},
@@ -1081,10 +1316,10 @@ const SLOT_ORDER = [
 ];
 
 const SLOT_LABEL = {
-  "r16-L-0":"Octavos","r16-L-1":"Octavos","r16-L-2":"Octavos","r16-L-3":"Octavos",
-  "r16-R-0":"Octavos","r16-R-1":"Octavos","r16-R-2":"Octavos","r16-R-3":"Octavos",
-  "qf-L-0":"Cuartos","qf-L-1":"Cuartos","qf-R-0":"Cuartos","qf-R-1":"Cuartos",
-  "sf-L-0":"Semifinal","sf-R-0":"Semifinal",
+  "r16-L-0":"P89","r16-L-1":"P90","r16-L-2":"P93","r16-L-3":"P94",
+  "r16-R-0":"P91","r16-R-1":"P92","r16-R-2":"P95","r16-R-3":"P96",
+  "qf-L-0":"P97","qf-L-1":"P98","qf-R-0":"P99","qf-R-1":"P100",
+  "sf-L-0":"P101","sf-R-0":"P102",
 };
 
 function feedersOf(slotId) {
@@ -1221,14 +1456,18 @@ function pickWinner(el) {
   const name = el.dataset.name;
   const html = decodeURIComponent(el.dataset.html);
 
-  card.querySelectorAll(".team-row").forEach(r => {
-    r.classList.remove("winner","loser");
-    r.classList.add(r.dataset.name === name ? "winner" : "loser");
+  // Update all cards with same mid (desktop + mobile)
+  document.querySelectorAll('[data-mid="' + mid + '"]').forEach(function(c) {
+    c.querySelectorAll(".team-row").forEach(function(r) {
+      r.classList.remove("winner","loser");
+      r.classList.add(r.dataset.name === name ? "winner" : "loser");
+    });
   });
 
   S[mid] = { winner: {name, html} };
   save();
   propagate(mid);
+  syncMobile();
 }
 
 // ── Seleccionar ganador en slots R16/QF/SF/Final ──────────────────────────
@@ -1261,6 +1500,7 @@ function pickSlotWinner(el) {
   if (slotId !== "slot-final") propagate(slotId);
   renderFinal();
   renderTercer();
+  syncMobile();
 }
 
 function pickTercerWinner(el) {
@@ -1273,6 +1513,7 @@ function pickTercerWinner(el) {
   });
   S["slot-tercer"] = { winner: {name, html} };
   save();
+  syncMobile();
 }
 
 // ── Propagación ───────────────────────────────────────────────────────────
@@ -1304,6 +1545,7 @@ function restore() {
     });
   });
   SLOT_ORDER.forEach(id => renderSlot(id));
+  syncMobile();
 }
 
 function resetBracket() {
@@ -1312,12 +1554,107 @@ function resetBracket() {
   document.querySelectorAll("[data-mid] .team-row").forEach(r =>
     r.classList.remove("winner","loser"));
   SLOT_ORDER.forEach(id => renderSlot(id));
+  syncMobile();
+}
+
+// ── Sincronizar mobile bracket con estado desktop ─────────────────────────
+function syncMobile() {
+  ["r16-L-0","r16-L-1","r16-L-2","r16-L-3",
+   "r16-R-0","r16-R-1","r16-R-2","r16-R-3",
+   "qf-L-0","qf-L-1","qf-R-0","qf-R-1",
+   "sf-L-0","sf-R-0"].forEach(function(id) {
+    var d = document.getElementById(id);
+    var m = document.getElementById('m-' + id);
+    if (d && m) { m.innerHTML = d.innerHTML; m.className = d.className; }
+  });
+  var df = document.getElementById('slot-final');
+  var mfr = document.getElementById('m-final-rows');
+  if (df && mfr) { mfr.innerHTML = df.innerHTML; }
+  var dt = document.getElementById('slot-tercer');
+  var mtr = document.getElementById('m-tercer-rows');
+  if (dt && mtr) { mtr.innerHTML = dt.innerHTML; }
+}
+
+// ── Tabs del bracket mobile ───────────────────────────────────────────────
+function mbSetRound(btn, round) {
+  document.querySelectorAll('.mb-tab').forEach(function(t) { t.classList.remove('mb-active'); });
+  btn.classList.add('mb-active');
+  document.querySelectorAll('.mb-panel').forEach(function(p) { p.style.display = 'none'; });
+  var panel = document.getElementById('mb-' + round);
+  if (panel) { panel.style.display = 'block'; }
 }
 
 // ── Polling de datos en vivo (sin recarga de página) ─────────────────────
 function applyDataUtc(root) {
   (root || document).querySelectorAll('[data-utc]').forEach(function(el) {
-    el.innerHTML = fmtDate(el.dataset.utc);
+    el.innerHTML = el.dataset.format === 'time' ? fmtTime(el.dataset.utc) : fmtDate(el.dataset.utc);
+  });
+}
+
+// ── Navegación de días ────────────────────────────────────────────────────
+var _navDatesHtml = {};
+var _navDates = [];
+var _navIdx = 0;
+var _navTodayStr = '';
+
+function navInit(todayStr, datesHtml) {
+  _navDatesHtml = datesHtml;
+  _navDates = Object.keys(datesHtml).sort();
+  var ti = _navDates.indexOf(todayStr);
+  var prevTodayIdx = _navDates.indexOf(_navTodayStr);
+  var wasOnToday = (_navTodayStr === '' || _navIdx === prevTodayIdx);
+  _navTodayStr = todayStr;
+  if (wasOnToday) _navIdx = ti >= 0 ? ti : 0;
+  navRender();
+}
+
+function navDay(delta) {
+  var next = _navIdx + delta;
+  if (next < 0 || next >= _navDates.length) return;
+  _navIdx = next;
+  navRender();
+}
+
+function navRender() {
+  if (!_navDates.length) return;
+  var todayIdx = _navDates.indexOf(_navTodayStr);
+  var diff = _navIdx - todayIdx;
+  var label = diff === 0 ? 'Partidos de hoy'
+            : diff === -1 ? 'Partidos de ayer'
+            : diff === 1 ? 'Partidos de mañana'
+            : 'Partidos del ' + _navDates[_navIdx];
+  var labelEl = document.getElementById('hoy-nav-label');
+  if (labelEl) labelEl.textContent = label;
+  var body = document.getElementById('today-body');
+  if (body) { body.innerHTML = _navDatesHtml[_navDates[_navIdx]] || ''; applyDataUtc(body); }
+  var prev = document.getElementById('hoy-prev');
+  var next = document.getElementById('hoy-next');
+  if (prev) prev.disabled = (_navIdx === 0);
+  if (next) next.disabled = (_navIdx === _navDates.length - 1);
+}
+
+// ── Secciones colapsables ─────────────────────────────────────────────────
+var SEC = {};
+function loadSecs() { try { SEC = JSON.parse(localStorage.getItem('sec_states') || '{}'); } catch(e) { SEC={}; } }
+function saveSecs() { localStorage.setItem('sec_states', JSON.stringify(SEC)); }
+function toggleSec(id) {
+  var body = document.getElementById('sb-' + id);
+  var btn  = document.getElementById('st-' + id);
+  if (!body) return;
+  var collapsed = body.classList.toggle('sec-collapsed');
+  if (btn) btn.textContent = collapsed ? '▼ ABRIR' : '▲ CERRAR';
+  SEC[id] = collapsed;
+  saveSecs();
+}
+function restoreSecs() {
+  loadSecs();
+  Object.keys(SEC).forEach(function(id) {
+    if (SEC[id]) {
+      var body = document.getElementById('sb-' + id);
+      var btn  = document.getElementById('st-' + id);
+      if (body) body.classList.add('sec-collapsed');
+      if (btn) btn.textContent = '▼ ABRIR';
+    }
   });
 }
 
@@ -1328,8 +1665,12 @@ function pollData() {
       var gi = document.getElementById('groups-inner');
       if (gi && d.groups_html !== undefined) gi.innerHTML = d.groups_html;
 
-      var tc = document.getElementById('thirds-container');
-      if (tc && d.thirds_html !== undefined) tc.innerHTML = d.thirds_html;
+      var ti = document.getElementById('thirds-inner');
+      if (ti && d.thirds_html !== undefined) ti.innerHTML = d.thirds_html;
+
+      if (d.dates_html !== undefined && d.today_date !== undefined) {
+        navInit(d.today_date, d.dates_html);
+      }
 
       var r32Updated = false;
       var rl = document.getElementById('r32-left');
@@ -1340,7 +1681,15 @@ function pollData() {
       if (rr && d.r32_right_html !== undefined) {
         rr.innerHTML = d.r32_right_html; applyDataUtc(rr); r32Updated = true;
       }
+      var mbR32 = document.getElementById('mb-r32');
+      if (mbR32 && d.r32_left_html !== undefined && d.r32_right_html !== undefined) {
+        mbR32.innerHTML = d.r32_left_html + d.r32_right_html;
+        applyDataUtc(mbR32);
+      }
       if (r32Updated) restore();
+
+      var si = document.getElementById('scorers-inner');
+      if (si && d.scorers_html !== undefined) si.innerHTML = d.scorers_html;
 
       var upd = document.getElementById('upd');
       if (upd && d.updated) upd.textContent = d.updated;
@@ -1366,7 +1715,7 @@ function scaleBracket() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  load(); restore();
+  load(); restore(); restoreSecs();
   applyDataUtc();
   scaleBracket();
   window.addEventListener('resize', scaleBracket);
