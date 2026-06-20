@@ -1,11 +1,17 @@
-name = "mundial2026"
+name = "mundial2026-api"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 
-[placement]
-mode = "smart"
-
+# Solo intercepta /api/* — el resto sigue yendo a Cloudflare Pages
 routes = [
-  { pattern = "mejortercero.online/*", zone_name = "mejortercero.online" },
-  { pattern = "www.mejortercero.online/*", zone_name = "mejortercero.online" }
+  { pattern = "mejortercero.online/api/*", zone_name = "mejortercero.online" }
 ]
+
+# KV binding — completar con el namespace_id después de correr:
+# wrangler kv namespace create SUGGESTIONS
+[[kv_namespaces]]
+binding = "SUGGESTIONS"
+id = "PLACEHOLDER_KV_ID"
+
+# El hash de la contraseña admin se guarda como secret:
+# wrangler secret put ADMIN_TOKEN_HASH

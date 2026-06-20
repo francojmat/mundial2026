@@ -58,6 +58,8 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Mundial 2026</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+  <!-- PostHog Analytics — reemplazar POSTHOG_KEY con tu Project API Key -->
+  <!-- <script>!function(t,e){{var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){{function g(t,e){{var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){{t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){{var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}},u.people.toString=function(){{return u.toString(1)+" (stub)"}},n="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep".split(" "),o=0;o<n.length;o++)g(u,n[o]);e._i.push([i,s,a])}},(e.__SV=1))}}(document,window.posthog||[]);posthog.init('POSTHOG_KEY',{{api_host:'https://us.i.posthog.com',person_profiles:'identified_only'}})</script> -->
   <style>
     *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
     body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:{BG};color:{TXT};padding:28px 24px}}
@@ -124,7 +126,8 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
       .grupos{{grid-template-columns:1fr}}
       td{{font-size:.74rem;padding:5px 6px}}
       th{{font-size:.55rem;padding:4px 6px}}
-.reset-btn{{font-size:.68rem}}
+      .reset-btn{{font-size:.68rem}}
+      .fab-sug{{bottom:14px;right:14px;padding:8px 14px;font-size:.72rem}}
     }}
 
     .mitad{{display:flex;flex:1}}
@@ -282,6 +285,83 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   {_render_mobile_bracket(matchups)}
   <button class="reset-btn" onclick="resetBracket()">↺ Resetear simulación</button>
 </div>
+
+<!-- Botón flotante sugerencias -->
+<button class="fab-sug" onclick="openSug()" title="Enviar sugerencia">✉ Sugerencias</button>
+
+<!-- Modal sugerencias -->
+<div class="sug-overlay" id="sugOverlay" onclick="if(event.target===this)closeSug()">
+  <div class="sug-modal">
+    <div class="sug-header">
+      <span>Envianos una sugerencia</span>
+      <button onclick="closeSug()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:{MUT}">✕</button>
+    </div>
+    <div class="sug-body">
+      <label class="sug-label">Tu nombre <span style="color:{DIM}">(opcional)</span></label>
+      <input id="sugName" class="sug-input" type="text" placeholder="Ej: Martín" maxlength="80" autocomplete="off">
+      <label class="sug-label">Sugerencia *</label>
+      <textarea id="sugMsg" class="sug-input" rows="4" placeholder="¿Qué mejorarías o agregarías?" maxlength="600"></textarea>
+      <button class="sug-send" id="sugBtn" onclick="sendSug()">Enviar sugerencia</button>
+      <p id="sugThanks" style="display:none;color:{TEL};font-size:.8rem;margin-top:8px;font-weight:600">¡Gracias! Tu sugerencia fue enviada.</p>
+      <p id="sugErr" style="display:none;color:#dc2626;font-size:.78rem;margin-top:8px"></p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .fab-sug{{position:fixed;bottom:24px;right:24px;background:{T};color:#fff;border:none;padding:10px 18px;font-size:.78rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;z-index:999;box-shadow:0 4px 16px rgba(194,65,12,.35)}}
+  .fab-sug:hover{{background:#a83509}}
+  .sug-overlay{{display:none;position:fixed;inset:0;background:rgba(33,28,20,.5);z-index:1000;align-items:center;justify-content:center}}
+  .sug-overlay.open{{display:flex}}
+  .sug-modal{{background:{WHT};width:100%;max-width:420px;margin:20px}}
+  .sug-header{{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid {BDR};font-size:.82rem;font-weight:700;color:{TXT}}}
+  .sug-body{{padding:18px}}
+  .sug-label{{display:block;font-size:.7rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;margin-top:12px}}
+  .sug-label:first-child{{margin-top:0}}
+  .sug-input{{width:100%;border:1px solid {BDR};padding:8px 10px;font-size:.82rem;font-family:inherit;color:{TXT};background:{BG};resize:vertical}}
+  .sug-input:focus{{outline:1px solid {T}}}
+  .sug-send{{margin-top:14px;width:100%;background:{T};color:#fff;border:none;padding:10px;font-size:.78rem;font-weight:700;cursor:pointer;letter-spacing:.06em;text-transform:uppercase}}
+  .sug-send:hover{{background:#a83509}}
+  .sug-send:disabled{{background:{DIM};cursor:default}}
+</style>
+
+<script>
+// ── Sugerencias → Worker ──────────────────────────────────────────────────
+const SUG_API = 'https://mejortercero.online/api/suggest';
+function openSug(){{ document.getElementById('sugOverlay').classList.add('open'); }}
+function closeSug(){{
+  document.getElementById('sugOverlay').classList.remove('open');
+  document.getElementById('sugThanks').style.display='none';
+  document.getElementById('sugErr').style.display='none';
+}}
+async function sendSug(){{
+  const btn   = document.getElementById('sugBtn');
+  const errEl = document.getElementById('sugErr');
+  errEl.style.display = 'none';
+  const msg  = document.getElementById('sugMsg').value.trim().slice(0,600);
+  const name = document.getElementById('sugName').value.trim().slice(0,80);
+  if (!msg) {{ errEl.textContent='El campo sugerencia no puede estar vacío.'; errEl.style.display='block'; return; }}
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  try {{
+    const res = await fetch(SUG_API, {{
+      method: 'POST',
+      headers: {{'Content-Type':'application/json'}},
+      body: JSON.stringify({{ msg, name, page: window.location.pathname }}),
+    }});
+    const data = await res.json();
+    if (!res.ok) {{ throw new Error(data.error || 'Error al enviar'); }}
+    document.getElementById('sugMsg').value = '';
+    document.getElementById('sugName').value = '';
+    document.getElementById('sugThanks').style.display = 'block';
+    setTimeout(closeSug, 2000);
+  }} catch(e) {{
+    errEl.textContent = e.message || 'Error de red. Intentá de nuevo.';
+    errEl.style.display = 'block';
+  }} finally {{
+    btn.disabled = false; btn.textContent = 'Enviar sugerencia';
+  }}
+}}
+</script>
 
 <script>
 // ── Datos ──────────────────────────────────────────────────────────────────
