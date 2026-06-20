@@ -228,7 +228,8 @@ def _build_venues(fixtures: list) -> list:
             continue
         teams = fx.get("teams") or {}
         goals = fx.get("goals") or {}
-        slot = venues.setdefault(name, {"name": name, "city": v.get("city", ""), "matches": []})
+        slot = venues.setdefault(name, {"name": name, "city": v.get("city", ""),
+                                        "id": v.get("id"), "matches": []})
         slot["matches"].append({
             "date":   f.get("date", ""),
             "status": (f.get("status") or {}).get("short", ""),

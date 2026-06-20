@@ -1,9 +1,11 @@
 """Renderer HTML — identidad Zevra + bracket interactivo."""
 
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Set
 from countries import traducir, nombre_es
+
+_ARG_TZ = timezone(timedelta(hours=-3))
 
 T   = "#c2410c"
 TEL = "#0d9488"
@@ -272,6 +274,8 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .ven-m-a{{justify-content:flex-start}}
     .ven-m-h img,.ven-m-a img{{margin-right:0;flex-shrink:0}}
     .ven-m-mid{{font-weight:700;color:{MUT};font-size:.72rem;text-align:center;min-width:38px}}
+    .ven-time{{color:{T};font-weight:700;font-size:.7rem}}
+    .ven-img{{width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin-bottom:10px;display:block}}
     @media(max-width:480px){{
       .ven-m{{font-size:.68rem;grid-template-columns:28px 1fr auto 1fr}}
       .hoy-home,.hoy-away{{font-size:.72rem}}
@@ -1453,6 +1457,8 @@ def _render_scorers(standings: Dict) -> str:
 def _render_ranking(items: list, value_header: str, key: str,
                     empty: str = "Disponible próximamente.") -> str:
     """Tabla de ranking de jugadores (asistencias, amarillas, rojas). Top 10 + ver todos."""
+    # Solo jugadores con al menos 1 (no rellenar con ceros)
+    items = [it for it in items if (it.get("value") or 0) > 0]
     if not items:
         return f'<p style="font-size:.75rem;color:{MUT};margin-top:4px">{empty}</p>'
 
@@ -1513,8 +1519,17 @@ def _venue_date(iso: str) -> str:
         return ""
 
 
+def _venue_time(iso: str) -> str:
+    """Hora de inicio del partido en hora argentina (UTC-3)."""
+    try:
+        dt = datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(_ARG_TZ)
+        return dt.strftime("%H:%M")
+    except Exception:
+        return "—"
+
+
 def _render_venues(standings: Dict) -> str:
-    """Módulo de estadios, cada uno expandible con sus partidos."""
+    """Módulo de estadios, cada uno expandible con foto y sus partidos."""
     venues = standings.get("_venues", [])
     if not venues:
         return f'<p style="font-size:.75rem;color:{MUT};margin-top:4px">Disponible próximamente.</p>'
@@ -1528,7 +1543,7 @@ def _render_venues(standings: Dict) -> str:
             if m.get("status") == "FT" and m.get("gh") is not None:
                 mid = f'<span class="pts">{m.get("gh")} - {m.get("ga")}</span>'
             else:
-                mid = '<span style="color:{0}">vs</span>'.format(DIM)
+                mid = f'<span class="ven-time">{_venue_time(m.get("date", ""))}</span>'
             fecha = _venue_date(m.get("date", ""))
             rows += (f'<div class="ven-m">'
                      f'<span class="ven-m-date">{fecha}</span>'
@@ -1536,7 +1551,13 @@ def _render_venues(standings: Dict) -> str:
                      f'<span class="ven-m-mid">{mid}</span>'
                      f'<span class="ven-m-team ven-m-a">{away}</span>'
                      f'</div>')
-        detail = f'<div class="hoy-detail"><div class="hoy-dsec">{rows}</div></div>'
+        # Foto del estadio (construida con el id; solo los que tienen id en la API)
+        img = ""
+        if v.get("id"):
+            img = (f'<img class="ven-img" loading="lazy" alt="" '
+                   f'src="https://media.api-sports.io/football/venues/{v["id"]}.png" '
+                   f'onerror="this.style.display=\'none\'">')
+        detail = f'<div class="hoy-detail">{img}<div class="hoy-dsec">{rows}</div></div>'
         cards += (f'<div class="hoy-fila" onclick="toggleMatch(this)">'
                   f'<div class="hoy-head">'
                   f'<span class="hoy-etiqueta">{v.get("name", "")}</span>'
