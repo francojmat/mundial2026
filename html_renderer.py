@@ -359,6 +359,39 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   </div>
 </div>
 
+<div class="divider"></div>
+<div class="sec">
+  <div class="sec-hdr" onclick="toggleSec('asistencias')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Asistencias — Mundial 2026</p>
+    <button class="sec-toggle" id="st-asistencias">▲ CERRAR</button>
+  </div>
+  <div class="sec-body" id="sb-asistencias">
+    <div id="assists-inner">{_render_assists(standings)}</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+<div class="sec">
+  <div class="sec-hdr" onclick="toggleSec('amarillas')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Tarjetas amarillas — Mundial 2026</p>
+    <button class="sec-toggle" id="st-amarillas">▲ CERRAR</button>
+  </div>
+  <div class="sec-body" id="sb-amarillas">
+    <div id="yellows-inner">{_render_yellows(standings)}</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+<div class="sec">
+  <div class="sec-hdr" onclick="toggleSec('rojas')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Tarjetas rojas — Mundial 2026</p>
+    <button class="sec-toggle" id="st-rojas">▲ CERRAR</button>
+  </div>
+  <div class="sec-body" id="sb-rojas">
+    <div id="reds-inner">{_render_reds(standings)}</div>
+  </div>
+</div>
+
 <!-- Botón flotante sugerencias -->
 <button class="fab-sug" onclick="openSug()" title="Enviar sugerencia">Sugerencias</button>
 
@@ -895,6 +928,15 @@ function pollData() {{
       var si = document.getElementById('scorers-inner');
       if (si && d.scorers_html !== undefined) si.innerHTML = d.scorers_html;
 
+      var ai = document.getElementById('assists-inner');
+      if (ai && d.assists_html !== undefined) ai.innerHTML = d.assists_html;
+
+      var yi = document.getElementById('yellows-inner');
+      if (yi && d.yellows_html !== undefined) yi.innerHTML = d.yellows_html;
+
+      var rdi = document.getElementById('reds-inner');
+      if (rdi && d.reds_html !== undefined) rdi.innerHTML = d.reds_html;
+
       var upd = document.getElementById('upd');
       if (upd && d.updated) upd.textContent = d.updated;
     }})
@@ -1318,6 +1360,50 @@ def _render_scorers(standings: Dict) -> str:
       </div>
       {btn}
     </div>"""
+
+
+def _render_ranking(items: list, value_header: str,
+                    empty: str = "Disponible próximamente.") -> str:
+    """Tabla de ranking de jugadores (asistencias, amarillas, rojas)."""
+    if not items:
+        return f'<p style="font-size:.75rem;color:{MUT};margin-top:4px">{empty}</p>'
+
+    def _row(i: int, it: dict) -> str:
+        bg = f'style="background:{GRY}"' if i % 2 == 0 else ''
+        return (f'<tr {bg}>'
+                f'<td>{i}</td>'
+                f'<td style="text-align:left;white-space:nowrap">{it.get("name", "")}</td>'
+                f'<td style="text-align:left;white-space:nowrap">{traducir(it.get("team", ""))}</td>'
+                f'<td><span class="pts">{it.get("value", 0)}</span></td>'
+                f'</tr>')
+
+    rows = "".join(_row(i, it) for i, it in enumerate(items[:10], 1))
+    return f"""
+    <div style="max-width:500px;margin:0 auto">
+      <div class="grupo">
+        <table>
+          <thead><tr>
+            <th>#</th>
+            <th style="text-align:left">Jugador</th>
+            <th style="text-align:left">País</th>
+            <th>{value_header}</th>
+          </tr></thead>
+          <tbody>{rows}</tbody>
+        </table>
+      </div>
+    </div>"""
+
+
+def _render_assists(standings: Dict) -> str:
+    return _render_ranking(standings.get("_assists", []), "Asist.")
+
+
+def _render_yellows(standings: Dict) -> str:
+    return _render_ranking(standings.get("_yellows", []), "Amar.")
+
+
+def _render_reds(standings: Dict) -> str:
+    return _render_ranking(standings.get("_reds", []), "Rojas")
 
 
 def _hoy_detail_html(m: dict) -> str:

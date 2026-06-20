@@ -220,4 +220,9 @@ def build_standings(client: WorldCupClient, fifa_rankings: Dict[str, int] = None
     except Exception:
         result["_scorers"] = []
 
+    # Datos del torneo de API-Football (rankings: asistencias, amarillas, rojas)
+    if apifootball is not None:
+        from tournament import enrich_tournament_data
+        enrich_tournament_data(result, apifootball)
+
     return result

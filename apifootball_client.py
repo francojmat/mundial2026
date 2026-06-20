@@ -1,10 +1,10 @@
 """
-API-Football (api-sports.io) client — free tier: 100 req/día, 10 req/min.
-Solo lo usamos para el DETALLE de eventos (goles, tarjetas, cambios) que
-football-data.org no da en su plan gratuito. El marcador y el estado en vivo
-siguen viniendo de football-data.org.
+API-Football (api-sports.io) client — plan Pro: 7.500 req/día.
+Provee el detalle de eventos (goles, tarjetas, cambios), rankings del torneo,
+planteles, cuerpo técnico, lesionados, y detalle de partido (alineaciones,
+estadísticas). El marcador y el estado en vivo siguen viniendo de football-data.org.
 
-Plan free directo (NO RapidAPI):
+Endpoint directo (NO RapidAPI):
   base = https://v3.football.api-sports.io
   header = x-apisports-key
 """
@@ -13,6 +13,19 @@ import requests
 
 APIFOOTBALL_BASE = "https://v3.football.api-sports.io"
 WORLD_CUP_LEAGUE_ID = 1  # "World Cup" en API-Football
+
+
+def _player_ranking(raw: dict, value_fn) -> list:
+    """Normaliza la respuesta de un endpoint players/top* a [{name, team, value}]."""
+    out = []
+    for p in raw.get("response", []):
+        st = (p.get("statistics") or [{}])[0]
+        out.append({
+            "name":  (p.get("player") or {}).get("name", ""),
+            "team":  (st.get("team") or {}).get("name", ""),
+            "value": value_fn(st) or 0,
+        })
+    return out
 
 
 class APIFootballClient:
@@ -48,3 +61,23 @@ class APIFootballClient:
             return data.get("response") or []
         except Exception:
             return []
+
+    # ── Rankings del torneo ───────────────────────────────────────────────
+    def _league_params(self) -> dict:
+        return {"league": WORLD_CUP_LEAGUE_ID, "season": self.season}
+
+    def get_top_assists(self) -> list:
+        raw = self._get("/players/topassists", self._league_params())
+        return _player_ranking(raw, lambda st: (st.get("goals") or {}).get("assists"))
+
+    def get_top_yellow_cards(self) -> list:
+        raw = self._get("/players/topyellowcards", self._league_params())
+        return _player_ranking(raw, lambda st: (st.get("cards") or {}).get("yellow"))
+
+    def get_top_red_cards(self) -> list:
+        raw = self._get("/players/topredcards", self._league_params())
+        return _player_ranking(
+            raw,
+            lambda st: ((st.get("cards") or {}).get("red") or 0)
+                       + ((st.get("cards") or {}).get("yellowred") or 0),
+        )
