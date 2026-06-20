@@ -230,6 +230,12 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
       .hoy-match{{gap:6px}}
     }}
 
+    /* ── Secciones colapsables ── */
+    .sec-hdr{{display:flex;align-items:center;justify-content:space-between;padding-bottom:7px;border-bottom:1px solid {BDR};margin-bottom:12px;cursor:pointer;user-select:none}}
+    .sec-hdr:hover .sec-toggle{{color:{T}}}
+    .sec-body.sec-collapsed{{display:none}}
+    .sec-toggle{{background:none;border:none;color:{DIM};font-size:.7rem;cursor:pointer;padding:0;line-height:1;font-family:inherit}}
+
     /* ── Mobile bracket ── */
     .mobile-bracket{{display:none}}
     @media(max-width:900px){{
@@ -253,40 +259,71 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 
 <div id="today-container">
 <div class="sec">
-  <div class="hoy-nav">
-    <button class="hoy-nav-btn" id="hoy-prev" onclick="navDay(-1)">&#8249;</button>
-    <p class="sec-t" id="hoy-nav-label" style="margin:0">Partidos de hoy</p>
-    <button class="hoy-nav-btn" id="hoy-next" onclick="navDay(+1)">&#8250;</button>
+  <div style="position:relative">
+    <div class="hoy-nav">
+      <button class="hoy-nav-btn" id="hoy-prev" onclick="navDay(-1)">&#8249;</button>
+      <p class="sec-t" id="hoy-nav-label" style="margin:0;border:none;padding-bottom:0">Partidos de hoy</p>
+      <button class="hoy-nav-btn" id="hoy-next" onclick="navDay(+1)">&#8250;</button>
+    </div>
+    <button class="sec-toggle" id="st-hoy" onclick="toggleSec('hoy')" style="position:absolute;right:0;top:50%;transform:translateY(-50%)">▲</button>
   </div>
-  <div id="today-body">{_render_today_matches(standings.get("_today_matches", []))}</div>
+  <div class="sec-body" id="sb-hoy">
+    <div id="today-body">{_render_today_matches(standings.get("_today_matches", []))}</div>
+  </div>
 </div>
 <div class="divider"></div>
 </div>
 
 <div class="sec">
-  <p class="sec-t">Posiciones — Fase de grupos</p>
-  <div class="leyenda">
-    <span class="ley-item"><span class="ley-dot" style="background:{WHT};border:1px solid {BDR};border-left:3px solid {TEL}"></span>Clasifica directo</span>
-    <span class="ley-item"><span class="ley-dot" style="background:{WHT};border:1px solid {BDR};border-left:3px solid {T}"></span>Mejor 3ro (top 8)</span>
-    <span class="ley-item"><span class="ley-dot" style="background:{GRY};border:1px solid {BDR}"></span>Eliminado / fuera del top 8</span>
+  <div class="sec-hdr" onclick="toggleSec('grupos')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Posiciones — Fase de grupos</p>
+    <button class="sec-toggle" id="st-grupos">▲</button>
   </div>
-  <div class="grupos" id="groups-inner">{_render_groups(standings, live_teams, thirds_advancing_set)}</div>
+  <div class="sec-body" id="sb-grupos">
+    <div class="leyenda">
+      <span class="ley-item"><span class="ley-dot" style="background:{WHT};border:1px solid {BDR};border-left:3px solid {TEL}"></span>Clasifica directo</span>
+      <span class="ley-item"><span class="ley-dot" style="background:{WHT};border:1px solid {BDR};border-left:3px solid {T}"></span>Mejor 3ro (top 8)</span>
+      <span class="ley-item"><span class="ley-dot" style="background:{GRY};border:1px solid {BDR}"></span>Eliminado / fuera del top 8</span>
+    </div>
+    <div class="grupos" id="groups-inner">{_render_groups(standings, live_teams, thirds_advancing_set)}</div>
+  </div>
 </div>
 
-<div id="thirds-container">{_render_thirds(standings)}</div>
+<div class="sec">
+  <div class="sec-hdr" onclick="toggleSec('terceros')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Mejor Tercero — Mundial 2026</p>
+    <button class="sec-toggle" id="st-terceros">▲</button>
+  </div>
+  <div class="sec-body" id="sb-terceros">
+    <div id="thirds-inner">{_render_thirds(standings)}</div>
+  </div>
+</div>
 <div class="divider"></div>
 
 <div class="sec">
-  <p class="sec-t">Bracket — Hacé clic para simular el avance</p>
-  <div class="llaves-wrap">
-    {_render_llaves(matchups)}
+  <div class="sec-hdr" onclick="toggleSec('bracket')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Bracket — Hacé clic para simular el avance</p>
+    <button class="sec-toggle" id="st-bracket">▲</button>
   </div>
-  {_render_mobile_bracket(matchups)}
-  <button class="reset-btn" onclick="resetBracket()">↺ Resetear simulación</button>
+  <div class="sec-body" id="sb-bracket">
+    <div class="llaves-wrap">
+      {_render_llaves(matchups)}
+    </div>
+    {_render_mobile_bracket(matchups)}
+    <button class="reset-btn" onclick="resetBracket()">↺ Resetear simulación</button>
+  </div>
 </div>
 
 <div class="divider"></div>
-<div id="scorers-container">{_render_scorers(standings)}</div>
+<div class="sec">
+  <div class="sec-hdr" onclick="toggleSec('goleadores')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Goleadores — Mundial 2026</p>
+    <button class="sec-toggle" id="st-goleadores">▲</button>
+  </div>
+  <div class="sec-body" id="sb-goleadores">
+    <div id="scorers-inner">{_render_scorers(standings)}</div>
+  </div>
+</div>
 
 <!-- Botón flotante sugerencias -->
 <button class="fab-sug" onclick="openSug()" title="Enviar sugerencia">✉ Sugerencias</button>
@@ -753,6 +790,31 @@ function navRender() {{
   if (next) next.disabled = (_navIdx === _navDates.length - 1);
 }}
 
+// ── Secciones colapsables ─────────────────────────────────────────────────
+var SEC = {{}};
+function loadSecs() {{ try {{ SEC = JSON.parse(localStorage.getItem('sec_states') || '{{}}'); }} catch(e) {{ SEC={{}}; }} }}
+function saveSecs() {{ localStorage.setItem('sec_states', JSON.stringify(SEC)); }}
+function toggleSec(id) {{
+  var body = document.getElementById('sb-' + id);
+  var btn  = document.getElementById('st-' + id);
+  if (!body) return;
+  var collapsed = body.classList.toggle('sec-collapsed');
+  if (btn) btn.textContent = collapsed ? '▼' : '▲';
+  SEC[id] = collapsed;
+  saveSecs();
+}}
+function restoreSecs() {{
+  loadSecs();
+  Object.keys(SEC).forEach(function(id) {{
+    if (SEC[id]) {{
+      var body = document.getElementById('sb-' + id);
+      var btn  = document.getElementById('st-' + id);
+      if (body) body.classList.add('sec-collapsed');
+      if (btn) btn.textContent = '▼';
+    }}
+  }});
+}}
+
 function pollData() {{
   fetch('data.json?_=' + Date.now())
     .then(function(r) {{ return r.json(); }})
@@ -760,8 +822,8 @@ function pollData() {{
       var gi = document.getElementById('groups-inner');
       if (gi && d.groups_html !== undefined) gi.innerHTML = d.groups_html;
 
-      var tc = document.getElementById('thirds-container');
-      if (tc && d.thirds_html !== undefined) tc.innerHTML = d.thirds_html;
+      var ti = document.getElementById('thirds-inner');
+      if (ti && d.thirds_html !== undefined) ti.innerHTML = d.thirds_html;
 
       if (d.dates_html !== undefined && d.today_date !== undefined) {{
         navInit(d.today_date, d.dates_html);
@@ -783,8 +845,8 @@ function pollData() {{
       }}
       if (r32Updated) restore();
 
-      var sc = document.getElementById('scorers-container');
-      if (sc && d.scorers_html !== undefined) sc.innerHTML = d.scorers_html;
+      var si = document.getElementById('scorers-inner');
+      if (si && d.scorers_html !== undefined) si.innerHTML = d.scorers_html;
 
       var upd = document.getElementById('upd');
       if (upd && d.updated) upd.textContent = d.updated;
@@ -810,7 +872,7 @@ function scaleBracket() {{
 }}
 
 document.addEventListener("DOMContentLoaded", function() {{
-  load(); restore();
+  load(); restore(); restoreSecs();
   applyDataUtc();
   scaleBracket();
   window.addEventListener('resize', scaleBracket);
@@ -882,11 +944,7 @@ def _render_groups(standings: Dict, live_teams: Set[str], thirds_advancing_set: 
 def _render_thirds(standings: Dict) -> str:
     thirds = standings.get("_thirds_ranked", [])
     if not thirds:
-        return f"""
-  <div class="sec">
-    <p class="sec-t">Mejor Tercero — Mundial 2026</p>
-    <p style="font-size:.75rem;color:{MUT};margin-top:4px">Disponible al completarse la primera ronda de grupos.</p>
-  </div>"""
+        return f'<p style="font-size:.75rem;color:{MUT};margin-top:4px">Disponible al completarse la primera ronda de grupos.</p>'
     filas = ""
     for i, entry in enumerate(thirds, 1):
         s = entry["stats"]
@@ -902,8 +960,6 @@ def _render_thirds(standings: Dict) -> str:
       <td>{dg}</td><td><span class="pts">{s.points}</span></td>
     </tr>"""
     return f"""
-  <div class="sec">
-    <p class="sec-t">Mejor Tercero — Mundial 2026</p>
     <div style="max-width:660px;margin:0 auto">
       <div class="grupo">
         <table>
@@ -911,8 +967,7 @@ def _render_thirds(standings: Dict) -> str:
           <tbody>{filas}</tbody>
         </table>
       </div>
-    </div>
-  </div>"""
+    </div>"""
 
 
 # ── Match card R32 ─────────────────────────────────────────────────────────
@@ -1166,7 +1221,7 @@ def _hoy_centro(m: dict) -> str:
 def _render_scorers(standings: Dict) -> str:
     scorers = standings.get("_scorers", [])
     if not scorers:
-        return ""
+        return f'<p style="font-size:.75rem;color:{MUT};margin-top:4px">Disponible próximamente.</p>'
     filas = ""
     for i, s in enumerate(scorers, 1):
         filas += f"""
@@ -1177,8 +1232,6 @@ def _render_scorers(standings: Dict) -> str:
       <td><span class="pts">{s["goals"]}</span></td>
     </tr>"""
     return f"""
-  <div class="sec">
-    <p class="sec-t">Goleadores — Mundial 2026</p>
     <div style="max-width:500px">
       <div class="grupo">
         <table>
@@ -1191,8 +1244,7 @@ def _render_scorers(standings: Dict) -> str:
           <tbody>{filas}</tbody>
         </table>
       </div>
-    </div>
-  </div>"""
+    </div>"""
 
 
 def _render_today_matches(matches: list) -> str:
