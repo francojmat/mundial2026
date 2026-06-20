@@ -81,3 +81,51 @@ class APIFootballClient:
             lambda st: ((st.get("cards") or {}).get("red") or 0)
                        + ((st.get("cards") or {}).get("yellowred") or 0),
         )
+
+    # ── Plantel y cuerpo técnico ──────────────────────────────────────────
+    def get_squad(self, team_id: int) -> list:
+        """Plantel completo de un equipo: [{id, name, number, age, position, photo}]."""
+        try:
+            raw = self._get("/players/squads", {"team": team_id})
+        except Exception:
+            return []
+        resp = raw.get("response") or []
+        if not resp:
+            return []
+        out = []
+        for p in resp[0].get("players", []):
+            out.append({
+                "id":       p.get("id"),
+                "name":     p.get("name", ""),
+                "number":   p.get("number"),
+                "age":      p.get("age"),
+                "position": p.get("position", ""),
+                "photo":    p.get("photo", ""),
+            })
+        return out
+
+    def get_coach(self, team_id: int) -> dict:
+        """DT actual de un equipo: {name, age, nationality, photo}."""
+        try:
+            raw = self._get("/coachs", {"team": team_id})
+        except Exception:
+            return {}
+        resp = raw.get("response") or []
+        # El DT actual es el que tiene a este equipo con career.end == null.
+        current = None
+        for c in resp:
+            for car in (c.get("career") or []):
+                if (car.get("team") or {}).get("id") == team_id and not car.get("end"):
+                    current = c
+                    break
+            if current:
+                break
+        c = current or (resp[0] if resp else None)
+        if not c:
+            return {}
+        return {
+            "name":        c.get("name", ""),
+            "age":         c.get("age"),
+            "nationality": c.get("nationality", ""),
+            "photo":       c.get("photo", ""),
+        }

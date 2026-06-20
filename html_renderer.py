@@ -1,5 +1,6 @@
 """Renderer HTML — identidad Zevra + bracket interactivo."""
 
+import urllib.parse
 from datetime import datetime
 from typing import Dict, List, Set
 from countries import traducir, nombre_es
@@ -258,6 +259,8 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .hoy-badge-live{{color:{T};font-size:.6rem;font-weight:700;text-transform:uppercase;display:inline-flex;align-items:center;gap:2px;letter-spacing:.04em}}
     .hoy-badge-live .dot{{width:5px;height:5px}}
     .hoy-badge-fin{{color:{MUT};font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}}
+    .team-link{{color:inherit;text-decoration:none;cursor:pointer;border-bottom:1px dotted {BDR2}}}
+    .team-link:hover{{color:{T};border-bottom-color:{T}}}
     .ven-count{{color:{MUT};font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}}
     .ven-city{{font-size:.72rem;color:{MUT};margin-top:3px}}
     .ven-m{{display:grid;grid-template-columns:34px 1fr auto 1fr;align-items:center;gap:6px;padding:3px 0;font-size:.74rem}}
@@ -1030,7 +1033,9 @@ def _render_groups(standings: Dict, live_teams: Set[str], thirds_advancing_set: 
             dg = (f'<span class="dg-p">{s.goal_diff:+d}</span>' if s.goal_diff > 0
                   else f'<span class="dg-n">{s.goal_diff:+d}</span>' if s.goal_diff < 0
                   else "0")
-            name_html = f'<span class="live-name">{traducir(team)}</span>' if is_live_team else traducir(team)
+            name_inner = f'<span class="live-name">{traducir(team)}</span>' if is_live_team else traducir(team)
+            team_q = urllib.parse.quote(team)
+            name_html = f'<a class="team-link" href="/plantel.html?t={team_q}">{name_inner}</a>'
             filas += f"""
         <tr class="{cls}">
           <td>{pos}</td><td>{name_html}</td>

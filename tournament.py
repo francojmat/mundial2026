@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 
 RANKINGS_REFRESH = 600    # segundos: los rankings se recalculan cada 10 min
 VENUES_REFRESH = 1800     # segundos: estadios cada 30 min (la estructura es fija, refresca scores)
+SQUADS_REFRESH = 604800   # segundos: planteles 1 vez por semana (los rosters no cambian)
+SQUADS_PER_RUN = 10       # tope de equipos a refrescar por corrida (evita ráfaga de llamadas)
 
 
 def _now():
@@ -78,22 +80,82 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
     standings["_yellows"] = rk.get("yellows", [])
     standings["_reds"]    = rk.get("reds", [])
 
-    # Estadios: salen de los fixtures (nombre, ciudad, partidos). No cambian → cache diario.
-    vn = cache.get("venues") or {}
-    if _stale(vn, VENUES_REFRESH):
+    # Fixtures: se usan para estadios y para mapear nombre football-data → team_id API-Football.
+    matches_by_date = standings.get("_matches_by_date", {})
+    need_fixtures = _stale(cache.get("venues") or {}, VENUES_REFRESH) or not cache.get("team_id_map")
+    fixtures = None
+    if need_fixtures:
         try:
             fixtures = client.get_all_fixtures()
-            if fixtures:
-                vn = {"list": _build_venues(fixtures), "last_fetch": _now().isoformat()}
-                cache["venues"] = vn
-                dirty = True
         except Exception:
-            vn = cache.get("venues") or {}
+            fixtures = None
 
+    # Estadios
+    vn = cache.get("venues") or {}
+    if fixtures and _stale(vn, VENUES_REFRESH):
+        vn = {"list": _build_venues(fixtures), "last_fetch": _now().isoformat()}
+        cache["venues"] = vn
+        dirty = True
     standings["_venues"] = vn.get("list", [])
+
+    # Mapa nombre → team_id (se arma una vez con los fixtures, después persiste)
+    tid_map = cache.get("team_id_map") or {}
+    if fixtures and matches_by_date:
+        new_map = _build_team_id_map(matches_by_date, fixtures)
+        if new_map:
+            tid_map = {**tid_map, **new_map}
+            cache["team_id_map"] = tid_map
+            dirty = True
+
+    # Planteles + coach (cache semanal, con tope por corrida)
+    squads = cache.get("squads") or {}
+    if tid_map:
+        budget = SQUADS_PER_RUN
+        for name, tid in tid_map.items():
+            if budget <= 0:
+                break
+            entry = squads.get(name)
+            if entry and not _stale(entry, SQUADS_REFRESH):
+                continue
+            try:
+                players = client.get_squad(tid)
+            except Exception:
+                continue
+            if players:
+                squads[name] = {
+                    "players": players,
+                    "coach":   client.get_coach(tid),
+                    "last_fetch": _now().isoformat(),
+                }
+                budget -= 1
+                dirty = True
+        cache["squads"] = squads
+    standings["_squads"] = squads
 
     if dirty:
         _save(cache_path, cache)
+
+
+def _build_team_id_map(matches_by_date: dict, fixtures: list) -> dict:
+    """Mapea nombre de equipo (football-data) → team_id (API-Football) por timestamp de kickoff."""
+    out = {}
+    for matches in matches_by_date.values():
+        for m in matches:
+            utc = _parse_iso(m.get("utc_date", ""))
+            if not utc:
+                continue
+            for fx in fixtures:
+                fxd = _parse_iso((fx.get("fixture") or {}).get("date", ""))
+                if fxd and abs((fxd - utc).total_seconds()) <= 300:
+                    teams = fx.get("teams") or {}
+                    h = (teams.get("home") or {}).get("id")
+                    a = (teams.get("away") or {}).get("id")
+                    if m.get("home") and h:
+                        out[m["home"]] = h
+                    if m.get("away") and a:
+                        out[m["away"]] = a
+                    break
+    return out
 
 
 def _build_venues(fixtures: list) -> list:
