@@ -69,9 +69,19 @@ generar 1 archivo por entidad). `generate.py` escribe la shell y el JSON cada co
   fragmento. `pages.render_squad_fragment()` arma el plantel (jugadores con foto agrupados por
   posición, expandibles, + DT aparte). Link desde cada país en Posiciones (`_render_groups`).
   Datos: `players/squads` + `coachs` por equipo. `planteles.json` keyed por nombre football-data.
+- **Ver Partido** (`partido.html` + `partidos.json`, en `match_page.py`): la shell lee `?id=<match_id>`
+  e inyecta el detalle: alineaciones (formación + XI + suplentes + DT), estadísticas del partido
+  (barras comparativas home/away), rendimiento por jugador (rating/min/G/A) y posiciones del grupo.
+  Botón "VER PARTIDO" arriba del detalle expandible (`_hoy_detail_html`, solo si `m["has_detail"]`).
+  Datos: `fixtures/lineups` + `fixtures/statistics` + `fixtures/players` por partido jugado/en vivo.
 - `tournament.py` cachea en `apifootball_cache.json`: rankings (asist/amar/rojas, refresh 10min),
-  estadios (refresh 30min), `team_id_map` (nombre football-data → team_id API-Football, vía
-  timestamp de kickoff), y `squads` (refresh semanal, tope 10 equipos/corrida para no saturar).
+  estadios (refresh 30min), `team_id_map` + `fixture_id_map`, `squads` (semanal, 10 equipos/corrida),
+  y `match_details` (por partido; FINISHED se cachea para siempre, en vivo refresca cada 2min, tope
+  5 partidos/corrida).
+- **CRÍTICO — mapeo de fixtures:** `apifootball_client.resolve_fixture()` matchea football-data ↔
+  API-Football por **timestamp de kickoff Y nombres de equipo** (vía nombre_es). NO matchear solo
+  por timestamp: dos partidos simultáneos se cruzan (bug real: Argentina mostraba plantel de Austria).
+  Lo usan events.py y tournament.py.
 - Identidad visual de marca obligatoria en TODO lo nuevo (tokens en html_renderer.py: T=#c2410c…).
 - Toda página nueva debe tener retorno a la principal (botón "← Volver al inicio").
 
@@ -145,6 +155,9 @@ NOTA: al pasar a pago, API-Football cambia la API key (la del free queda muerta)
 - 💡 Nota de diseño: el detalle desplegable solo se renderiza para los partidos de HOY
   (`_render_today_matches`). Partidos de días previos no muestran el detalle en la web aunque
   estén cacheados. Si se quiere mostrar historial con detalle, hay que extender el render.
+- ✅ Features agregadas (jun 2026): rankings (asistencias/amarillas/rojas), Estadios, páginas de
+  Plantel por país (con foto) y Ver Partido. Feature "Lesionados/Sancionados" NO se hizo: el
+  endpoint `injuries` devuelve 0 para selecciones en el Mundial (sin datos).
 
 ## Gotcha operativo
 El cron pushea a `main` cada ~60s. Al trabajar local, los push chocan seguido. Patrón:
