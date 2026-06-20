@@ -285,6 +285,21 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .sec-body.sec-collapsed{{display:none}}
     .sec-toggle{{background:none;border:none;color:{DIM};font-size:.7rem;cursor:pointer;padding:0;line-height:1;font-family:inherit}}
 
+    /* ── Sidebar de navegación ── */
+    [id^="sec-"]{{scroll-margin-top:16px}}
+    .navfab{{position:fixed;bottom:20px;left:20px;z-index:55;background:{T};color:{WHT};border:none;border-radius:12px;width:46px;height:46px;font-size:1.3rem;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;line-height:1}}
+    .navfab:hover{{opacity:.92}}
+    .nav-overlay{{position:fixed;inset:0;background:rgba(33,28,20,.42);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}}
+    .nav-overlay.open{{opacity:1;pointer-events:auto}}
+    .nav-drawer{{position:fixed;top:0;left:0;height:100%;width:262px;max-width:82%;background:{WHT};z-index:65;transform:translateX(-100%);transition:transform .25s ease;box-shadow:2px 0 20px rgba(0,0,0,.14);display:flex;flex-direction:column;padding:18px 0;overflow-y:auto}}
+    .nav-drawer.open{{transform:translateX(0)}}
+    .nav-dh{{display:flex;justify-content:space-between;align-items:center;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:{DIM};padding:0 20px 14px;margin-bottom:6px;border-bottom:1px solid {BDR}}}
+    .nav-close{{background:none;border:none;font-size:1.1rem;color:{MUT};cursor:pointer;line-height:1;padding:0}}
+    .nav-link{{display:flex;align-items:center;gap:11px;padding:11px 20px;font-size:.9rem;font-weight:600;color:{TXT};cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit;border-left:3px solid transparent}}
+    .nav-link:hover{{background:{GRY};color:{T};border-left-color:{T}}}
+    .nav-dot{{width:7px;height:7px;border-radius:50%;background:{BDR2};flex-shrink:0}}
+    .nav-link:hover .nav-dot{{background:{T}}}
+
     /* ── Mobile bracket ── */
     .mobile-bracket{{display:none}}
     @media(max-width:900px){{
@@ -300,6 +315,21 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </head>
 <body>
 
+<button class="navfab" onclick="toggleNav()" aria-label="Ir a sección" title="Ir a sección">&#9776;</button>
+<div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
+<nav class="nav-drawer" id="navDrawer">
+  <div class="nav-dh"><span>Ir a sección</span><button class="nav-close" onclick="closeNav()" aria-label="Cerrar">&#10005;</button></div>
+  <button class="nav-link" onclick="navGo('hoy')"><span class="nav-dot"></span>Partidos</button>
+  <button class="nav-link" onclick="navGo('grupos')"><span class="nav-dot"></span>Posiciones</button>
+  <button class="nav-link" onclick="navGo('terceros')"><span class="nav-dot"></span>Mejor Tercero</button>
+  <button class="nav-link" onclick="navGo('bracket')"><span class="nav-dot"></span>Bracket</button>
+  <button class="nav-link" onclick="navGo('goleadores')"><span class="nav-dot"></span>Goleadores</button>
+  <button class="nav-link" onclick="navGo('asistencias')"><span class="nav-dot"></span>Asistencias</button>
+  <button class="nav-link" onclick="navGo('amarillas')"><span class="nav-dot"></span>Tarjetas amarillas</button>
+  <button class="nav-link" onclick="navGo('rojas')"><span class="nav-dot"></span>Tarjetas rojas</button>
+  <button class="nav-link" onclick="navGo('estadios')"><span class="nav-dot"></span>Estadios</button>
+</nav>
+
 <div class="hdr">
   <h1>Mundial 2026</h1>
   <span class="pill"><span class="dot"></span>En vivo</span>
@@ -307,7 +337,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 <p class="upd">Última actualización: <span id="upd">{updated}</span></p>
 
 <div id="today-container">
-<div class="sec">
+<div class="sec" id="sec-hoy">
   <div style="position:relative">
     <div class="hoy-nav">
       <button class="hoy-nav-btn" id="hoy-prev" onclick="navDay(-1)">&#8249;</button>
@@ -323,7 +353,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 <div class="divider"></div>
 </div>
 
-<div class="sec">
+<div class="sec" id="sec-grupos">
   <div class="sec-hdr" onclick="toggleSec('grupos')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Posiciones — Fase de grupos</p>
     <button class="sec-toggle" id="st-grupos">▲ CERRAR</button>
@@ -338,7 +368,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   </div>
 </div>
 
-<div class="sec">
+<div class="sec" id="sec-terceros">
   <div class="sec-hdr" onclick="toggleSec('terceros')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Mejor Tercero — Mundial 2026</p>
     <button class="sec-toggle" id="st-terceros">▲ CERRAR</button>
@@ -349,7 +379,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 <div class="divider"></div>
 
-<div class="sec">
+<div class="sec" id="sec-bracket">
   <div class="sec-hdr" onclick="toggleSec('bracket')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Bracket — Hacé clic para simular el avance</p>
     <button class="sec-toggle" id="st-bracket">▲ CERRAR</button>
@@ -364,7 +394,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
-<div class="sec">
+<div class="sec" id="sec-goleadores">
   <div class="sec-hdr" onclick="toggleSec('goleadores')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Goleadores — Mundial 2026</p>
     <button class="sec-toggle" id="st-goleadores">▲ CERRAR</button>
@@ -375,7 +405,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
-<div class="sec">
+<div class="sec" id="sec-asistencias">
   <div class="sec-hdr" onclick="toggleSec('asistencias')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Asistencias — Mundial 2026</p>
     <button class="sec-toggle" id="st-asistencias">▲ CERRAR</button>
@@ -386,7 +416,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
-<div class="sec">
+<div class="sec" id="sec-amarillas">
   <div class="sec-hdr" onclick="toggleSec('amarillas')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Tarjetas amarillas — Mundial 2026</p>
     <button class="sec-toggle" id="st-amarillas">▲ CERRAR</button>
@@ -397,7 +427,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
-<div class="sec">
+<div class="sec" id="sec-rojas">
   <div class="sec-hdr" onclick="toggleSec('rojas')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Tarjetas rojas — Mundial 2026</p>
     <button class="sec-toggle" id="st-rojas">▲ CERRAR</button>
@@ -408,7 +438,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
-<div class="sec">
+<div class="sec" id="sec-estadios">
   <div class="sec-hdr" onclick="toggleSec('estadios')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Estadios — Mundial 2026</p>
     <button class="sec-toggle" id="st-estadios">▲ CERRAR</button>
@@ -919,6 +949,28 @@ function restoreSecs() {{
       if (btn) btn.textContent = '▼ ABRIR';
     }}
   }});
+}}
+
+// ── Sidebar de navegación ─────────────────────────────────────────────────
+function toggleNav() {{
+  document.getElementById('navDrawer').classList.toggle('open');
+  document.getElementById('navOverlay').classList.toggle('open');
+}}
+function closeNav() {{
+  document.getElementById('navDrawer').classList.remove('open');
+  document.getElementById('navOverlay').classList.remove('open');
+}}
+function navGo(secId) {{
+  closeNav();
+  var body = document.getElementById('sb-' + secId);
+  if (body && body.classList.contains('sec-collapsed')) {{
+    body.classList.remove('sec-collapsed');
+    var btn = document.getElementById('st-' + secId);
+    if (btn) btn.textContent = '▲ CERRAR';
+    SEC[secId] = false; saveSecs();
+  }}
+  var target = document.getElementById('sec-' + secId);
+  if (target) setTimeout(function() {{ target.scrollIntoView({{behavior: 'smooth', block: 'start'}}); }}, 60);
 }}
 
 function pollData() {{
