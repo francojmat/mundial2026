@@ -313,22 +313,44 @@ async function handleApply(request, env) {
   }
 
   // The content from GitHub is already base64; we just pass it through
-  const updateBody = {
-    message: `AI apply: ${body.description || filename}`,
-    content: previewFile.content.replace(/\n/g, ""),
-    branch:  "main",
-  };
-  if (mainSha) updateBody.sha = mainSha;
+  const content = previewFile.content.replace(/\n/g, "");
 
-  const updateResp = await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}`, {
-    method:  "PUT",
-    headers: { ...ghHeaders, "Content-Type": "application/json" },
-    body:    JSON.stringify(updateBody),
-  });
+  // Retry up to 3 times — cron jobs can push to main between our GET and PUT
+  let updateResp;
+  let currentSha = mainSha;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const updateBody = {
+      message: `AI apply: ${body.description || filename}`,
+      content,
+      branch: "main",
+    };
+    if (currentSha) updateBody.sha = currentSha;
+
+    updateResp = await fetch(`https://api.github.com/repos/${REPO}/contents/${filename}`, {
+      method:  "PUT",
+      headers: { ...ghHeaders, "Content-Type": "application/json" },
+      body:    JSON.stringify(updateBody),
+    });
+
+    if (updateResp.ok) break;
+
+    if (updateResp.status === 409 && attempt < 2) {
+      // SHA stale — refetch and retry
+      const fresh = await fetch(
+        `https://api.github.com/repos/${REPO}/contents/${filename}?ref=main`,
+        { headers: ghHeaders }
+      );
+      if (fresh.ok) currentSha = (await fresh.json()).sha;
+      continue;
+    }
+
+    const err = await updateResp.text();
+    return json({ error: `GitHub error: ${err}` }, 502);
+  }
 
   if (!updateResp.ok) {
     const err = await updateResp.text();
-    return json({ error: `GitHub error: ${err}` }, 502);
+    return json({ error: `GitHub error tras reintentos: ${err}` }, 502);
   }
 
   // Persist this change to memory
