@@ -72,8 +72,19 @@ generar 1 archivo por entidad). `generate.py` escribe la shell y el JSON cada co
 - **Ver Partido** (`partido.html` + `partidos.json`, en `match_page.py`): la shell lee `?id=<match_id>`
   e inyecta el detalle: alineaciones (formación + XI + suplentes + DT), estadísticas del partido
   (barras comparativas home/away), rendimiento por jugador (rating/min/G/A) y posiciones del grupo.
-  Botón "VER PARTIDO" arriba del detalle expandible (`_hoy_detail_html`, solo si `m["has_detail"]`).
-  Datos: `fixtures/lineups` + `fixtures/statistics` + `fixtures/players` por partido jugado/en vivo.
+  Botón "VER PARTIDO" arriba del detalle expandible (`_hoy_detail_html`) en TODOS los partidos.
+  `generate.py` arma un fragmento por CADA partido; si no hay alineaciones/stats todavía, muestra
+  header + posiciones + "sin datos aún". Datos: `fixtures/lineups`+`statistics`+`players`.
+  El detalle se enriquece priorizando partidos EN VIVO y los más recientes (no los más viejos).
+- **Sidebar de navegación**: botón flotante ☰ (abajo-izq) que despliega un drawer con las 9 secciones.
+  `navGo(secId)` cierra el drawer, expande la sección si está colapsada y hace scroll suave.
+  Cada `<div class="sec">` tiene `id="sec-<secId>"`.
+- **Rankings** (asistencias/amarillas/rojas): top 10 + "Ver todos" (`toggleList`), filtran value>0
+  (no rellenan con ceros). Goleadores: football-data, `limit=200` (da más que las 20 de API-Football).
+- **Estadios**: capacidad oficial WC2026 de los 16 (dict curado `_VENUE_CAPACITY` en tournament.py,
+  fuente Wikipedia/FIFA — la API solo tiene 8 y con capacidad general). Superficie + foto desde la API
+  (solo 8 con id). Las fotos placeholder se filtran por tamaño (`_image_is_real`, <35KB = placeholder).
+  En la lista de partidos por estadio: resultado si jugado, si no el horario (hora argentina).
 - `tournament.py` cachea en `apifootball_cache.json`: rankings (asist/amar/rojas, refresh 10min),
   estadios (refresh 30min), `team_id_map` + `fixture_id_map`, `squads` (semanal, 10 equipos/corrida),
   y `match_details` (por partido; FINISHED se cachea para siempre, en vivo refresca cada 2min, tope
