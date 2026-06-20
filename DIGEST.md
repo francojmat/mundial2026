@@ -74,18 +74,16 @@ encabezado del cuadro.
 **Degradación elegante:** sin `APIFOOTBALL_KEY`, `apifootball=None` y no se llama a la API
 → el sitio funciona igual, solo muestra el árbitro en el detalle. No rompe nada.
 
-## ⚠️ BLOQUEANTE: API-Football free NO cubre season 2026
-Verificado 2026-06-20: el endpoint `/fixtures?league=1&season=2026` con plan Free devuelve
-`"Free plans do not have access to this season, try from 2022 to 2024."`. O sea, el detalle
-de eventos del Mundial actual NO está disponible en el free tier. El código funciona
-(probado con la final 2022, fixture 979139: trae penal de Messi, gol de Di María, etc.),
-pero para datos 2026 hace falta **plan pago de API-Football** o una **fuente alternativa**.
-Decisión pendiente del usuario. La key está cargada y activa; el sistema corre sin error
-(no encuentra fixtures 2026 → cae a solo-árbitro vía degradación).
+## API-Football: plan Pro ACTIVO (2026-06-20)
+El free tier NO daba acceso a season 2026 (error "Free plans do not have access to this
+season"). Se contrató el **plan Pro de API-Football (USD 19/mes, 7.500 req/día)** que sí da
+acceso a 2026. Verificado: trae los 72 partidos del Mundial con eventos reales (hat-trick de
+Messi vs Algeria, Mbappé, Haaland, etc.). El detalle de eventos ya aparece en la web.
+NOTA: al pasar a pago, API-Football cambia la API key (la del free queda muerta).
 
 ## Secrets (GitHub Actions → Settings → Secrets)
-- `FOOTBALL_API_KEY` — football-data.org (ya cargado)
-- `APIFOOTBALL_KEY` — API-Football (cargado y activo; pero free no cubre 2026)
+- `FOOTBALL_API_KEY` — football-data.org (cargado)
+- `APIFOOTBALL_KEY` — API-Football, **key del plan Pro** (cargado y activo)
 
 ## Archivos principales
 - `generate.py` — entrypoint; lee `FOOTBALL_API_KEY` y `APIFOOTBALL_KEY` del env.
@@ -101,11 +99,15 @@ Decisión pendiente del usuario. La key está cargada y activa; el sistema corre
 ## Estado actual (2026-06-20)
 - ✅ Cuadros de partido desplegables (chevron, goles/tarjetas/cambios/árbitro).
 - ✅ Métricas PostHog ampliadas en admin (países, dispositivos, referentes, horas pico, únicos).
-- ✅ Sistema de dos APIs implementado, testeado y deployado en modo degradado.
-- ⏳ PENDIENTE: el usuario crea cuenta en API-Football y carga `APIFOOTBALL_KEY`. Al cargarla,
-  el detalle de eventos reales empieza a aparecer en la próxima corrida.
-- 💡 Futuro: si el tráfico lo justifica, plan pago de API-Football (~USD 19/mes, 7.500 req/día)
-  para detalle instantáneo en todos los partidos simultáneos.
+- ✅ Sistema de dos APIs implementado, testeado y deployado.
+- ✅ **API-Football Pro ACTIVO**: detalle de eventos reales del 2026 funcionando en la web.
+- ✅ Workflow a prueba de fallos (continue-on-error + push resiliente con exit 0) → no más
+  mails de "Run failed". Ver sección "Gotcha operativo".
+- 💡 Futuro posible: migrar a API-Football como ÚNICA fuente (reemplazar football-data.org)
+  para simplificar el stack a una sola API. No urgente; el sistema de dos APIs anda bien.
+- 💡 Nota de diseño: el detalle desplegable solo se renderiza para los partidos de HOY
+  (`_render_today_matches`). Partidos de días previos no muestran el detalle en la web aunque
+  estén cacheados. Si se quiere mostrar historial con detalle, hay que extender el render.
 
 ## Gotcha operativo
 El cron pushea a `main` cada ~60s. Al trabajar local, los push chocan seguido. Patrón:
