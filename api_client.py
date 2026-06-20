@@ -26,6 +26,86 @@ class WorldCupClient:
         params = {"stage": stage} if stage else {}
         return self._get(f"/competitions/{COMPETITION}/matches", params=params)
 
+    def get_match_details(self, match_id: int) -> dict:
+        """Fetch detailed single-match data (goals, bookings, substitutions)."""
+        try:
+            return self._get(f"/matches/{match_id}")
+        except Exception:
+            return {}
+
+    def enrich_matches_with_events(self, matches_by_date: dict, days_back: int = 4) -> None:
+        """
+        Para partidos terminados o en vivo de los últimos `days_back` días,
+        obtiene goles, tarjetas y cambios desde el endpoint individual.
+        Modifica matches_by_date in-place. Respeta el rate limit de 10 req/min.
+        """
+        from datetime import datetime, timezone, timedelta
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+
+        for matches in matches_by_date.values():
+            for m in matches:
+                status = m.get("status", "")
+                if status not in ("FINISHED", "IN_PLAY", "PAUSED"):
+                    continue
+
+                utc_str = m.get("utc_date", "")
+                if not utc_str:
+                    continue
+
+                try:
+                    utc_dt = datetime.fromisoformat(utc_str.replace("Z", "+00:00"))
+                    if status == "FINISHED" and utc_dt < cutoff:
+                        continue
+                except Exception:
+                    continue
+
+                match_id = m.get("match_id")
+                if not match_id:
+                    continue
+
+                time.sleep(6.2)  # 10 req/min → 1 cada 6s
+                detail = self.get_match_details(match_id)
+                if not detail:
+                    continue
+
+                goals_detail = []
+                for g in (detail.get("goals") or []):
+                    minute = str(g.get("minute") or "")
+                    if g.get("injuryTime"):
+                        minute += f'+{g["injuryTime"]}'
+                    goals_detail.append({
+                        "minute": minute,
+                        "scorer": (g.get("scorer") or {}).get("name", ""),
+                        "team":   (g.get("team") or {}).get("shortName") or (g.get("team") or {}).get("name", ""),
+                        "assist": (g.get("assist") or {}).get("name", ""),
+                        "type":   g.get("type", "NORMAL"),
+                    })
+
+                bookings = []
+                for b in (detail.get("bookings") or []):
+                    minute = str(b.get("minute") or "")
+                    if b.get("injuryTime"):
+                        minute += f'+{b["injuryTime"]}'
+                    bookings.append({
+                        "minute": minute,
+                        "player": (b.get("player") or {}).get("name", ""),
+                        "team":   (b.get("team") or {}).get("shortName") or (b.get("team") or {}).get("name", ""),
+                        "card":   b.get("card", "YELLOW"),
+                    })
+
+                subs = []
+                for s in (detail.get("substitutions") or []):
+                    subs.append({
+                        "minute":     str(s.get("minute") or ""),
+                        "player_out": (s.get("playerOut") or {}).get("name", ""),
+                        "player_in":  (s.get("playerIn") or {}).get("name", ""),
+                        "team":       (s.get("team") or {}).get("shortName") or (s.get("team") or {}).get("name", ""),
+                    })
+
+                m["goals_detail"]  = goals_detail
+                m["bookings"]      = bookings
+                m["substitutions"] = subs
+
     def get_scorers(self, limit: int = 10) -> list:
         raw = self._get(f"/competitions/{COMPETITION}/scorers", params={"limit": limit})
         result = []
@@ -107,6 +187,7 @@ class WorldCupClient:
                 })
 
             by_date.setdefault(local_date.isoformat(), []).append({
+                "match_id": m.get("id"),
                 "home": home,
                 "away": away,
                 "home_goals": full.get("home"),
@@ -205,6 +286,7 @@ def build_standings(client: WorldCupClient, fifa_rankings: Dict[str, int] = None
                 live_teams.add(m.away)
     result["_live_teams"] = live_teams
     display = client.get_matches_for_display()
+    client.enrich_matches_with_events(display["dates"])
     result["_matches_by_date"] = display["dates"]
     result["_today_date"]      = display["today"]
     result["_today_matches"]   = display["dates"].get(display["today"], [])
