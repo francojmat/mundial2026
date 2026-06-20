@@ -26,16 +26,16 @@ class APIFootballClient:
         resp.raise_for_status()
         return resp.json()
 
-    def get_fixtures_by_date(self, date_iso: str) -> list:
+    def get_all_fixtures(self) -> list:
         """
-        Devuelve todos los partidos del Mundial de una fecha (YYYY-MM-DD).
-        Una sola request resuelve el mapeo de todos los partidos de ese día.
+        Devuelve TODOS los partidos del Mundial de la temporada en una sola request.
+        (El filtro ?date= de API-Football es poco fiable por timezone, así que
+        traemos todo y matcheamos por timestamp del lado nuestro.)
         """
         try:
             data = self._get("/fixtures", {
                 "league": WORLD_CUP_LEAGUE_ID,
                 "season": self.season,
-                "date": date_iso,
             })
             return data.get("response") or []
         except Exception:

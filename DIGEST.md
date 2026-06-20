@@ -61,9 +61,11 @@ enriquece in-place cada partido con `goals_detail`, `bookings`, `substitutions`
 `requests_today` se resetea al cambiar el día (UTC).
 
 **Mapeo de IDs entre APIs:** se matchea cada partido de football-data con el fixture de
-API-Football por **timestamp de kickoff** (tolerancia 5 min). Una request de
-`/fixtures?league=1&season=2026&date=...` resuelve todos los partidos de un día de una.
-El mapeo se cachea en `fixture_map` (no se vuelve a resolver).
+API-Football por **timestamp de kickoff** (tolerancia 5 min). Se traen TODOS los fixtures
+del torneo en UNA request (`/fixtures?league=1&season=2026`, ~104 partidos) y se arma el
+mapa completo. El mapeo se cachea en `fixture_map` y no se vuelve a resolver (el calendario
+no cambia). NO usar el filtro `?date=` de API-Football: es poco fiable por timezone
+(devuelve 0 aunque el partido exista). World Cup = league id **1**.
 
 **Nombres de equipos:** en los eventos se usa `m["home"]`/`m["away"]` (de football-data,
 traducibles al español) según el `team.id` de API-Football, para que coincidan con el
@@ -72,9 +74,18 @@ encabezado del cuadro.
 **Degradación elegante:** sin `APIFOOTBALL_KEY`, `apifootball=None` y no se llama a la API
 → el sitio funciona igual, solo muestra el árbitro en el detalle. No rompe nada.
 
+## ⚠️ BLOQUEANTE: API-Football free NO cubre season 2026
+Verificado 2026-06-20: el endpoint `/fixtures?league=1&season=2026` con plan Free devuelve
+`"Free plans do not have access to this season, try from 2022 to 2024."`. O sea, el detalle
+de eventos del Mundial actual NO está disponible en el free tier. El código funciona
+(probado con la final 2022, fixture 979139: trae penal de Messi, gol de Di María, etc.),
+pero para datos 2026 hace falta **plan pago de API-Football** o una **fuente alternativa**.
+Decisión pendiente del usuario. La key está cargada y activa; el sistema corre sin error
+(no encuentra fixtures 2026 → cae a solo-árbitro vía degradación).
+
 ## Secrets (GitHub Actions → Settings → Secrets)
 - `FOOTBALL_API_KEY` — football-data.org (ya cargado)
-- `APIFOOTBALL_KEY` — API-Football (PENDIENTE de cargar por el usuario)
+- `APIFOOTBALL_KEY` — API-Football (cargado y activo; pero free no cubre 2026)
 
 ## Archivos principales
 - `generate.py` — entrypoint; lee `FOOTBALL_API_KEY` y `APIFOOTBALL_KEY` del env.

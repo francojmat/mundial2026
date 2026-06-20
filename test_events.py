@@ -8,7 +8,7 @@ class FakeClient:
     def __init__(self):
         self.fixture_calls = 0
         self.event_calls = 0
-    def get_fixtures_by_date(self, date_iso):
+    def get_all_fixtures(self):
         self.fixture_calls += 1
         # Devuelve un fixture cuyo kickoff coincide con el partido de prueba
         return [{

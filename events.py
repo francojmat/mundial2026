@@ -115,46 +115,41 @@ def _parse_events(raw_events: list, home_id, away_id, home_name: str, away_name:
     return {"goals_detail": goals, "bookings": bookings, "substitutions": subs}
 
 
-def _resolve_fixture(cache: dict, client, m: dict, date_resolved: set) -> dict:
+def _ensure_fixture_map(cache: dict, client, matches: list, state: dict) -> None:
     """
-    Devuelve {fixture_id, home_id, away_id} para un partido de football-data,
-    matcheando por timestamp de inicio. Cachea el mapeo. Cuesta 1 request por
-    fecha (la primera vez que se ve esa fecha), compartida por todos sus partidos.
-    Devuelve None si no se pudo mapear.
+    Asegura que todos los partidos candidatos tengan su fixture_id de API-Football.
+    Si falta alguno, trae TODOS los fixtures del torneo en una sola request y
+    matchea por timestamp de kickoff (tolerancia 5 min). Cachea el mapeo (no cambia).
+    `state` evita pedir la lista más de una vez por corrida.
     """
-    key = str(m.get("match_id"))
-    if key in cache["fixture_map"]:
-        return cache["fixture_map"][key]
+    pending = [m for m in matches if str(m.get("match_id")) not in cache["fixture_map"]]
+    if not pending or state.get("fixtures_fetched"):
+        return
+    if cache["requests_today"] >= DAILY_BUDGET:
+        return
 
-    utc_dt = _parse_iso(m.get("utc_date", ""))
-    if not utc_dt:
-        return None
-
-    date_iso = utc_dt.date().isoformat()
-    if date_iso in date_resolved:
-        # Ya pedimos los fixtures de esta fecha en esta corrida y no matcheó.
-        return None
-
-    fixtures = client.get_fixtures_by_date(date_iso)
+    fixtures = client.get_all_fixtures()
     cache["requests_today"] += 1
-    date_resolved.add(date_iso)
+    state["fixtures_fetched"] = True
+    if not fixtures:
+        return
 
-    # Match por timestamp de kickoff (tolerancia 5 min) sobre todos los del día.
-    for fx in fixtures:
-        fx_dt = _parse_iso((fx.get("fixture") or {}).get("date", ""))
-        if not fx_dt:
+    for m in pending:
+        utc_dt = _parse_iso(m.get("utc_date", ""))
+        if not utc_dt:
             continue
-        if abs((fx_dt - utc_dt).total_seconds()) <= 300:
-            teams = fx.get("teams") or {}
-            mapping = {
-                "fixture_id": (fx.get("fixture") or {}).get("id"),
-                "home_id":    (teams.get("home") or {}).get("id"),
-                "away_id":    (teams.get("away") or {}).get("id"),
-            }
-            cache["fixture_map"][key] = mapping
-            return mapping
-
-    return None
+        for fx in fixtures:
+            fx_dt = _parse_iso((fx.get("fixture") or {}).get("date", ""))
+            if not fx_dt:
+                continue
+            if abs((fx_dt - utc_dt).total_seconds()) <= 300:
+                teams = fx.get("teams") or {}
+                cache["fixture_map"][str(m.get("match_id"))] = {
+                    "fixture_id": (fx.get("fixture") or {}).get("id"),
+                    "home_id":    (teams.get("home") or {}).get("id"),
+                    "away_id":    (teams.get("away") or {}).get("id"),
+                }
+                break
 
 
 def enrich_with_events(matches_by_date: dict, client, cache_path: str = "events_cache.json") -> None:
@@ -193,7 +188,7 @@ def enrich_with_events(matches_by_date: dict, client, cache_path: str = "events_
                 live_count += 1
 
     interval = _adaptive_interval(live_count)
-    date_resolved = set()
+    state = {}  # evita pedir la lista de fixtures más de una vez por corrida
     dirty = False
 
     for m in candidates:
@@ -224,7 +219,8 @@ def enrich_with_events(matches_by_date: dict, client, cache_path: str = "events_
             need_fetch = False
 
         if need_fetch:
-            mapping = _resolve_fixture(cache, client, m, date_resolved)
+            _ensure_fixture_map(cache, client, candidates, state)
+            mapping = cache["fixture_map"].get(key)
             if mapping and mapping.get("fixture_id") and cache["requests_today"] < DAILY_BUDGET:
                 raw = client.get_fixture_events(mapping["fixture_id"])
                 cache["requests_today"] += 1
