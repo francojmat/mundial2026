@@ -91,7 +91,23 @@
 
 <script>
 const API = 'https://mejortercero.online/api';
+const SESSION_TIMEOUT = 3 * 60 * 1000; // 3 minutos
 let _token = '';
+let _timeoutId = null;
+
+function resetTimeout() {
+  clearTimeout(_timeoutId);
+  _timeoutId = setTimeout(() => {
+    _token = '';
+    sessionStorage.removeItem('adm_token');
+    document.getElementById('panel').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('login-err').style.display = 'none';
+  }, SESSION_TIMEOUT);
+}
+document.addEventListener('click', resetTimeout);
+document.addEventListener('keydown', resetTimeout);
 
 async function sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -133,6 +149,7 @@ function showPanel() {
   document.getElementById('panel').style.display = 'block';
   const now = new Date().toLocaleString('es-AR', { dateStyle:'short', timeStyle:'short' });
   document.getElementById('admin-sub').textContent = `Sesión activa · ${now}`;
+  resetTimeout();
 }
 
 function switchTab(name) {
@@ -148,16 +165,19 @@ function switchTab(name) {
 // ── Métricas ─────────────────────────────────────────────────────────────────
 
 async function loadMetrics() {
-  const res = await fetch(`${API}/metrics?token=${encodeURIComponent(_token)}`);
-  if (!res.ok) return;
-  const d = await res.json();
-
-  document.getElementById('metrics-loading').style.display = 'none';
-  document.getElementById('metrics-content').style.display = 'block';
-  document.getElementById('m-today').textContent = d.today_views.toLocaleString('es-AR');
-  document.getElementById('m-week').textContent  = d.week_views.toLocaleString('es-AR');
-  document.getElementById('m-month').textContent = d.month_views.toLocaleString('es-AR');
-  document.getElementById('m-chart').innerHTML   = renderChart(d.daily);
+  try {
+    const res = await fetch(`${API}/metrics?token=${encodeURIComponent(_token)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d = await res.json();
+    document.getElementById('metrics-loading').style.display = 'none';
+    document.getElementById('metrics-content').style.display = 'block';
+    document.getElementById('m-today').textContent = d.today_views.toLocaleString('es-AR');
+    document.getElementById('m-week').textContent  = d.week_views.toLocaleString('es-AR');
+    document.getElementById('m-month').textContent = d.month_views.toLocaleString('es-AR');
+    document.getElementById('m-chart').innerHTML   = renderChart(d.daily);
+  } catch(e) {
+    document.getElementById('metrics-loading').textContent = 'Error al cargar métricas: ' + e.message;
+  }
 }
 
 function renderChart(daily) {
