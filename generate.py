@@ -12,15 +12,21 @@ import sys
 sys.path.insert(0, ".")
 
 from api_client import WorldCupClient, build_standings
+from apifootball_client import APIFootballClient
 from bracket import build_round_of_32
 from data_renderer import render_data_json
 from html_renderer import render_html
 
 
-def main(api_key: str, html_out: str, json_out: str) -> None:
+def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None) -> None:
     client = WorldCupClient(api_key)
+    apifootball = APIFootballClient(apifootball_key) if apifootball_key else None
+    if apifootball:
+        print("API-Football activo: eventos en vivo habilitados.")
+    else:
+        print("API-Football sin key: solo árbitro (sin goles/tarjetas/cambios).")
     print("Fetching datos...")
-    standings = build_standings(client)
+    standings = build_standings(client, apifootball=apifootball)
     matchups = build_round_of_32(standings, standings.get("_thirds_advancing", []))
 
     html = render_html(standings, matchups)
@@ -38,6 +44,7 @@ def main(api_key: str, html_out: str, json_out: str) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--key", default=os.environ.get("FOOTBALL_API_KEY"))
+    parser.add_argument("--apifootball-key", default=os.environ.get("APIFOOTBALL_KEY"))
     parser.add_argument("--html", default="mundial2026.html")
     parser.add_argument("--json", default="data.json")
     args = parser.parse_args()
@@ -45,4 +52,4 @@ if __name__ == "__main__":
     if not args.key:
         sys.exit("Error: falta la API key. Pasala con --key o la variable FOOTBALL_API_KEY.")
 
-    main(args.key, args.html, args.json)
+    main(args.key, args.html, args.json, apifootball_key=args.apifootball_key)
