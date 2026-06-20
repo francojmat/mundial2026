@@ -19,6 +19,7 @@ from bracket import build_round_of_32
 from data_renderer import render_data_json
 from html_renderer import render_html
 from pages import render_plantel_shell, render_squad_fragment
+from match_page import render_partido_shell, render_match_fragment
 
 
 def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None) -> None:
@@ -43,6 +44,26 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
         planteles = {name: render_squad_fragment(name, sq) for name, sq in squads.items()}
         outputs.append(("planteles.json", json.dumps(planteles, ensure_ascii=False)))
         outputs.append(("plantel.html", render_plantel_shell()))
+
+    # Páginas de partido (partidos con detalle cacheado)
+    details = standings.get("_match_details", {})
+    if details:
+        by_id = {}
+        for matches in standings.get("_matches_by_date", {}).values():
+            for m in matches:
+                by_id[str(m.get("match_id"))] = m
+        partidos = {}
+        for mid, det in details.items():
+            m = by_id.get(mid)
+            if not m:
+                continue
+            grp = (m.get("group") or "").replace("GROUP_", "")
+            stage_label = f"Grupo {grp}" if grp else (m.get("stage", "") or "").replace("_", " ").title()
+            group_data = standings.get(m.get("group")) if m.get("group") else None
+            partidos[mid] = render_match_fragment(m, det, group_data, stage_label)
+        if partidos:
+            outputs.append(("partidos.json", json.dumps(partidos, ensure_ascii=False)))
+            outputs.append(("partido.html", render_partido_shell()))
 
     for path, content in outputs:
         tmp = path + ".tmp"

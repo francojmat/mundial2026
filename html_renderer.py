@@ -237,6 +237,8 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .hoy-fila.open .hoy-chev{{transform:rotate(180deg)}}
     .hoy-detail{{display:none;border-top:1px solid {GRY};padding:8px 2px 4px;margin-top:8px}}
     .hoy-fila.open .hoy-detail{{display:block}}
+    .hoy-vermatch{{display:block;text-align:center;background:{T};color:{WHT};font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:8px;border-radius:8px;text-decoration:none;margin-bottom:10px}}
+    .hoy-vermatch:hover{{opacity:.9}}
     .hoy-dsec{{margin-bottom:8px}}
     .hoy-dsec:last-child{{margin-bottom:0}}
     .hoy-dsec-t{{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:{DIM};margin:0 0 4px}}
@@ -1537,10 +1539,17 @@ def _hoy_detail_html(m: dict) -> str:
         sections.append(f'<div class="hoy-dsec"><p class="hoy-dsec-t">Árbitro</p>'
                         f'<p style="font-size:.75rem;color:{MUT};margin:0">{ref}</p></div>')
 
-    if not sections:
+    # Botón VER PARTIDO arriba de todo (solo si hay detalle cacheado)
+    vermatch = ""
+    if m.get("has_detail"):
+        mid = m.get("match_id")
+        vermatch = (f'<a class="hoy-vermatch" href="/partido.html?id={mid}" '
+                    f'onclick="event.stopPropagation()">VER PARTIDO &#8594;</a>')
+
+    if not sections and not vermatch:
         return ""
 
-    return f'<div class="hoy-detail">{"".join(sections)}</div>'
+    return f'<div class="hoy-detail">{vermatch}{"".join(sections)}</div>'
 
 
 def _render_today_matches(matches: list) -> str:

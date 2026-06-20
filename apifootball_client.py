@@ -166,6 +166,69 @@ class APIFootballClient:
             })
         return out
 
+    # ── Detalle de partido ────────────────────────────────────────────────
+    @staticmethod
+    def _lineup_player(p: dict) -> dict:
+        pl = p.get("player") or {}
+        return {"name": pl.get("name", ""), "number": pl.get("number"), "pos": pl.get("pos", "")}
+
+    def get_fixture_lineups(self, fixture_id: int) -> list:
+        """[{team, formation, coach, startXI:[{name,number,pos}], subs:[...]}] (2 equipos)."""
+        try:
+            raw = self._get("/fixtures/lineups", {"fixture": fixture_id})
+        except Exception:
+            return []
+        out = []
+        for t in raw.get("response", []):
+            out.append({
+                "team":      (t.get("team") or {}).get("name", ""),
+                "formation": t.get("formation", ""),
+                "coach":     (t.get("coach") or {}).get("name", ""),
+                "startXI":   [self._lineup_player(p) for p in (t.get("startXI") or [])],
+                "subs":      [self._lineup_player(p) for p in (t.get("substitutes") or [])],
+            })
+        return out
+
+    def get_fixture_statistics(self, fixture_id: int) -> list:
+        """[{team, stats:{tipo: valor}}] (2 equipos)."""
+        try:
+            raw = self._get("/fixtures/statistics", {"fixture": fixture_id})
+        except Exception:
+            return []
+        out = []
+        for t in raw.get("response", []):
+            stats = {s.get("type", ""): s.get("value") for s in (t.get("statistics") or [])}
+            out.append({"team": (t.get("team") or {}).get("name", ""), "stats": stats})
+        return out
+
+    def get_fixture_players(self, fixture_id: int) -> list:
+        """[{team, players:[{name,number,pos,rating,minutes,goals,assists,captain,sub}]}] (2 equipos)."""
+        try:
+            raw = self._get("/fixtures/players", {"fixture": fixture_id})
+        except Exception:
+            return []
+        out = []
+        for t in raw.get("response", []):
+            players = []
+            for p in (t.get("players") or []):
+                pl = p.get("player") or {}
+                st = (p.get("statistics") or [{}])[0]
+                g  = st.get("games") or {}
+                go = st.get("goals") or {}
+                players.append({
+                    "name":    pl.get("name", ""),
+                    "number":  g.get("number"),
+                    "pos":     g.get("position", ""),
+                    "rating":  g.get("rating"),
+                    "minutes": g.get("minutes"),
+                    "goals":   go.get("total") or 0,
+                    "assists": go.get("assists") or 0,
+                    "captain": g.get("captain"),
+                    "sub":     g.get("substitute"),
+                })
+            out.append({"team": (t.get("team") or {}).get("name", ""), "players": players})
+        return out
+
     def get_coach(self, team_id: int) -> dict:
         """DT actual de un equipo: {name, age, nationality, photo}."""
         try:

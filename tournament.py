@@ -15,6 +15,8 @@ RANKINGS_REFRESH = 600    # segundos: los rankings se recalculan cada 10 min
 VENUES_REFRESH = 1800     # segundos: estadios cada 30 min (la estructura es fija, refresca scores)
 SQUADS_REFRESH = 604800   # segundos: planteles 1 vez por semana (los rosters no cambian)
 SQUADS_PER_RUN = 10       # tope de equipos a refrescar por corrida (evita ráfaga de llamadas)
+MATCH_LIVE_REFRESH = 120  # segundos: detalle de partido en vivo cada 2 min
+MATCH_DETAILS_PER_RUN = 5 # tope de partidos a enriquecer por corrida (3 llamadas c/u)
 
 
 def _now():
@@ -98,13 +100,18 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
         dirty = True
     standings["_venues"] = vn.get("list", [])
 
-    # Mapa nombre → team_id (se arma una vez con los fixtures, después persiste)
+    # Mapas nombre→team_id y match_id→fixture_id (se arman con los fixtures, persisten)
     tid_map = cache.get("team_id_map") or {}
+    fx_map = cache.get("fixture_id_map") or {}
     if fixtures and matches_by_date:
-        new_map = _build_team_id_map(matches_by_date, fixtures)
-        if new_map:
-            tid_map = {**tid_map, **new_map}
+        new_tid, new_fx = _build_maps(matches_by_date, fixtures)
+        if new_tid:
+            tid_map = {**tid_map, **new_tid}
             cache["team_id_map"] = tid_map
+            dirty = True
+        if new_fx:
+            fx_map = {**fx_map, **new_fx}
+            cache["fixture_id_map"] = fx_map
             dirty = True
 
     # Planteles + coach (cache semanal, con tope por corrida)
@@ -132,24 +139,75 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
         cache["squads"] = squads
     standings["_squads"] = squads
 
+    # Detalle de partido (alineaciones, stats de equipo, stats por jugador)
+    details = cache.get("match_details") or {}
+    if fx_map and matches_by_date:
+        if _enrich_match_details(matches_by_date, fx_map, details, client):
+            cache["match_details"] = details
+            dirty = True
+    # Marcar qué partidos tienen detalle (para mostrar el botón VER PARTIDO)
+    for matches in matches_by_date.values():
+        for m in matches:
+            if str(m.get("match_id")) in details:
+                m["has_detail"] = True
+    standings["_match_details"] = details
+
     if dirty:
         _save(cache_path, cache)
 
 
-def _build_team_id_map(matches_by_date: dict, fixtures: list) -> dict:
-    """Mapea nombre de equipo (football-data) → team_id (API-Football) por timestamp + equipos."""
+def _enrich_match_details(matches_by_date: dict, fx_map: dict, details: dict, client) -> bool:
+    """Trae alineaciones/stats/jugadores de partidos jugados o en vivo. Cache por partido."""
+    dirty = False
+    budget = MATCH_DETAILS_PER_RUN
+    for matches in matches_by_date.values():
+        for m in matches:
+            if budget <= 0:
+                return dirty
+            status = m.get("status", "")
+            if status not in ("FINISHED", "IN_PLAY", "PAUSED"):
+                continue
+            key = str(m.get("match_id"))
+            fixture_id = fx_map.get(key)
+            if not fixture_id:
+                continue
+            cached = details.get(key)
+            if cached:
+                if cached.get("status") == "FINISHED":
+                    continue  # terminado y cacheado → no cambia
+                if not _stale(cached, MATCH_LIVE_REFRESH):
+                    continue  # en vivo pero refrescado hace poco
+            lineups = client.get_fixture_lineups(fixture_id)
+            if not lineups:
+                continue  # todavía sin alineaciones (no arrancó)
+            details[key] = {
+                "lineups":    lineups,
+                "statistics": client.get_fixture_statistics(fixture_id),
+                "players":    client.get_fixture_players(fixture_id),
+                "status":     status,
+                "last_fetch": _now().isoformat(),
+            }
+            budget -= 1
+            dirty = True
+    return dirty
+
+
+def _build_maps(matches_by_date: dict, fixtures: list):
+    """Devuelve (team_name→team_id, match_id→fixture_id) por timestamp + equipos."""
     from apifootball_client import resolve_fixture
-    out = {}
+    tid, fx = {}, {}
     for matches in matches_by_date.values():
         for m in matches:
             mapping = resolve_fixture(m, fixtures)  # robusto ante partidos simultáneos
             if not mapping:
                 continue
             if m.get("home") and mapping.get("home_id"):
-                out[m["home"]] = mapping["home_id"]
+                tid[m["home"]] = mapping["home_id"]
             if m.get("away") and mapping.get("away_id"):
-                out[m["away"]] = mapping["away_id"]
-    return out
+                tid[m["away"]] = mapping["away_id"]
+            if mapping.get("fixture_id"):
+                fx[str(m.get("match_id"))] = mapping["fixture_id"]
+    return tid, fx
 
 
 def _build_venues(fixtures: list) -> list:
