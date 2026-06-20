@@ -35,6 +35,13 @@
     .sug-msg{font-size:.85rem;margin-top:5px;line-height:1.5;color:#211c14}
     .sug-empty{font-size:.8rem;color:#b09880;padding:24px 0;text-align:center}
     .loading{text-align:center;padding:40px;color:#b09880;font-size:.8rem}
+    .m-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+    .m-card{background:#fff;border:1px solid #e8ddd0;padding:16px 20px}
+    .m-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#b09880;margin-bottom:6px}
+    .m-val{font-size:2rem;font-weight:700;color:#c2410c;line-height:1}
+    .m-chart-wrap{background:#fff;border:1px solid #e8ddd0;padding:16px 20px}
+    .m-chart-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#b09880;margin-bottom:12px}
+    @media(max-width:600px){.m-cards{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -67,10 +74,18 @@
   </div>
 
   <div id="tab-metrics" class="tab-pane">
-    <iframe width="100%" height="700" frameborder="0" allowfullscreen
-      src="https://us.posthog.com/embedded/f_nmtFmo3syJpWeHX2oUTrkYVZdMhw"
-      sandbox="allow-scripts allow-same-origin allow-popups"
-      style="display:block;border:1px solid #e8ddd0"></iframe>
+    <div id="metrics-loading" class="loading">Cargando métricas…</div>
+    <div id="metrics-content" style="display:none">
+      <div class="m-cards">
+        <div class="m-card"><div class="m-label">Visitas hoy</div><div class="m-val" id="m-today">—</div></div>
+        <div class="m-card"><div class="m-label">Últimos 7 días</div><div class="m-val" id="m-week">—</div></div>
+        <div class="m-card"><div class="m-label">Últimos 30 días</div><div class="m-val" id="m-month">—</div></div>
+      </div>
+      <div class="m-chart-wrap">
+        <p class="m-chart-title">Visitas por día — últimos 30 días</p>
+        <div id="m-chart"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -125,6 +140,65 @@ function switchTab(name) {
     t.classList.toggle('active', ['sugs','metrics'][i] === name));
   document.getElementById('tab-sugs').classList.toggle('active', name === 'sugs');
   document.getElementById('tab-metrics').classList.toggle('active', name === 'metrics');
+  if (name === 'metrics' && document.getElementById('metrics-content').style.display === 'none') {
+    loadMetrics();
+  }
+}
+
+// ── Métricas ─────────────────────────────────────────────────────────────────
+
+async function loadMetrics() {
+  const res = await fetch(`${API}/metrics?token=${encodeURIComponent(_token)}`);
+  if (!res.ok) return;
+  const d = await res.json();
+
+  document.getElementById('metrics-loading').style.display = 'none';
+  document.getElementById('metrics-content').style.display = 'block';
+  document.getElementById('m-today').textContent = d.today_views.toLocaleString('es-AR');
+  document.getElementById('m-week').textContent  = d.week_views.toLocaleString('es-AR');
+  document.getElementById('m-month').textContent = d.month_views.toLocaleString('es-AR');
+  document.getElementById('m-chart').innerHTML   = renderChart(d.daily);
+}
+
+function renderChart(daily) {
+  if (!daily || !daily.length) return '<p style="color:#b09880;font-size:.8rem;padding:8px 0">Sin datos aún.</p>';
+
+  const W = 560, H = 160;
+  const P = {t:12, r:12, b:32, l:38};
+  const cw = W - P.l - P.r, ch = H - P.t - P.b;
+  const maxV = Math.max(...daily.map(d => d.views), 1);
+  const n = daily.length;
+  const px = i => P.l + (i / Math.max(n - 1, 1)) * cw;
+  const py = v => P.t + ch - (v / maxV) * ch;
+
+  const pts = daily.map((d, i) => `${px(i).toFixed(1)},${py(d.views).toFixed(1)}`);
+  const line = `M ${pts.join(' L ')}`;
+  const fill = `${line} L ${px(n-1).toFixed(1)},${(P.t+ch).toFixed(1)} L ${P.l},${(P.t+ch).toFixed(1)} Z`;
+
+  const grid = [0, 0.5, 1].map(p => {
+    const yv = (P.t + ch - p * ch).toFixed(1);
+    return `<line x1="${P.l}" y1="${yv}" x2="${P.l+cw}" y2="${yv}" stroke="#e8ddd0" stroke-width="1"/>
+            <text x="${P.l-4}" y="${(+yv+3.5).toFixed(1)}" text-anchor="end" font-size="9" fill="#b09880">${Math.round(p*maxV)}</text>`;
+  }).join('');
+
+  const labels = daily.map((d, i) => {
+    if (i % 7 !== 0 && i !== n - 1) return '';
+    const dt = new Date(d.day + 'T12:00:00');
+    const lbl = dt.toLocaleDateString('es-AR', {day:'numeric', month:'short'});
+    return `<text x="${px(i).toFixed(1)}" y="${H-5}" text-anchor="middle" font-size="9" fill="#b09880">${lbl}</text>`;
+  }).join('');
+
+  const dots = n <= 20
+    ? daily.map((d, i) => `<circle cx="${px(i).toFixed(1)}" cy="${py(d.views).toFixed(1)}" r="2.5" fill="#c2410c"/>`)
+    : [];
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
+    ${grid}
+    <path d="${fill}" fill="rgba(194,65,12,.08)"/>
+    <path d="${line}" fill="none" stroke="#c2410c" stroke-width="2" stroke-linejoin="round"/>
+    ${dots.join('')}
+    ${labels}
+  </svg>`;
 }
 
 async function loadSuggestions() {

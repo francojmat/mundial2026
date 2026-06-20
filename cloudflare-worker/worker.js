@@ -32,6 +32,9 @@ export default {
       return new Response(null, { status: 204, headers: cors() });
     }
 
+    if (path === "/api/metrics" && request.method === "GET") {
+      return handleMetrics(request, env);
+    }
     if (path === "/api/suggest" && request.method === "POST") {
       return handleSuggest(request, env);
     }
@@ -45,6 +48,58 @@ export default {
     return new Response("Not found", { status: 404 });
   },
 };
+
+// ── GET /api/metrics ─────────────────────────────────────────────────────────
+
+async function handleMetrics(request, env) {
+  const url = new URL(request.url);
+  if (!validToken(url.searchParams.get("token") || "", env)) {
+    return json({ error: "No autorizado" }, 401);
+  }
+
+  const res = await fetch("https://us.posthog.com/api/projects/478313/query", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${env.POSTHOG_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: {
+        kind: "HogQLQuery",
+        query: `SELECT toDate(timestamp) AS day,
+                       count() AS pageviews,
+                       count(distinct person_id) AS users
+                FROM events
+                WHERE event = '$pageview'
+                  AND timestamp >= now() - interval 30 day
+                GROUP BY day
+                ORDER BY day`,
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    return json({ error: "Error PostHog", status: res.status }, 502);
+  }
+
+  const data = await res.json();
+  const rows = (data.results || []).map(r => ({
+    day: r[0],
+    views: Number(r[1]),
+    users: Number(r[2]),
+  }));
+
+  const today = new Date().toISOString().split("T")[0];
+  const weekAgo = new Date(Date.now() - 6 * 86400000).toISOString().split("T")[0];
+
+  return json({
+    daily: rows,
+    today_views: rows.find(r => r.day === today)?.views ?? 0,
+    today_users: rows.find(r => r.day === today)?.users ?? 0,
+    week_views:  rows.filter(r => r.day >= weekAgo).reduce((s, r) => s + r.views, 0),
+    month_views: rows.reduce((s, r) => s + r.views, 0),
+  });
+}
 
 // ── POST /api/suggest ────────────────────────────────────────────────────────
 
