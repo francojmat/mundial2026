@@ -210,8 +210,8 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .hoy-nav-btn:disabled{{opacity:.3;cursor:default}}
     .hoy-lista{{display:flex;flex-direction:column;gap:6px}}
     .hoy-fila{{background:{WHT};border:1px solid {BDR};padding:7px 12px}}
-    .hoy-fila-top{{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}}
-    .hoy-etiqueta{{font-size:.6rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase}}
+    .hoy-etiqueta{{font-size:.6rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:3px}}
+    .hoy-badge-row{{text-align:center;margin-bottom:4px;line-height:1}}
     .hoy-match{{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%}}
     .hoy-home{{display:flex;align-items:center;justify-content:flex-start;flex-direction:row-reverse;gap:6px;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden}}
     .hoy-away{{display:flex;align-items:center;justify-content:flex-start;gap:6px;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden}}
@@ -1197,11 +1197,10 @@ def _render_today_matches(matches: list) -> str:
         away_html = traducir(m["away"])
         centro = _hoy_centro(m)
         badge = _hoy_status_badge(m)
+        badge_html = f'<div class="hoy-badge-row">{badge}</div>' if badge else ''
         rows += (f'<div class="hoy-fila">'
-                 f'<div class="hoy-fila-top">'
                  f'<span class="hoy-etiqueta">{lbl}</span>'
-                 f'{badge}'
-                 f'</div>'
+                 f'{badge_html}'
                  f'<div class="hoy-match">'
                  f'<div class="hoy-home">{home_html}</div>'
                  f'<div class="hoy-centro">{centro}</div>'
