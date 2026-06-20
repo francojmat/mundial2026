@@ -48,7 +48,11 @@
     .msg{max-width:82%;padding:10px 14px;font-size:.87rem;line-height:1.55;word-wrap:break-word;white-space:pre-wrap}
     .msg-user{align-self:flex-end;background:#c2410c;color:#fff}
     .msg-bot{align-self:flex-start;background:#fff;border:1px solid #e8ddd0;color:#211c14}
-    .msg-thinking{align-self:flex-start;background:#fff;border:1px solid #e8ddd0;color:#b09880;font-style:italic;font-size:.8rem;padding:8px 14px}
+    .msg-thinking{align-self:flex-start;background:#fff3f0;border:1px solid #c2410c;color:#c2410c;font-size:.82rem;padding:10px 16px;display:flex;align-items:center;gap:8px}
+    .think-dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:#c2410c;animation:tdot .9s ease-in-out infinite}
+    .think-dots span:nth-child(2){animation-delay:.2s}
+    .think-dots span:nth-child(3){animation-delay:.4s}
+    @keyframes tdot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
 
     #preview-card{background:#fff;border:1px solid #c2410c;padding:14px 16px;margin-bottom:12px}
     .preview-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#c2410c;margin-bottom:8px}
@@ -354,20 +358,31 @@ function appendMsg(role, text) {
   return div;
 }
 
+let _thinkTimer = null;
+let _thinkSecs  = 0;
+
 function appendThinking() {
   const msgs = document.getElementById('chat-msgs');
   const div  = document.createElement('div');
   div.className = 'msg msg-thinking';
   div.id = 'thinking-bubble';
-  div.textContent = 'Pensando…';
+  div.innerHTML = '<span id="think-label">Claude pensando</span> <span class="think-dots"><span></span><span></span><span></span></span> <span id="think-secs" style="font-size:.72rem;opacity:.7">(0s)</span>';
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
+  _thinkSecs = 0;
+  _thinkTimer = setInterval(() => {
+    _thinkSecs++;
+    const el = document.getElementById('think-secs');
+    if (el) el.textContent = `(${_thinkSecs}s)`;
+  }, 1000);
 }
 
 function removeThinking() {
+  clearInterval(_thinkTimer);
   const el = document.getElementById('thinking-bubble');
   if (el) el.remove();
 }
+
 
 function showPreviewCard(previewUrl, description) {
   _pendingChange = { previewUrl, description, file: _pendingChange?.file || 'html_renderer.py' };
@@ -436,17 +451,21 @@ async function sendMessage() {
 
 async function pollUntilDone(jobId, maxSeconds) {
   const deadline = Date.now() + maxSeconds * 1000;
+  console.log('[chat] job iniciado:', jobId);
   while (Date.now() < deadline) {
     await new Promise(r => setTimeout(r, 2000));
     try {
       const res  = await fetch(`${API}/chat-poll?jobId=${encodeURIComponent(jobId)}&token=${encodeURIComponent(_token)}`);
       const data = await res.json();
-      if (data.status === 'done') return data;
+      console.log('[chat] poll status:', data.status, data);
+      if (data.status === 'done')      return data;
       if (data.status === 'not_found') return null;
-      // status === "pending" → keep polling
-    } catch { /* network blip, retry */ }
+    } catch(e) {
+      console.warn('[chat] poll error:', e.message);
+    }
   }
-  return null; // timed out
+  console.warn('[chat] timeout esperando job:', jobId);
+  return null;
 }
 
 async function applyChange() {
