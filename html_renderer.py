@@ -1410,7 +1410,7 @@ def _stage_label(stage: str, group: str, matchday: int) -> str:
         grp = group.replace("GROUP_", "")
         return f"Grupo {grp} · Fecha {matchday}"
     return {
-        "ROUND_OF_32":    "Round of 32",
+        "ROUND_OF_32":    "16avos de Final",
         "ROUND_OF_16":    "Octavos de Final",
         "QUARTER_FINALS": "Cuartos de Final",
         "SEMI_FINALS":    "Semifinales",
@@ -1574,23 +1574,23 @@ def _venue_time(iso: str) -> str:
 # Calendario COMPLETO de eliminatorias — verificado (Wikipedia/FIFA): (fecha, estadio, ronda)
 # Nombres de estadio como en los fixtures de API-Football.
 _VENUE_KO = [
-    # 32avos de Final (28/06 → 03/07)
-    ("2026-06-28", "SoFi Stadium",            "32avos de Final"),
-    ("2026-06-29", "NRG Stadium",             "32avos de Final"),
-    ("2026-06-29", "Gillette Stadium",        "32avos de Final"),
-    ("2026-06-29", "Estadio BBVA",            "32avos de Final"),
-    ("2026-06-30", "AT&T Stadium",            "32avos de Final"),
-    ("2026-06-30", "MetLife Stadium",         "32avos de Final"),
-    ("2026-06-30", "Estadio Azteca",          "32avos de Final"),
-    ("2026-07-01", "Mercedes-Benz Stadium",   "32avos de Final"),
-    ("2026-07-01", "Lumen Field",             "32avos de Final"),
-    ("2026-07-01", "Levi's Stadium",          "32avos de Final"),
-    ("2026-07-02", "SoFi Stadium",            "32avos de Final"),
-    ("2026-07-02", "BMO Field",               "32avos de Final"),
-    ("2026-07-02", "BC Place",                "32avos de Final"),
-    ("2026-07-03", "AT&T Stadium",            "32avos de Final"),
-    ("2026-07-03", "Hard Rock Stadium",       "32avos de Final"),
-    ("2026-07-03", "Arrowhead Stadium",       "32avos de Final"),
+    # 16avos de Final (28/06 → 03/07)
+    ("2026-06-28", "SoFi Stadium",            "16avos de Final"),
+    ("2026-06-29", "NRG Stadium",             "16avos de Final"),
+    ("2026-06-29", "Gillette Stadium",        "16avos de Final"),
+    ("2026-06-29", "Estadio BBVA",            "16avos de Final"),
+    ("2026-06-30", "AT&T Stadium",            "16avos de Final"),
+    ("2026-06-30", "MetLife Stadium",         "16avos de Final"),
+    ("2026-06-30", "Estadio Azteca",          "16avos de Final"),
+    ("2026-07-01", "Mercedes-Benz Stadium",   "16avos de Final"),
+    ("2026-07-01", "Lumen Field",             "16avos de Final"),
+    ("2026-07-01", "Levi's Stadium",          "16avos de Final"),
+    ("2026-07-02", "SoFi Stadium",            "16avos de Final"),
+    ("2026-07-02", "BMO Field",               "16avos de Final"),
+    ("2026-07-02", "BC Place",                "16avos de Final"),
+    ("2026-07-03", "AT&T Stadium",            "16avos de Final"),
+    ("2026-07-03", "Hard Rock Stadium",       "16avos de Final"),
+    ("2026-07-03", "Arrowhead Stadium",       "16avos de Final"),
     # Octavos de Final (04/07 → 07/07)
     ("2026-07-04", "NRG Stadium",             "Octavos de Final"),
     ("2026-07-04", "Lincoln Financial Field", "Octavos de Final"),
@@ -1615,7 +1615,7 @@ _VENUE_KO = [
 
 
 def _knockouts_for_venue(venue_name: str) -> list:
-    """Eliminatorias (32avos → Final) programadas en este estadio. Calendario verificado."""
+    """Eliminatorias (16avos → Final) programadas en este estadio. Calendario verificado."""
     if not venue_name:
         return []
     return [{"date": d, "ko": True, "label": lbl}
