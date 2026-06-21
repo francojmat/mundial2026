@@ -337,10 +337,8 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </nav>
 
 <div class="hdr">
-  <h1>Mundial 2026</h1>
-  <span class="pill"><span class="dot"></span>En vivo</span>
+  <h1>Mejor Tercero - Mundial 2026</h1>
 </div>
-<p class="upd">Última actualización: <span id="upd">{updated}</span></p>
 
 <div id="today-container">
 <div class="sec" id="sec-hoy">
