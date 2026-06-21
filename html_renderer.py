@@ -103,10 +103,10 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .grupo{{background:{WHT};border:1px solid {BDR};overflow:hidden}}
     .grupo-h{{display:flex;align-items:center;justify-content:space-between;padding:9px 14px 8px;border-bottom:1px solid {BDR}}}
     .grupo-t{{font-size:.76rem;font-weight:700;color:{T};letter-spacing:.08em;text-transform:uppercase}}
-    .badge{{font-size:.6rem;font-weight:700;padding:2px 8px;letter-spacing:.05em;text-transform:uppercase}}
-    .b-ok  {{color:{OK};background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.3)}}
+    .badge{{font-size:.6rem;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase}}
+    .b-ok  {{color:{MUT};background:{GRY};border:1px solid {BDR}}}
     .b-vivo{{color:{T};background:rgba(194,65,12,.1);border:1px solid rgba(194,65,12,.3)}}
-    .b-live{{color:{WHT};background:{T};padding:2px 8px;font-size:.6rem;font-weight:700;text-transform:uppercase;display:inline-flex;align-items:center;gap:4px}}
+    .b-live{{color:{WHT};background:{T};padding:2px 9px;border-radius:999px;font-size:.6rem;font-weight:700;text-transform:uppercase;display:inline-flex;align-items:center;gap:4px}}
 
     table{{width:100%;border-collapse:collapse}}
     th{{font-size:.61rem;font-weight:600;color:{DIM};letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;text-align:center;border-bottom:1px solid {BDR}}}
@@ -175,7 +175,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .mc-meta{{font-size:.6rem;color:{DIM};padding:3px 8px 4px;border-top:1px solid {BG};display:flex;flex-direction:column;gap:1px;flex-shrink:0}}
     .mc-meta .venue{{color:{MUT};font-size:.57rem}}
 
-    .badge-live-sm{{color:{WHT};background:{T};font-size:.55rem;font-weight:700;padding:1px 6px;text-transform:uppercase;display:inline-flex;align-items:center;gap:3px}}
+    .badge-live-sm{{color:{WHT};background:{T};font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:999px;text-transform:uppercase;display:inline-flex;align-items:center;gap:3px}}
     .badge-live-sm .dot{{width:4px;height:4px}}
 
     /* Filas de equipo — clicables */
@@ -265,8 +265,8 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .hoy-badge-fin{{color:{MUT};font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;vertical-align:middle;margin-left:7px}}
     .team-link{{color:inherit;text-decoration:none;cursor:pointer;border-bottom:1px dotted {BDR2}}}
     .team-link:hover{{color:{T};border-bottom-color:{T}}}
-    .ven-count{{color:{MUT};font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}}
-    .ven-city{{font-size:.72rem;color:{MUT};margin-top:3px}}
+    .ven-name{{font-size:.82rem;font-weight:700;color:{TXT}}}
+    .ven-sub{{text-align:center;font-size:.68rem;color:{MUT};margin-top:3px;letter-spacing:.02em}}
     .ven-m{{display:grid;grid-template-columns:34px 1fr auto 1fr;align-items:center;gap:6px;padding:3px 0;font-size:.74rem}}
     .ven-m-date{{color:{DIM};font-size:.66rem}}
     .ven-m-team{{display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden}}
@@ -1641,13 +1641,14 @@ def _render_venues(standings: Dict) -> str:
             bits.append(f'<span class="ven-k">Superficie</span> {surf_es}')
         info = f'<div class="ven-info">{"".join(f"<span>{b}</span>" for b in bits)}</div>' if bits else ""
         detail = f'<div class="hoy-detail">{img}{info}<div class="hoy-dsec">{rows}</div></div>'
+        sub = " · ".join(b for b in [v.get("city", ""),
+                                     f'{count} {"partido" if count == 1 else "partidos"}'] if b)
         cards += (f'<div class="hoy-fila" onclick="toggleMatch(this)">'
                   f'<div class="hoy-head">'
-                  f'<span class="hoy-etiqueta">{v.get("name", "")}</span>'
-                  f'<span class="ven-count">{count} {"partido" if count == 1 else "partidos"}</span>'
+                  f'<span class="ven-name">{v.get("name", "")}</span>'
                   f'<span class="hoy-chev">&#9662;</span>'
                   f'</div>'
-                  f'<div class="ven-city">{v.get("city", "")}</div>'
+                  f'<div class="ven-sub">{sub}</div>'
                   f'{detail}'
                   f'</div>')
     return f'<div style="max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:8px">{cards}</div>'
