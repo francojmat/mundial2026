@@ -83,7 +83,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
     body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:{BG};color:{TXT};padding:28px 24px}}
 
-    .hdr{{display:flex;align-items:center;gap:12px;margin-bottom:4px}}
+    .hdr{{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:18px;text-align:center}}
     h1{{font-size:1.55rem;font-weight:700;letter-spacing:-.02em}}
     .pill{{display:inline-flex;align-items:center;gap:5px;background:rgba(194,65,12,.1);border:1px solid rgba(194,65,12,.35);color:{T};font-size:.68rem;font-weight:700;padding:3px 10px;letter-spacing:.08em;text-transform:uppercase}}
     .dot{{width:6px;height:6px;border-radius:50%;background:{T};animation:blink 1.4s ease-in-out infinite}}
@@ -1684,6 +1684,14 @@ def _hoy_detail_html(m: dict) -> str:
     if ref:
         sections.append(f'<div class="hoy-dsec"><p class="hoy-dsec-t">Árbitro</p>'
                         f'<p style="font-size:.75rem;color:{MUT};margin:0">{ref}</p></div>')
+
+    vname = m.get("venue_name", "")
+    if vname:
+        from countries import capacidad_fmt
+        vbits = [b for b in [vname, m.get("venue_city", ""),
+                             (capacidad_fmt(vname) + " espectadores") if capacidad_fmt(vname) else ""] if b]
+        sections.append(f'<div class="hoy-dsec"><p class="hoy-dsec-t">Estadio</p>'
+                        f'<p style="font-size:.75rem;color:{MUT};margin:0">{" · ".join(vbits)}</p></div>')
 
     # Botón VER PARTIDO arriba de todo — SIEMPRE (todos los partidos tienen su página)
     mid = m.get("match_id")

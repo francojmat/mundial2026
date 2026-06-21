@@ -149,6 +149,7 @@ def _af_to_match(fx: dict, team_groups: dict) -> dict:
         matchday = 0
         group = ""
     referee = ((f.get("referee") or "").split(",")[0]).strip()
+    venue = f.get("venue") or {}
     return {
         "match_id":   f.get("id"),
         "home": home, "away": away,
@@ -163,6 +164,8 @@ def _af_to_match(fx: dict, team_groups: dict) -> dict:
         "group":      group,
         "matchday":   matchday,
         "referee":    referee,
+        "venue_name": venue.get("name", ""),
+        "venue_city": venue.get("city", ""),
         "goals_detail":  [],
         "bookings":      [],
         "substitutions": [],

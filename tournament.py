@@ -22,27 +22,7 @@ MATCH_DETAILS_PER_RUN = 5 # tope de partidos a enriquecer por corrida (3 llamada
 VENUE_DETAILS_REFRESH = 604800  # detalles de estadio (foto/superficie) 1 vez por semana
 VENUE_IMG_MIN_BYTES = 35000     # debajo de esto la imagen es un placeholder de la API
 
-# Capacidades oficiales de configuración Mundial 2026 (fuente: Wikipedia/FIFA).
-# La API solo tiene 8 de 16 y con capacidades generales, no de torneo → usamos estas para los 16.
-# Clave = nombre del estadio como viene en los fixtures de API-Football.
-_VENUE_CAPACITY = {
-    "Estadio Azteca":          80824,
-    "MetLife Stadium":         80663,
-    "AT&T Stadium":            70649,
-    "SoFi Stadium":            70492,
-    "Arrowhead Stadium":       69045,
-    "Levi's Stadium":          68827,
-    "NRG Stadium":             68777,
-    "Lincoln Financial Field": 68324,
-    "Mercedes-Benz Stadium":   68239,
-    "Lumen Field":             66925,
-    "Hard Rock Stadium":       64478,
-    "Gillette Stadium":        64146,
-    "BC Place":                52497,
-    "Estadio BBVA":            51243,
-    "Estadio Akron":           45664,
-    "BMO Field":               43036,
-}
+from countries import VENUE_CAPACITY as _VENUE_CAPACITY
 
 
 def _now():

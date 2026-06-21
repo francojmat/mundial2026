@@ -199,21 +199,33 @@ def render_match_fragment(match, detail, group_data, stage_label):
         centro = '<span class="mt-vs">vs</span>'
     if status == "FINISHED":
         badge = '<span class="mt-badge mt-fin">Finalizado</span>'
-    elif status in ("IN_PLAY", "PAUSED"):
-        badge = '<span class="mt-badge mt-live">En vivo</span>'
+    elif status == "PAUSED":
+        badge = '<span class="mt-badge mt-live"><span class="mt-dot"></span>Entretiempo</span>'
+    elif status in ("IN_PLAY",):
+        el = match.get("elapsed")
+        min_html = f"{el}'" if el is not None else ""
+        badge = (f'<span class="mt-badge mt-live"><span class="mt-dot"></span>EN VIVO '
+                 f'<span class="mt-min">{min_html}</span></span>')
     else:
         badge = ''
+
+    # Estadio
+    from countries import capacidad_fmt
+    vbits = [b for b in [match.get("venue_name", ""), match.get("venue_city", ""),
+                         (capacidad_fmt(match.get("venue_name", "")) or "")] if b]
+    venue_html = f'<div class="mt-venue">{" · ".join(vbits)}</div>' if vbits else ""
 
     header = (
         f'<div class="mt-meta">{stage_label} · {_mt_date(match.get("utc_date", ""))}</div>'
         f'<div class="mt-scoreline">'
         f'<div class="mt-team mt-th">{traducir(home)}</div>'
-        f'<div class="mt-center">{centro}</div>'
+        f'<div class="mt-center" id="mt-center">{centro}</div>'
         f'<div class="mt-team mt-ta">{traducir(away)}</div></div>'
-        f'<div class="mt-badge-wrap">{badge}</div>'
+        f'<div class="mt-badge-wrap" id="mt-badge">{badge}</div>'
     )
     ref = match.get("referee", "")
     ref_html = f'<div class="mt-ref">Árbitro: {ref}</div>' if ref else ""
+    header += venue_html
 
     detail = detail or {}
     detail_body = (
@@ -261,9 +273,12 @@ def render_partido_shell():
     .mt-sep{{color:{DIM};font-weight:700}}
     .mt-vs{{font-size:.85rem;color:{DIM};font-weight:700}}
     .mt-badge-wrap{{margin-top:10px}}
-    .mt-badge{{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 10px;border-radius:10px}}
+    .mt-badge{{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:4px 11px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}}
     .mt-fin{{background:{GRY};color:{MUT}}}
     .mt-live{{background:rgba(194,65,12,.12);color:{T}}}
+    .mt-dot{{width:6px;height:6px;border-radius:50%;background:{T};animation:mtblink 1.4s ease-in-out infinite}}
+    @keyframes mtblink{{0%,100%{{opacity:1}}50%{{opacity:.2}}}}
+    .mt-venue{{font-size:.72rem;color:{MUT};margin-top:9px}}
     .mt-ref{{font-size:.72rem;color:{MUT};margin-top:10px}}
     .mt-sec{{margin-bottom:26px}}
     .mt-st{{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:{T};margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid {BDR}}}
@@ -310,18 +325,43 @@ def render_partido_shell():
     <div id="match"><p class="loading">Cargando partido…</p></div>
   </div>
   <script>
-    (function() {{
-      var id = new URLSearchParams(location.search).get('id') || '';
+    var MID = new URLSearchParams(location.search).get('id') || '';
+
+    function loadMatch() {{
       var box = document.getElementById('match');
       fetch('/api/partidos')
         .then(function(r) {{ return r.json(); }})
         .then(function(d) {{
-          var html = d[id];
-          if (html) {{ box.innerHTML = html; }}
+          var html = d[MID];
+          if (html) {{ box.innerHTML = html; pollMatchLive(); }}
           else {{ box.innerHTML = '<p class="loading">Detalle no disponible todavía. Probá cuando arranque el partido.</p>'; }}
         }})
         .catch(function() {{ box.innerHTML = '<p class="loading">No se pudo cargar el partido.</p>'; }});
-    }})();
+    }}
+
+    // Actualiza marcador, minuto y badge EN VIVO sin recargar (cada 8s)
+    function pollMatchLive() {{
+      fetch('/api/live')
+        .then(function(r) {{ return r.json(); }})
+        .then(function(d) {{
+          var m = (d.matches || []).filter(function(x) {{ return String(x.id) === String(MID); }})[0];
+          if (!m) return;
+          var center = document.getElementById('mt-center');
+          if (center && m.h != null) {{
+            center.innerHTML = '<span class="mt-sc">' + m.h + '</span><span class="mt-sep">-</span><span class="mt-sc">' + m.a + '</span>';
+          }}
+          var badge = document.getElementById('mt-badge');
+          if (badge) {{
+            badge.innerHTML = (m.status === 'HT')
+              ? '<span class="mt-badge mt-live"><span class="mt-dot"></span>Entretiempo</span>'
+              : '<span class="mt-badge mt-live"><span class="mt-dot"></span>EN VIVO <span class="mt-min">' + (m.elapsed != null ? m.elapsed + "'" : '') + '</span></span>';
+          }}
+        }})
+        .catch(function() {{}});
+    }}
+
+    loadMatch();
+    setInterval(pollMatchLive, 8000);
   </script>
 </body>
 </html>"""

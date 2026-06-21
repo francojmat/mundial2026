@@ -85,3 +85,31 @@ def nombre_es(nombre_api: str) -> str:
     if nombre_api in _PAISES:
         return _PAISES[nombre_api][0]
     return nombre_api
+
+
+# Capacidades oficiales de configuración Mundial 2026 (Wikipedia/FIFA).
+# Clave = nombre del estadio como viene en los fixtures de API-Football.
+VENUE_CAPACITY = {
+    "Estadio Azteca":          80824,
+    "MetLife Stadium":         80663,
+    "AT&T Stadium":            70649,
+    "SoFi Stadium":            70492,
+    "Arrowhead Stadium":       69045,
+    "Levi's Stadium":          68827,
+    "NRG Stadium":             68777,
+    "Lincoln Financial Field": 68324,
+    "Mercedes-Benz Stadium":   68239,
+    "Lumen Field":             66925,
+    "Hard Rock Stadium":       64478,
+    "Gillette Stadium":        64146,
+    "BC Place":                52497,
+    "Estadio BBVA":            51243,
+    "Estadio Akron":           45664,
+    "BMO Field":               43036,
+}
+
+
+def capacidad_fmt(name: str):
+    """Capacidad formateada con puntos de miles, o None si no se conoce."""
+    cap = VENUE_CAPACITY.get(name)
+    return f"{cap:,}".replace(",", ".") if cap else None

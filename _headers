@@ -1,9 +1,14 @@
-/data.json
-  Cache-Control: public, max-age=30, s-maxage=30
-  Access-Control-Allow-Origin: *
-
+# Shells: revalidar en cada carga (no-cache) → el usuario siempre corre el último
+# código, sin quedar pegado a una versión vieja (el problema de los minutos en celu).
+# El contenido vivo viene por /api/* (lo maneja el Worker), así que el HTML puede revalidar.
 /mundial2026.html
-  Cache-Control: public, max-age=300, s-maxage=300
+  Cache-Control: no-cache
+
+/plantel.html
+  Cache-Control: no-cache
+
+/partido.html
+  Cache-Control: no-cache
 
 /flags/*
   Cache-Control: public, max-age=86400, s-maxage=86400
