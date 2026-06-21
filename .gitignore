@@ -14,3 +14,10 @@ test_api.py
 
 # Wrangler (Cloudflare Worker CLI) — contiene account ID y cache local
 cloudflare-worker/.wrangler/
+
+# Datos generados (viven en la rama 'data', servidos por el Worker)
+data.json
+planteles.json
+partidos.json
+events_cache.json
+apifootball_cache.json

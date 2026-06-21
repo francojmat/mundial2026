@@ -20,7 +20,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4   # main = solo código (Pages lo deploya en code change)
 
       - uses: actions/setup-python@v5
         with:
@@ -30,33 +30,33 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      # Si la API corta (429) o falla, no rompemos la corrida: se reintenta al próximo ciclo.
-      - name: Generate HTML + data.json
+      # Trae los datos/caches más recientes desde la rama 'data' (estado entre corridas).
+      - name: Pull latest data + caches from 'data' branch
+        run: |
+          git fetch origin data 2>/dev/null && \
+          git checkout origin/data -- data.json planteles.json partidos.json events_cache.json apifootball_cache.json 2>/dev/null \
+            || echo "Sin rama 'data' todavía (primera corrida)."
+
+      - name: Generate
         continue-on-error: true
         env:
           FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
           APIFOOTBALL_KEY: ${{ secrets.APIFOOTBALL_KEY }}
         run: python generate.py
 
-      # Push resiliente: si otra corrida pusheó primero, rebase y reintento.
-      # Pase lo que pase, la corrida termina OK (exit 0) para no mandar mails de fallo.
-      - name: Commit if data changed
+      # Publica SOLO los datos a la rama 'data' (que Pages NO deploya → sin redeploys, sin 522).
+      # main queda intacto. Force-push de un único commit con los archivos de datos.
+      - name: Publish data to 'data' branch
         run: |
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          git add -A
+          git checkout --orphan data-tmp
+          git reset
+          git add -f data.json planteles.json partidos.json events_cache.json apifootball_cache.json
           if git diff --staged --quiet; then
-            echo "Sin cambios, no hay commit."
-            exit 0
+            echo "Sin cambios en datos."
+          else
+            git commit -m "data $(date -u '+%H:%M UTC')"
+            git push origin data-tmp:data --force
           fi
-          git commit -m "update $(date -u '+%H:%M UTC')"
-          for i in 1 2 3; do
-            if git push; then
-              echo "Push OK"
-              exit 0
-            fi
-            echo "Push rechazado, reintentando ($i)..."
-            git pull --rebase -X theirs origin main || git rebase --abort
-          done
-          echo "No se pudo pushear tras 3 intentos; el próximo ciclo lo toma."
           exit 0

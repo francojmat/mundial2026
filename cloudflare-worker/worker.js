@@ -39,6 +39,9 @@ export default {
     }
 
     if (path === "/api/live"        && request.method === "GET")  return handleLive(request, env, ctx);
+    if (path === "/api/data"        && request.method === "GET")  return handleData("data.json", ctx);
+    if (path === "/api/planteles"   && request.method === "GET")  return handleData("planteles.json", ctx);
+    if (path === "/api/partidos"    && request.method === "GET")  return handleData("partidos.json", ctx);
     if (path === "/api/metrics"     && request.method === "GET")  return handleMetrics(request, env);
     if (path === "/api/suggest"     && request.method === "POST") return handleSuggest(request, env);
     if (path === "/api/suggestions" && request.method === "GET")  return handleList(request, env);
@@ -51,6 +54,35 @@ export default {
     return new Response("Not found", { status: 404 });
   },
 };
+
+// ── GET /api/data | /api/planteles | /api/partidos ────────────────────────────
+// Sirve los datos desde la rama 'data' del repo (que Cloudflare Pages NO deploya).
+// Cachea ~20s → el sitio se actualiza sin redeployar Pages (se acaban los 522).
+async function handleData(file, ctx) {
+  const cache = caches.default;
+  const cacheKey = new Request("https://data.internal/" + file);
+  const hit = await cache.match(cacheKey);
+  if (hit) return hit;
+
+  let body = "{}";
+  try {
+    const r = await fetch(
+      "https://raw.githubusercontent.com/francojmat/mundial2026/data/" + file,
+      { cf: { cacheTtl: 10 } }
+    );
+    if (r.ok) body = await r.text();
+  } catch (e) { /* devolvemos {} */ }
+
+  const resp = new Response(body, {
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "public, max-age=20",
+      ...cors(),
+    },
+  });
+  ctx.waitUntil(cache.put(cacheKey, resp.clone()));
+  return resp;
+}
 
 // ── GET /api/live ────────────────────────────────────────────────────────────
 // Marcadores en vivo desde API-Football, cacheados 10s (sin importar el tráfico,

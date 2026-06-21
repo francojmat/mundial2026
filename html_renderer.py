@@ -1003,7 +1003,7 @@ function pollLive() {{
 }}
 
 function pollData() {{
-  fetch('data.json?_=' + Date.now())
+  fetch('/api/data')
     .then(function(r) {{ return r.json(); }})
     .then(function(d) {{
       var gi = document.getElementById('groups-inner');

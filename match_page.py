@@ -313,7 +313,7 @@ def render_partido_shell():
     (function() {{
       var id = new URLSearchParams(location.search).get('id') || '';
       var box = document.getElementById('match');
-      fetch('partidos.json?_=' + Date.now())
+      fetch('/api/partidos')
         .then(function(r) {{ return r.json(); }})
         .then(function(d) {{
           var html = d[id];

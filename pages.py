@@ -157,7 +157,7 @@ def render_plantel_shell() -> str:
     (function() {{
       var t = new URLSearchParams(location.search).get('t') || '';
       var box = document.getElementById('squad');
-      fetch('planteles.json?_=' + Date.now())
+      fetch('/api/planteles')
         .then(function(r) {{ return r.json(); }})
         .then(function(d) {{
           var html = d[t];
