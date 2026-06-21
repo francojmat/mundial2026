@@ -7,6 +7,12 @@ on:
   # Disparo externo desde cron-job.org
   workflow_dispatch:
 
+# Una sola corrida a la vez: si llega otra mientras una está corriendo, se cancela
+# la anterior (cancelada NO cuenta como fallo → no manda mail, y no se pisan los push).
+concurrency:
+  group: update-mundial
+  cancel-in-progress: true
+
 jobs:
   update:
     runs-on: ubuntu-latest
