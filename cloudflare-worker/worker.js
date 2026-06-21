@@ -90,43 +90,58 @@ async function handleData(file, ctx) {
 async function handleLive(request, env, ctx) {
   const KEY = (env.APIFOOTBALL_KEY || "").trim();
   const cache = caches.default;
-  const cacheKey = new Request("https://live.internal/wc2026");
-  const hit = await cache.match(cacheKey);
+  const fresh = new Request("https://live.internal/wc2026");       // respuesta servida (8s)
+  const good  = new Request("https://live.internal/wc2026-good");  // último resultado NO vacío (60s)
+
+  const hit = await cache.match(fresh);
   if (hit) return hit;
 
   // Estados "en vivo" (incluye entretiempo y prórroga)
   const LIVE = new Set(["1H", "2H", "HT", "ET", "BT", "P", "LIVE", "INT"]);
 
-  let matches = [];
+  let matches = null;  // null = el fetch falló; [] = no hay en vivo de verdad
   if (KEY) {
     try {
-      // Endpoint bulk del torneo (el mismo que usa el cron, confiable). Filtramos los
-      // en vivo del lado nuestro. cf.cacheTtl:0 → fetch siempre fresco (sin cache stale).
       const r = await fetch(
         "https://v3.football.api-sports.io/fixtures?league=1&season=2026",
         { headers: { "x-apisports-key": KEY }, cf: { cacheTtl: 0 } }
       );
       const data = await r.json();
-      matches = (data.response || [])
-        .filter(fx => LIVE.has((fx.fixture.status || {}).short))
-        .map(fx => ({
-          id:      fx.fixture.id,
-          status:  fx.fixture.status.short,
-          elapsed: fx.fixture.status.elapsed,
-          h:       fx.goals.home,
-          a:       fx.goals.away,
-        }));
-    } catch (e) { /* devolvemos lista vacía */ }
+      if (Array.isArray(data.response)) {
+        matches = data.response
+          .filter(fx => LIVE.has((fx.fixture.status || {}).short))
+          .map(fx => ({
+            id:      fx.fixture.id,
+            status:  fx.fixture.status.short,
+            elapsed: fx.fixture.status.elapsed,
+            h:       fx.goals.home,
+            a:       fx.goals.away,
+          }));
+      }
+    } catch (e) { matches = null; }
+  } else {
+    matches = [];
+  }
+
+  if (matches && matches.length > 0) {
+    // Resultado bueno → guardarlo como "último bueno" (60s)
+    ctx.waitUntil(cache.put(good, new Response(JSON.stringify(matches),
+      { headers: { "Cache-Control": "max-age=60" } })));
+  } else {
+    // Vacío o error: si hay un "último bueno" reciente, servirlo (mata el flapeo en vivo).
+    // Si genuinamente no hay en vivo, el último bueno ya expiró → []
+    const lg = await cache.match(good);
+    matches = lg ? await lg.json() : [];
   }
 
   const resp = new Response(JSON.stringify({ updated: Date.now(), matches }), {
     headers: {
       "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=10",
+      "Cache-Control": "public, max-age=8",
       ...cors(),
     },
   });
-  ctx.waitUntil(cache.put(cacheKey, resp.clone()));
+  ctx.waitUntil(cache.put(fresh, resp.clone()));
   return resp;
 }
 
