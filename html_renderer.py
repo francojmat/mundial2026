@@ -275,6 +275,8 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .ven-m-h img,.ven-m-a img{{margin-right:0;flex-shrink:0}}
     .ven-m-mid{{font-weight:700;color:{MUT};font-size:.72rem;text-align:center;min-width:38px}}
     .ven-time{{color:{T};font-weight:700;font-size:.7rem}}
+    .ven-m-ko{{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.72rem;border-top:1px dashed {BDR}}}
+    .ven-ko-label{{flex:1;color:{T};font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.03em}}
     .ven-img{{width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin-bottom:10px;display:block}}
     .ven-info{{display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:10px;font-size:.78rem;color:{TXT}}}
     .ven-info .ven-k{{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{DIM};margin-right:4px}}
@@ -1569,23 +1571,51 @@ def _venue_time(iso: str) -> str:
         return "—"
 
 
+_KO_ROUND_LABEL = {"r16": "Octavos de Final", "qf": "Cuartos de Final", "sf": "Semifinal"}
+
+
+def _knockouts_for_venue(venue_name: str) -> list:
+    """Eliminatorias (Octavos→Final) programadas en este estadio, desde _KO_SCHEDULE."""
+    if not venue_name:
+        return []
+    out = []
+    for key, (date, stadium) in _KO_SCHEDULE.items():
+        if stadium.startswith(venue_name):
+            out.append({"date": date, "ko": True, "label": _KO_ROUND_LABEL.get(key.split("-")[0], "")})
+    if _3RD_PLACE[1].startswith(venue_name):
+        out.append({"date": _3RD_PLACE[0], "ko": True, "label": "3er Puesto"})
+    if _FINAL[1].startswith(venue_name):
+        out.append({"date": _FINAL[0], "ko": True, "label": "Final"})
+    return out
+
+
 def _render_venues(standings: Dict) -> str:
-    """Módulo de estadios, cada uno expandible con foto y sus partidos."""
+    """Módulo de estadios, cada uno expandible con foto y sus partidos (grupos + eliminatorias)."""
     venues = standings.get("_venues", [])
     if not venues:
         return f'<p style="font-size:.75rem;color:{MUT};margin-top:4px">Disponible próximamente.</p>'
 
     cards = ""
     for v in venues:
+        all_m = list(v.get("matches", [])) + _knockouts_for_venue(v.get("name", ""))
+        all_m.sort(key=lambda m: m.get("date", ""))
+        count = len(all_m)
         rows = ""
-        for m in v.get("matches", []):
+        for m in all_m:
+            fecha = _venue_date(m.get("date", ""))
+            if m.get("ko"):
+                rows += (f'<div class="ven-m-ko">'
+                         f'<span class="ven-m-date">{fecha}</span>'
+                         f'<span class="ven-ko-label">{m.get("label", "")}</span>'
+                         f'<span class="ven-time">{_venue_time(m.get("date", ""))}</span>'
+                         f'</div>')
+                continue
             home = traducir(m.get("home", ""))
             away = traducir(m.get("away", ""))
             if m.get("status") == "FT" and m.get("gh") is not None:
                 mid = f'<span class="pts">{m.get("gh")} - {m.get("ga")}</span>'
             else:
                 mid = f'<span class="ven-time">{_venue_time(m.get("date", ""))}</span>'
-            fecha = _venue_date(m.get("date", ""))
             rows += (f'<div class="ven-m">'
                      f'<span class="ven-m-date">{fecha}</span>'
                      f'<span class="ven-m-team ven-m-h">{home}</span>'
@@ -1614,7 +1644,7 @@ def _render_venues(standings: Dict) -> str:
         cards += (f'<div class="hoy-fila" onclick="toggleMatch(this)">'
                   f'<div class="hoy-head">'
                   f'<span class="hoy-etiqueta">{v.get("name", "")}</span>'
-                  f'<span class="ven-count">{v.get("count", 0)} {"partido" if v.get("count")==1 else "partidos"}</span>'
+                  f'<span class="ven-count">{count} {"partido" if count == 1 else "partidos"}</span>'
                   f'<span class="hoy-chev">&#9662;</span>'
                   f'</div>'
                   f'<div class="ven-city">{v.get("city", "")}</div>'
