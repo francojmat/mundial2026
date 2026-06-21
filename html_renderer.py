@@ -1573,12 +1573,35 @@ def _venue_time(iso: str) -> str:
 
 _KO_ROUND_LABEL = {"r16": "Octavos de Final", "qf": "Cuartos de Final", "sf": "Semifinal"}
 
+# 32avos de Final — calendario verificado (Wikipedia): (fecha, nombre de estadio API-Football)
+_R32_SCHEDULE = [
+    ("2026-06-28", "SoFi Stadium"),
+    ("2026-06-29", "NRG Stadium"),
+    ("2026-06-29", "Gillette Stadium"),
+    ("2026-06-29", "Estadio BBVA"),
+    ("2026-06-30", "AT&T Stadium"),
+    ("2026-06-30", "MetLife Stadium"),
+    ("2026-06-30", "Estadio Azteca"),
+    ("2026-07-01", "Mercedes-Benz Stadium"),
+    ("2026-07-01", "Lumen Field"),
+    ("2026-07-01", "Levi's Stadium"),
+    ("2026-07-02", "SoFi Stadium"),
+    ("2026-07-02", "BMO Field"),
+    ("2026-07-02", "BC Place"),
+    ("2026-07-03", "AT&T Stadium"),
+    ("2026-07-03", "Hard Rock Stadium"),
+    ("2026-07-03", "Arrowhead Stadium"),
+]
+
 
 def _knockouts_for_venue(venue_name: str) -> list:
-    """Eliminatorias (Octavos→Final) programadas en este estadio, desde _KO_SCHEDULE."""
+    """Eliminatorias programadas en este estadio (32avos verificados + Octavos→Final)."""
     if not venue_name:
         return []
     out = []
+    for date, stadium in _R32_SCHEDULE:
+        if stadium == venue_name:
+            out.append({"date": date, "ko": True, "label": "32avos de Final"})
     for key, (date, stadium) in _KO_SCHEDULE.items():
         if stadium.startswith(venue_name):
             out.append({"date": date, "ko": True, "label": _KO_ROUND_LABEL.get(key.split("-")[0], "")})
@@ -1604,10 +1627,12 @@ def _render_venues(standings: Dict) -> str:
         for m in all_m:
             fecha = _venue_date(m.get("date", ""))
             if m.get("ko"):
+                t = _venue_time(m.get("date", ""))
+                time_html = f'<span class="ven-time">{t}</span>' if t != "—" else ''
                 rows += (f'<div class="ven-m-ko">'
                          f'<span class="ven-m-date">{fecha}</span>'
                          f'<span class="ven-ko-label">{m.get("label", "")}</span>'
-                         f'<span class="ven-time">{_venue_time(m.get("date", ""))}</span>'
+                         f'{time_html}'
                          f'</div>')
                 continue
             home = traducir(m.get("home", ""))
