@@ -18,6 +18,25 @@ from countries import nombre_es
 APIFOOTBALL_BASE = "https://v3.football.api-sports.io"
 WORLD_CUP_LEAGUE_ID = 1  # "World Cup" en API-Football
 
+# Status de API-Football → status interno (el que usa el resto del código)
+STATUS_MAP = {
+    "FT": "FINISHED", "AET": "FINISHED", "PEN": "FINISHED",
+    "1H": "IN_PLAY", "2H": "IN_PLAY", "ET": "IN_PLAY", "BT": "IN_PLAY",
+    "P": "IN_PLAY", "LIVE": "IN_PLAY", "INT": "IN_PLAY",
+    "HT": "PAUSED",
+    "NS": "TIMED", "TBD": "TIMED",
+}
+
+# Round de API-Football → stage interno (el que espera _stage_label)
+ROUND_TO_STAGE = {
+    "Round of 32":     "ROUND_OF_32",
+    "Round of 16":     "ROUND_OF_16",
+    "Quarter-finals":  "QUARTER_FINALS",
+    "Semi-finals":     "SEMI_FINALS",
+    "3rd Place Final": "THIRD_PLACE",
+    "Final":           "FINAL",
+}
+
 
 def _parse_iso(s: str):
     try:
@@ -115,6 +134,26 @@ class APIFootballClient:
             return data.get("response") or []
         except Exception:
             return []
+
+    def get_team_groups(self) -> dict:
+        """{nombre_equipo: 'GROUP_X'} desde /standings (API-Football no da el grupo en el fixture)."""
+        try:
+            raw = self._get("/standings", self._league_params())
+        except Exception:
+            return {}
+        out = {}
+        resp = raw.get("response") or []
+        if not resp:
+            return out
+        for grp in (resp[0].get("league") or {}).get("standings") or []:
+            for row in grp:
+                g = row.get("group", "") or ""
+                if g.startswith("Group "):
+                    gkey = "GROUP_" + g.replace("Group ", "").strip()
+                    name = (row.get("team") or {}).get("name", "")
+                    if name:
+                        out[name] = gkey
+        return out
 
     def get_fixture_events(self, fixture_id: int) -> list:
         """Devuelve la lista cruda de eventos de un partido."""

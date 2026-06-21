@@ -23,14 +23,11 @@ from match_page import render_partido_shell, render_match_fragment
 
 
 def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None) -> None:
-    client = WorldCupClient(api_key)
-    apifootball = APIFootballClient(apifootball_key) if apifootball_key else None
-    if apifootball:
-        print("API-Football activo: eventos en vivo habilitados.")
-    else:
-        print("API-Football sin key: solo árbitro (sin goles/tarjetas/cambios).")
+    apifootball = APIFootballClient(apifootball_key)  # proveedor principal de datos
+    scorers_client = WorldCupClient(api_key) if api_key else None  # solo goleadores
+    print(f"Proveedor: API-Football. Goleadores: {'football-data' if scorers_client else 'sin lista'}.")
     print("Fetching datos...")
-    standings = build_standings(client, apifootball=apifootball)
+    standings = build_standings(scorers_client, apifootball)
     matchups = build_round_of_32(standings, standings.get("_thirds_advancing", []))
 
     html = render_html(standings, matchups)
@@ -80,7 +77,7 @@ if __name__ == "__main__":
     parser.add_argument("--json", default="data.json")
     args = parser.parse_args()
 
-    if not args.key:
-        sys.exit("Error: falta la API key. Pasala con --key o la variable FOOTBALL_API_KEY.")
+    if not args.apifootball_key:
+        sys.exit("Error: falta APIFOOTBALL_KEY (proveedor principal). Pasala con --apifootball-key.")
 
     main(args.key, args.html, args.json, apifootball_key=args.apifootball_key)

@@ -137,18 +137,13 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
             v["image_url"] = d.get("image")
     standings["_venues"] = vlist
 
-    # Mapas nombre→team_id y match_id→fixture_id (se arman con los fixtures, persisten)
+    # Mapa nombre→team_id (directo de los fixtures; el match_id ya es el fixture_id)
     tid_map = cache.get("team_id_map") or {}
-    fx_map = cache.get("fixture_id_map") or {}
-    if fixtures and matches_by_date:
-        new_tid, new_fx = _build_maps(matches_by_date, fixtures)
+    if fixtures:
+        new_tid = _team_ids_from_fixtures(fixtures)
         if new_tid:
             tid_map = {**tid_map, **new_tid}
             cache["team_id_map"] = tid_map
-            dirty = True
-        if new_fx:
-            fx_map = {**fx_map, **new_fx}
-            cache["fixture_id_map"] = fx_map
             dirty = True
 
     # Planteles + coach (cache semanal, con tope por corrida)
@@ -178,8 +173,8 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
 
     # Detalle de partido (alineaciones, stats de equipo, stats por jugador)
     details = cache.get("match_details") or {}
-    if fx_map and matches_by_date:
-        if _enrich_match_details(matches_by_date, fx_map, details, client):
+    if matches_by_date:
+        if _enrich_match_details(matches_by_date, details, client):
             cache["match_details"] = details
             dirty = True
     # Marcar qué partidos tienen detalle (para mostrar el botón VER PARTIDO)
@@ -193,20 +188,19 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
         _save(cache_path, cache)
 
 
-def _enrich_match_details(matches_by_date: dict, fx_map: dict, details: dict, client) -> bool:
+def _enrich_match_details(matches_by_date: dict, details: dict, client) -> bool:
     """Trae alineaciones/stats/jugadores de partidos jugados o en vivo. Cache por partido.
-    Prioriza partidos en vivo y los más recientes (que son los que la gente mira)."""
-    # Candidatos que necesitan fetch (no cacheados, o en vivo desactualizados)
+    Prioriza partidos en vivo y los más recientes (que son los que la gente mira).
+    El match_id ES el fixture_id de API-Football."""
     candidates = []
     for matches in matches_by_date.values():
         for m in matches:
             status = m.get("status", "")
             if status not in ("FINISHED", "IN_PLAY", "PAUSED"):
                 continue
-            key = str(m.get("match_id"))
-            if not fx_map.get(key):
+            if not m.get("match_id"):
                 continue
-            cached = details.get(key)
+            cached = details.get(str(m.get("match_id")))
             if cached:
                 if cached.get("status") == "FINISHED":
                     continue  # terminado y cacheado → no cambia
@@ -221,7 +215,7 @@ def _enrich_match_details(matches_by_date: dict, fx_map: dict, details: dict, cl
     dirty = False
     for m in candidates[:MATCH_DETAILS_PER_RUN]:
         key = str(m.get("match_id"))
-        fixture_id = fx_map.get(key)
+        fixture_id = m.get("match_id")
         lineups = client.get_fixture_lineups(fixture_id)
         if not lineups:
             continue  # todavía sin alineaciones (no arrancó)
@@ -236,22 +230,16 @@ def _enrich_match_details(matches_by_date: dict, fx_map: dict, details: dict, cl
     return dirty
 
 
-def _build_maps(matches_by_date: dict, fixtures: list):
-    """Devuelve (team_name→team_id, match_id→fixture_id) por timestamp + equipos."""
-    from apifootball_client import resolve_fixture
-    tid, fx = {}, {}
-    for matches in matches_by_date.values():
-        for m in matches:
-            mapping = resolve_fixture(m, fixtures)  # robusto ante partidos simultáneos
-            if not mapping:
-                continue
-            if m.get("home") and mapping.get("home_id"):
-                tid[m["home"]] = mapping["home_id"]
-            if m.get("away") and mapping.get("away_id"):
-                tid[m["away"]] = mapping["away_id"]
-            if mapping.get("fixture_id"):
-                fx[str(m.get("match_id"))] = mapping["fixture_id"]
-    return tid, fx
+def _team_ids_from_fixtures(fixtures: list) -> dict:
+    """{nombre_equipo: team_id} directo de los fixtures de API-Football."""
+    out = {}
+    for fx in fixtures:
+        teams = fx.get("teams") or {}
+        for side in ("home", "away"):
+            t = teams.get(side) or {}
+            if t.get("name") and t.get("id"):
+                out[t["name"]] = t["id"]
+    return out
 
 
 def _image_is_real(url: str) -> bool:

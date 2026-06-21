@@ -126,103 +126,123 @@ class WorldCupClient:
         return {"dates": by_date, "today": today_local.isoformat()}
 
 
-def parse_matches(raw_matches: dict) -> Dict[str, List[MatchResult]]:
-    """Convert API match data → {group_name: [MatchResult, ...]}"""
-    groups: Dict[str, List[MatchResult]] = {}
+def _af_to_match(fx: dict, team_groups: dict) -> dict:
+    """Convierte un fixture de API-Football al formato interno de partido."""
+    from apifootball_client import STATUS_MAP, ROUND_TO_STAGE
+    f = fx.get("fixture") or {}
+    teams = fx.get("teams") or {}
+    goals = fx.get("goals") or {}
+    league = fx.get("league") or {}
+    home = (teams.get("home") or {}).get("name", "")
+    away = (teams.get("away") or {}).get("name", "")
+    status = STATUS_MAP.get((f.get("status") or {}).get("short", ""), "TIMED")
+    rnd = league.get("round", "") or ""
+    if rnd.startswith("Group Stage"):
+        stage = "GROUP_STAGE"
+        try:
+            matchday = int(rnd.rsplit("-", 1)[-1].strip())
+        except Exception:
+            matchday = 0
+        group = team_groups.get(home, "") or team_groups.get(away, "")
+    else:
+        stage = ROUND_TO_STAGE.get(rnd, "")
+        matchday = 0
+        group = ""
+    referee = ((f.get("referee") or "").split(",")[0]).strip()
+    return {
+        "match_id":   f.get("id"),
+        "home": home, "away": away,
+        "home_id":    (teams.get("home") or {}).get("id"),
+        "away_id":    (teams.get("away") or {}).get("id"),
+        "home_goals": goals.get("home"),
+        "away_goals": goals.get("away"),
+        "status":     status,
+        "utc_date":   f.get("date", ""),
+        "stage":      stage,
+        "group":      group,
+        "matchday":   matchday,
+        "referee":    referee,
+        "goals_detail":  [],
+        "bookings":      [],
+        "substitutions": [],
+    }
 
-    for m in raw_matches.get("matches", []):
-        if m.get("stage") != "GROUP_STAGE":
+
+def _build_display(matches: List[dict]) -> dict:
+    """Agrupa los partidos por fecha local (hora argentina, UTC-3)."""
+    from datetime import datetime, timezone, timedelta
+    ARG = timezone(timedelta(hours=-3))
+    today = datetime.now(ARG).date().isoformat()
+    by_date: Dict[str, list] = {}
+    for m in matches:
+        try:
+            dt = datetime.fromisoformat((m.get("utc_date") or "").replace("Z", "+00:00"))
+        except Exception:
             continue
-        group = m.get("group", "UNKNOWN")
-        status = m.get("status", "")
-        played = status in ("FINISHED", "IN_PLAY", "PAUSED")
-
-        home = m["homeTeam"]["shortName"] or m["homeTeam"]["name"]
-        away = m["awayTeam"]["shortName"] or m["awayTeam"]["name"]
-        score = m.get("score", {})
-        full = score.get("fullTime", {}) or {}
-
-        match = MatchResult(
-            home=home,
-            away=away,
-            home_goals=full.get("home") or 0,
-            away_goals=full.get("away") or 0,
-            played=played,
-            status=status,
-        )
-
-        groups.setdefault(group, []).append(match)
-
-    return groups
+        local = dt.astimezone(ARG).date().isoformat()
+        by_date.setdefault(local, []).append(m)
+    return {"dates": by_date, "today": today}
 
 
-def build_standings(client: WorldCupClient, fifa_rankings: Dict[str, int] = None,
-                    apifootball=None, events_cache_path: str = "events_cache.json") -> Dict:
+def build_standings(scorers_client, apifootball, fifa_rankings: Dict[str, int] = None,
+                    events_cache_path: str = "events_cache.json") -> Dict:
     """
-    Fetch all group matches and compute standings with FIFA 2026 tiebreakers.
-    Returns dict with groups + third-place ranking.
+    Arma posiciones + display desde API-Football (único proveedor de partidos).
+    `scorers_client` (football-data) se usa solo para la lista completa de goleadores.
     """
-    raw = client.get_matches(stage="GROUP_STAGE")
-    group_matches = parse_matches(raw)
+    fixtures = apifootball.get_all_fixtures()
+    team_groups = apifootball.get_team_groups()
+    matches = [_af_to_match(fx, team_groups) for fx in fixtures]
 
-    result = {}
+    # MatchResult por grupo (solo fase de grupos con grupo asignado)
+    group_matches: Dict[str, List[MatchResult]] = {}
+    for m in matches:
+        if m["stage"] != "GROUP_STAGE" or not m["group"]:
+            continue
+        played = m["status"] in ("FINISHED", "IN_PLAY", "PAUSED")
+        group_matches.setdefault(m["group"], []).append(MatchResult(
+            home=m["home"], away=m["away"],
+            home_goals=m["home_goals"] or 0, away_goals=m["away_goals"] or 0,
+            played=played, status=m["status"],
+        ))
+
+    result: Dict = {}
     all_thirds = []
-
-    for group_name, matches in sorted(group_matches.items()):
-        # Collect all teams in this group
-        teams_set = set()
-        for m in matches:
-            teams_set.add(m.home)
-            teams_set.add(m.away)
-        teams = list(teams_set)
-
-        stats = compute_stats(teams, matches)
-        ranked = rank_group(teams, stats, matches, fifa_rankings)
-
-        result[group_name] = {
-            "teams": ranked,
-            "stats": stats,
-            "matches": matches,
-        }
-
+    for group_name, gmatches in sorted(group_matches.items()):
+        teams = list({t for mm in gmatches for t in (mm.home, mm.away)})
+        stats = compute_stats(teams, gmatches)
+        ranked = rank_group(teams, stats, gmatches, fifa_rankings)
+        result[group_name] = {"teams": ranked, "stats": stats, "matches": gmatches}
         if len(ranked) >= 3:
-            third_team = ranked[2]
-            all_thirds.append({
-                "team": third_team,
-                "group": group_name,
-                "stats": stats[third_team],
-            })
+            all_thirds.append({"team": ranked[2], "group": group_name, "stats": stats[ranked[2]]})
 
-    # Rank the third-place teams
     best_thirds = rank_third_place_teams(all_thirds, fifa_rankings)
     result["_thirds_ranked"] = best_thirds
     result["_thirds_advancing"] = best_thirds[:8]
 
-    # Teams currently in a live match
     live_teams = set()
-    for matches in group_matches.values():
-        for m in matches:
-            if m.status in ("IN_PLAY", "PAUSED"):
-                live_teams.add(m.home)
-                live_teams.add(m.away)
+    for m in matches:
+        if m["status"] in ("IN_PLAY", "PAUSED"):
+            live_teams.add(m["home"])
+            live_teams.add(m["away"])
     result["_live_teams"] = live_teams
-    display = client.get_matches_for_display()
-    # Detalle de eventos (goles/tarjetas/cambios) desde API-Football, con caché y
-    # presupuesto. Si apifootball es None, no hace nada (solo se ve el árbitro).
-    if apifootball is not None:
-        from events import enrich_with_events
-        enrich_with_events(display["dates"], apifootball, events_cache_path)
+
+    display = _build_display(matches)
+    # Detalle de eventos (goles/tarjetas/cambios) — match_id YA es el fixture_id de API-Football
+    from events import enrich_with_events
+    enrich_with_events(display["dates"], apifootball, events_cache_path)
     result["_matches_by_date"] = display["dates"]
     result["_today_date"]      = display["today"]
     result["_today_matches"]   = display["dates"].get(display["today"], [])
+
+    # Goleadores: football-data (da más jugadores que las 20 de API-Football)
     try:
-        result["_scorers"] = client.get_scorers(limit=200)
+        result["_scorers"] = scorers_client.get_scorers(limit=200) if scorers_client else []
     except Exception:
         result["_scorers"] = []
 
-    # Datos del torneo de API-Football (rankings: asistencias, amarillas, rojas)
-    if apifootball is not None:
-        from tournament import enrich_tournament_data
-        enrich_tournament_data(result, apifootball)
+    # Resto de datos del torneo (rankings, estadios, planteles, detalle de partido)
+    from tournament import enrich_tournament_data
+    enrich_tournament_data(result, apifootball)
 
     return result

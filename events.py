@@ -15,7 +15,7 @@ import json
 import os
 from datetime import datetime, timezone, timedelta
 
-DAILY_BUDGET = 95          # margen sobre las 100 del free tier
+DAILY_BUDGET = 3000        # tope de requests/día para eventos (plan Pro = 7500 total)
 RECENT_DAYS = 4            # solo enriquecemos partidos de los últimos N días
 
 
@@ -46,7 +46,7 @@ def _load_cache(path: str) -> dict:
                 return json.load(f)
         except Exception:
             pass
-    return {"day": "", "requests_today": 0, "fixture_map": {}, "events": {}}
+    return {"day": "", "requests_today": 0, "events": {}}
 
 
 def _save_cache(path: str, cache: dict) -> None:
@@ -115,33 +115,6 @@ def _parse_events(raw_events: list, home_id, away_id, home_name: str, away_name:
     return {"goals_detail": goals, "bookings": bookings, "substitutions": subs}
 
 
-def _ensure_fixture_map(cache: dict, client, matches: list, state: dict) -> None:
-    """
-    Asegura que todos los partidos candidatos tengan su fixture_id de API-Football.
-    Si falta alguno, trae TODOS los fixtures del torneo en una sola request y
-    matchea por timestamp de kickoff (tolerancia 5 min). Cachea el mapeo (no cambia).
-    `state` evita pedir la lista más de una vez por corrida.
-    """
-    from apifootball_client import resolve_fixture
-
-    pending = [m for m in matches if str(m.get("match_id")) not in cache["fixture_map"]]
-    if not pending or state.get("fixtures_fetched"):
-        return
-    if cache["requests_today"] >= DAILY_BUDGET:
-        return
-
-    fixtures = client.get_all_fixtures()
-    cache["requests_today"] += 1
-    state["fixtures_fetched"] = True
-    if not fixtures:
-        return
-
-    for m in pending:
-        mapping = resolve_fixture(m, fixtures)  # matchea por timestamp + equipos
-        if mapping and mapping.get("fixture_id"):
-            cache["fixture_map"][str(m.get("match_id"))] = mapping
-
-
 def enrich_with_events(matches_by_date: dict, client, cache_path: str = "events_cache.json") -> None:
     """
     Enriquece in-place los partidos con goles/tarjetas/cambios desde API-Football.
@@ -178,7 +151,6 @@ def enrich_with_events(matches_by_date: dict, client, cache_path: str = "events_
                 live_count += 1
 
     interval = _adaptive_interval(live_count)
-    state = {}  # evita pedir la lista de fixtures más de una vez por corrida
     dirty = False
 
     for m in candidates:
@@ -204,26 +176,20 @@ def enrich_with_events(matches_by_date: dict, client, cache_path: str = "events_
                 if not last or (now - last).total_seconds() >= interval:
                     need_fetch = True
 
-        # Tope de presupuesto: si no queda, usamos lo cacheado y seguimos.
         if need_fetch and cache["requests_today"] >= DAILY_BUDGET:
             need_fetch = False
 
-        if need_fetch:
-            _ensure_fixture_map(cache, client, candidates, state)
-            mapping = cache["fixture_map"].get(key)
-            if mapping and mapping.get("fixture_id") and cache["requests_today"] < DAILY_BUDGET:
-                raw = client.get_fixture_events(mapping["fixture_id"])
-                cache["requests_today"] += 1
-                parsed = _parse_events(
-                    raw,
-                    mapping.get("home_id"), mapping.get("away_id"),
-                    m.get("home", ""), m.get("away", ""),
-                )
-                parsed["status"] = status
-                parsed["last_fetch"] = now.isoformat()
-                cache["events"][key] = parsed
-                cached = parsed
-                dirty = True
+        # match_id YA es el fixture_id de API-Football; home_id/away_id vienen en el partido
+        if need_fetch and m.get("match_id"):
+            raw = client.get_fixture_events(m["match_id"])
+            cache["requests_today"] += 1
+            parsed = _parse_events(raw, m.get("home_id"), m.get("away_id"),
+                                   m.get("home", ""), m.get("away", ""))
+            parsed["status"] = status
+            parsed["last_fetch"] = now.isoformat()
+            cache["events"][key] = parsed
+            cached = parsed
+            dirty = True
 
         if cached:
             apply(cached)
