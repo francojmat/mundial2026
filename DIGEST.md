@@ -23,20 +23,30 @@ Pipeline: `generate.py` → `build_standings()` (api_client.py) → `render_html
   - El job hace `git add data.json mundial2026.html events_cache.json` y pushea.
 - Panel admin: `admin.html` (métricas PostHog vía Cloudflare Worker en `cloudflare-worker/worker.js`).
 
-## Fuentes de datos — DOS APIs (decisión clave)
+## Fuentes de datos — API-Football es el proveedor PRINCIPAL (migración 2026-06-21)
 
-| Dato | Fuente | Costo | Frecuencia |
-|---|---|---|---|
-| Marcador, estado (EN VIVO/FIN), posiciones, fixtures, árbitro, goleadores del torneo | **football-data.org** | free (10 req/min) | cada corrida (~60s) |
-| Detalle de eventos por partido: goles (min + asistencia), tarjetas, cambios | **API-Football** (api-sports.io) | free (100 req/día) | adaptativo, solo en vivo |
+| Dato | Fuente |
+|---|---|
+| Partidos, scores, status, grupos, posiciones, fixtures, árbitro, eventos, planteles, detalle, estadios, rankings | **API-Football** (Pro, 7.500 req/día) |
+| Goleadores (lista completa) | **football-data.org** (free) — único uso que le queda |
 
-**Por qué dos APIs:** el free tier de football-data.org NO devuelve goles/tarjetas/cambios
-(devuelve `[]` en el endpoint individual `/v4/matches/{id}` — verificado con logs el 2026-06-20).
-Solo trae el árbitro. Por eso el detalle de eventos viene de API-Football.
+**Por qué football-data quedó solo para goleadores:** API-Football `topscorers` da solo top 20;
+football-data da ~80. Decisión del usuario: mantener football-data SOLO para esa lista.
 
-El **marcador** ya se actualiza en vivo gratis vía football-data.org, así que el usuario
-ve los goles en el resultado en ~60s sin gastar API-Football. API-Football solo llena el
-detalle del cuadro desplegable (quién, minuto, asistencia, tarjetas, cambios).
+**Grupos:** API-Football NO da la letra del grupo en el fixture (`round` = "Group Stage - N").
+El grupo se saca de `/standings` (`get_team_groups` → {equipo: GROUP_X}) y se asigna a cada partido.
+
+**match_id = fixture_id de API-Football.** Por eso events.py y tournament.py ya NO necesitan
+`resolve_fixture` (quedó muerto en apifootball_client.py) ni mapeo entre APIs. El bug de partidos
+simultáneos desapareció de raíz. `_af_to_match` (api_client.py) convierte fixture→formato interno.
+
+## Marcadores en vivo — endpoint /api/live (Worker)
+Para no esperar el ciclo de git (~60s), el marcador en vivo va por el Cloudflare Worker:
+`GET /api/live` pide a API-Football `?live=all`, cachea 10s (Cache API → respeta rate limit sin
+importar el tráfico), devuelve `[{id, status, elapsed, h, a}]`. El front (`pollLive`, cada 8s)
+busca la tarjeta por `data-mid` y actualiza el `.hoy-score`. Latencia ~8-10s. El Worker necesita
+el secret `APIFOOTBALL_KEY` (cargado vía `wrangler secret put`). Deploy del Worker: `wrangler deploy`
+desde `cloudflare-worker/` (wrangler está autenticado con la cuenta del usuario).
 
 ## Datos de API-Football disponibles y NO usados (WC 2026, league=1, season=2026)
 Hoy solo usamos `fixtures` (mapeo) y `fixtures/events` (goles/tarjetas/cambios). El plan Pro
