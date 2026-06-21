@@ -1571,45 +1571,55 @@ def _venue_time(iso: str) -> str:
         return "—"
 
 
-_KO_ROUND_LABEL = {"r16": "Octavos de Final", "qf": "Cuartos de Final", "sf": "Semifinal"}
-
-# 32avos de Final — calendario verificado (Wikipedia): (fecha, nombre de estadio API-Football)
-_R32_SCHEDULE = [
-    ("2026-06-28", "SoFi Stadium"),
-    ("2026-06-29", "NRG Stadium"),
-    ("2026-06-29", "Gillette Stadium"),
-    ("2026-06-29", "Estadio BBVA"),
-    ("2026-06-30", "AT&T Stadium"),
-    ("2026-06-30", "MetLife Stadium"),
-    ("2026-06-30", "Estadio Azteca"),
-    ("2026-07-01", "Mercedes-Benz Stadium"),
-    ("2026-07-01", "Lumen Field"),
-    ("2026-07-01", "Levi's Stadium"),
-    ("2026-07-02", "SoFi Stadium"),
-    ("2026-07-02", "BMO Field"),
-    ("2026-07-02", "BC Place"),
-    ("2026-07-03", "AT&T Stadium"),
-    ("2026-07-03", "Hard Rock Stadium"),
-    ("2026-07-03", "Arrowhead Stadium"),
+# Calendario COMPLETO de eliminatorias — verificado (Wikipedia/FIFA): (fecha, estadio, ronda)
+# Nombres de estadio como en los fixtures de API-Football.
+_VENUE_KO = [
+    # 32avos de Final (28/06 → 03/07)
+    ("2026-06-28", "SoFi Stadium",            "32avos de Final"),
+    ("2026-06-29", "NRG Stadium",             "32avos de Final"),
+    ("2026-06-29", "Gillette Stadium",        "32avos de Final"),
+    ("2026-06-29", "Estadio BBVA",            "32avos de Final"),
+    ("2026-06-30", "AT&T Stadium",            "32avos de Final"),
+    ("2026-06-30", "MetLife Stadium",         "32avos de Final"),
+    ("2026-06-30", "Estadio Azteca",          "32avos de Final"),
+    ("2026-07-01", "Mercedes-Benz Stadium",   "32avos de Final"),
+    ("2026-07-01", "Lumen Field",             "32avos de Final"),
+    ("2026-07-01", "Levi's Stadium",          "32avos de Final"),
+    ("2026-07-02", "SoFi Stadium",            "32avos de Final"),
+    ("2026-07-02", "BMO Field",               "32avos de Final"),
+    ("2026-07-02", "BC Place",                "32avos de Final"),
+    ("2026-07-03", "AT&T Stadium",            "32avos de Final"),
+    ("2026-07-03", "Hard Rock Stadium",       "32avos de Final"),
+    ("2026-07-03", "Arrowhead Stadium",       "32avos de Final"),
+    # Octavos de Final (04/07 → 07/07)
+    ("2026-07-04", "NRG Stadium",             "Octavos de Final"),
+    ("2026-07-04", "Lincoln Financial Field", "Octavos de Final"),
+    ("2026-07-05", "MetLife Stadium",         "Octavos de Final"),
+    ("2026-07-05", "Estadio Azteca",          "Octavos de Final"),
+    ("2026-07-06", "AT&T Stadium",            "Octavos de Final"),
+    ("2026-07-06", "Lumen Field",             "Octavos de Final"),
+    ("2026-07-07", "Mercedes-Benz Stadium",   "Octavos de Final"),
+    ("2026-07-07", "BC Place",                "Octavos de Final"),
+    # Cuartos de Final (09/07 → 11/07)
+    ("2026-07-09", "Gillette Stadium",        "Cuartos de Final"),
+    ("2026-07-10", "SoFi Stadium",            "Cuartos de Final"),
+    ("2026-07-11", "Hard Rock Stadium",       "Cuartos de Final"),
+    ("2026-07-11", "Arrowhead Stadium",       "Cuartos de Final"),
+    # Semifinales (14/07, 15/07)
+    ("2026-07-14", "AT&T Stadium",            "Semifinal"),
+    ("2026-07-15", "Mercedes-Benz Stadium",   "Semifinal"),
+    # 3er Puesto (18/07) y Final (19/07)
+    ("2026-07-18", "Hard Rock Stadium",       "3er Puesto"),
+    ("2026-07-19", "MetLife Stadium",         "Final"),
 ]
 
 
 def _knockouts_for_venue(venue_name: str) -> list:
-    """Eliminatorias programadas en este estadio (32avos verificados + Octavos→Final)."""
+    """Eliminatorias (32avos → Final) programadas en este estadio. Calendario verificado."""
     if not venue_name:
         return []
-    out = []
-    for date, stadium in _R32_SCHEDULE:
-        if stadium == venue_name:
-            out.append({"date": date, "ko": True, "label": "32avos de Final"})
-    for key, (date, stadium) in _KO_SCHEDULE.items():
-        if stadium.startswith(venue_name):
-            out.append({"date": date, "ko": True, "label": _KO_ROUND_LABEL.get(key.split("-")[0], "")})
-    if _3RD_PLACE[1].startswith(venue_name):
-        out.append({"date": _3RD_PLACE[0], "ko": True, "label": "3er Puesto"})
-    if _FINAL[1].startswith(venue_name):
-        out.append({"date": _FINAL[0], "ko": True, "label": "Final"})
-    return out
+    return [{"date": d, "ko": True, "label": lbl}
+            for d, ven, lbl in _VENUE_KO if ven == venue_name]
 
 
 def _render_venues(standings: Dict) -> str:
