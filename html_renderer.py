@@ -987,6 +987,21 @@ function navGo(secId) {{
   if (target) setTimeout(function() {{ target.scrollIntoView({{behavior: 'smooth', block: 'start'}}); }}, 60);
 }}
 
+// ── Marcadores en vivo (cada 8s, vía el Worker — mucho más rápido que data.json) ──
+function pollLive() {{
+  fetch('/api/live')
+    .then(function(r) {{ return r.json(); }})
+    .then(function(d) {{
+      (d.matches || []).forEach(function(m) {{
+        var card = document.querySelector('.hoy-fila[data-mid="' + m.id + '"]');
+        if (!card) return;
+        var sc = card.querySelector('.hoy-score');
+        if (sc && m.h != null) sc.textContent = m.h + ' - ' + m.a;
+      }});
+    }})
+    .catch(function() {{}});
+}}
+
 function pollData() {{
   fetch('data.json?_=' + Date.now())
     .then(function(r) {{ return r.json(); }})
@@ -1059,6 +1074,8 @@ document.addEventListener("DOMContentLoaded", function() {{
   window.addEventListener('resize', scaleBracket);
   pollData();
   setInterval(pollData, 30000);
+  pollLive();
+  setInterval(pollLive, 8000);
 }});
 </script>
 </body>
@@ -1670,7 +1687,7 @@ def _render_today_matches(matches: list) -> str:
         badge     = _hoy_badge(m)
         centro    = _hoy_centro(m)
         detail    = _hoy_detail_html(m)
-        rows += (f'<div class="hoy-fila" onclick="toggleMatch(this)">'
+        rows += (f'<div class="hoy-fila" data-mid="{m.get("match_id")}" onclick="toggleMatch(this)">'
                  f'<div class="hoy-head">'
                  f'<span class="hoy-etiqueta">{lbl}</span>'
                  f'{badge}'

@@ -38,6 +38,7 @@ export default {
       return new Response(null, { status: 204, headers: cors() });
     }
 
+    if (path === "/api/live"        && request.method === "GET")  return handleLive(request, env, ctx);
     if (path === "/api/metrics"     && request.method === "GET")  return handleMetrics(request, env);
     if (path === "/api/suggest"     && request.method === "POST") return handleSuggest(request, env);
     if (path === "/api/suggestions" && request.method === "GET")  return handleList(request, env);
@@ -50,6 +51,45 @@ export default {
     return new Response("Not found", { status: 404 });
   },
 };
+
+// ── GET /api/live ────────────────────────────────────────────────────────────
+// Marcadores en vivo desde API-Football, cacheados 10s (sin importar el tráfico,
+// la API se pide como mucho 1 vez cada 10s → respeta el rate limit).
+async function handleLive(request, env, ctx) {
+  const KEY = (env.APIFOOTBALL_KEY || "").trim();
+  const cache = caches.default;
+  const cacheKey = new Request("https://live.internal/wc2026");
+  const hit = await cache.match(cacheKey);
+  if (hit) return hit;
+
+  let matches = [];
+  if (KEY) {
+    try {
+      const r = await fetch(
+        "https://v3.football.api-sports.io/fixtures?league=1&season=2026&live=all",
+        { headers: { "x-apisports-key": KEY } }
+      );
+      const data = await r.json();
+      matches = (data.response || []).map(fx => ({
+        id:      fx.fixture.id,
+        status:  fx.fixture.status.short,
+        elapsed: fx.fixture.status.elapsed,
+        h:       fx.goals.home,
+        a:       fx.goals.away,
+      }));
+    } catch (e) { /* devolvemos lista vacía */ }
+  }
+
+  const resp = new Response(JSON.stringify({ updated: Date.now(), matches }), {
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "public, max-age=10",
+      ...cors(),
+    },
+  });
+  ctx.waitUntil(cache.put(cacheKey, resp.clone()));
+  return resp;
+}
 
 // ── GET /api/metrics ─────────────────────────────────────────────────────────
 
