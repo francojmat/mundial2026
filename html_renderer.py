@@ -993,8 +993,25 @@ function pollLive() {{
       (d.matches || []).forEach(function(m) {{
         var card = document.querySelector('.hoy-fila[data-mid="' + m.id + '"]');
         if (!card) return;
+        // Marcador: si la tarjeta ya está en vivo, actualizar; si estaba por jugarse, pasarla a vivo
         var sc = card.querySelector('.hoy-score');
-        if (sc && m.h != null) sc.textContent = m.h + ' - ' + m.a;
+        var centro = card.querySelector('.hoy-centro');
+        if (sc && m.h != null) {{
+          sc.textContent = m.h + ' - ' + m.a;
+        }} else if (centro && m.h != null) {{
+          centro.innerHTML = '<span class="hoy-score">' + m.h + ' - ' + m.a + '</span>';
+        }}
+        // Badge EN VIVO: crearlo si no existe (transición rápida sin esperar a /api/data)
+        var head = card.querySelector('.hoy-head');
+        var chev = head ? head.querySelector('.hoy-chev') : null;
+        if (head && chev && !head.querySelector('.hoy-badge-live') && !head.querySelector('.hoy-badge-fin')) {{
+          var b = document.createElement('span');
+          b.className = 'hoy-badge-live';
+          b.innerHTML = (m.status === 'HT')
+            ? '<span class="dot"></span>ENT'
+            : '<span class="dot"></span>EN VIVO <span class="hoy-min"></span>';
+          head.insertBefore(b, chev);
+        }}
         var mn = card.querySelector('.hoy-min');
         if (mn && m.elapsed != null && m.status !== 'HT') mn.textContent = m.elapsed + "'";
       }});

@@ -94,21 +94,28 @@ async function handleLive(request, env, ctx) {
   const hit = await cache.match(cacheKey);
   if (hit) return hit;
 
+  // Estados "en vivo" (incluye entretiempo y prórroga)
+  const LIVE = new Set(["1H", "2H", "HT", "ET", "BT", "P", "LIVE", "INT"]);
+
   let matches = [];
   if (KEY) {
     try {
+      // Endpoint bulk del torneo (el mismo que usa el cron, confiable). Filtramos los
+      // en vivo del lado nuestro. cf.cacheTtl:0 → fetch siempre fresco (sin cache stale).
       const r = await fetch(
-        "https://v3.football.api-sports.io/fixtures?league=1&season=2026&live=all",
-        { headers: { "x-apisports-key": KEY } }
+        "https://v3.football.api-sports.io/fixtures?league=1&season=2026",
+        { headers: { "x-apisports-key": KEY }, cf: { cacheTtl: 0 } }
       );
       const data = await r.json();
-      matches = (data.response || []).map(fx => ({
-        id:      fx.fixture.id,
-        status:  fx.fixture.status.short,
-        elapsed: fx.fixture.status.elapsed,
-        h:       fx.goals.home,
-        a:       fx.goals.away,
-      }));
+      matches = (data.response || [])
+        .filter(fx => LIVE.has((fx.fixture.status || {}).short))
+        .map(fx => ({
+          id:      fx.fixture.id,
+          status:  fx.fixture.status.short,
+          elapsed: fx.fixture.status.elapsed,
+          h:       fx.goals.home,
+          a:       fx.goals.away,
+        }));
     } catch (e) { /* devolvemos lista vacía */ }
   }
 
