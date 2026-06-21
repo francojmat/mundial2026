@@ -157,6 +157,7 @@ def _af_to_match(fx: dict, team_groups: dict) -> dict:
         "home_goals": goals.get("home"),
         "away_goals": goals.get("away"),
         "status":     status,
+        "elapsed":    (f.get("status") or {}).get("elapsed"),
         "utc_date":   f.get("date", ""),
         "stage":      stage,
         "group":      group,

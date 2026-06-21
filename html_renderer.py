@@ -233,10 +233,10 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .hoy-lista{{display:flex;flex-direction:column;gap:6px;max-width:600px;margin:0 auto}}
     .hoy-fila{{background:{WHT};border:1px solid {BDR};padding:7px 12px;cursor:pointer;user-select:none}}
     .hoy-fila:hover{{border-color:{BDR2}}}
-    .hoy-head{{display:flex;align-items:center;gap:6px;margin-bottom:5px}}
-    .hoy-etiqueta{{font-size:.6rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase;flex:1}}
-    .hoy-chev{{color:{BDR2};font-size:.65rem;flex-shrink:0;transition:transform .2s;line-height:1}}
-    .hoy-fila.open .hoy-chev{{transform:rotate(180deg)}}
+    .hoy-head{{position:relative;text-align:center;margin-bottom:5px;min-height:14px}}
+    .hoy-etiqueta{{font-size:.6rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase;vertical-align:middle}}
+    .hoy-chev{{position:absolute;right:0;top:50%;transform:translateY(-50%);color:{BDR2};font-size:.65rem;transition:transform .2s;line-height:1}}
+    .hoy-fila.open .hoy-chev{{transform:translateY(-50%) rotate(180deg)}}
     .hoy-detail{{display:none;border-top:1px solid {GRY};padding:8px 2px 4px;margin-top:8px}}
     .hoy-fila.open .hoy-detail{{display:block}}
     .hoy-vermatch{{display:block;text-align:center;background:{T};color:{WHT};font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:8px;border-radius:8px;text-decoration:none;margin-bottom:10px}}
@@ -260,9 +260,9 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .hoy-score{{font-size:.85rem;font-weight:700;color:{TXT}}}
     .hoy-hora{{font-size:.78rem;font-weight:600;color:{MUT}}}
     .hoy-vs{{font-size:.65rem;color:{DIM};font-weight:600}}
-    .hoy-badge-live{{color:{T};font-size:.6rem;font-weight:700;text-transform:uppercase;display:inline-flex;align-items:center;gap:2px;letter-spacing:.04em}}
+    .hoy-badge-live{{color:{T};font-size:.6rem;font-weight:700;text-transform:uppercase;display:inline-flex;align-items:center;gap:3px;letter-spacing:.04em;vertical-align:middle;margin-left:7px}}
     .hoy-badge-live .dot{{width:5px;height:5px}}
-    .hoy-badge-fin{{color:{MUT};font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}}
+    .hoy-badge-fin{{color:{MUT};font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;vertical-align:middle;margin-left:7px}}
     .team-link{{color:inherit;text-decoration:none;cursor:pointer;border-bottom:1px dotted {BDR2}}}
     .team-link:hover{{color:{T};border-bottom-color:{T}}}
     .ven-count{{color:{MUT};font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}}
@@ -997,6 +997,8 @@ function pollLive() {{
         if (!card) return;
         var sc = card.querySelector('.hoy-score');
         if (sc && m.h != null) sc.textContent = m.h + ' - ' + m.a;
+        var mn = card.querySelector('.hoy-min');
+        if (mn && m.elapsed != null && m.status !== 'HT') mn.textContent = m.elapsed + "'";
       }});
     }})
     .catch(function() {{}});
@@ -1405,8 +1407,13 @@ def _hoy_badge(m: dict) -> str:
     status = m["status"]
     if status == "FINISHED":
         return '<span class="hoy-badge-fin">FIN</span>'
-    if status in ("IN_PLAY", "PAUSED"):
-        return '<span class="hoy-badge-live"><span class="dot"></span>EN VIVO</span>'
+    if status == "PAUSED":
+        return '<span class="hoy-badge-live"><span class="dot"></span>ENT</span>'
+    if status == "IN_PLAY":
+        el = m.get("elapsed")
+        min_html = f"{el}'" if el is not None else ""
+        return ('<span class="hoy-badge-live"><span class="dot"></span>EN VIVO '
+                f'<span class="hoy-min">{min_html}</span></span>')
     return ''
 
 
