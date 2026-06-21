@@ -16,12 +16,24 @@ ranking de terceros, bracket de 32avos, goleadores. Se regenera solo cada ~60s.
 
 Pipeline: `generate.py` → `build_standings()` (api_client.py) → `render_html()` (html_renderer.py) + `render_data_json()` (data_renderer.py).
 
-### Hosting / deploy
-- Web servida por **Cloudflare Pages** desde la rama `main` del repo `francojmat/mundial2026`.
-- **GitHub Actions** (`.github/workflows/update.yml`) regenera y commitea a `main`:
-  - cron cada 5 min (mínimo de GitHub) + `workflow_dispatch` disparado por cron-job.org cada 60s.
-  - El job hace `git add data.json mundial2026.html events_cache.json` y pushea.
+### Hosting / deploy — DATOS SEPARADOS DEL CÓDIGO (clave, 2026-06-21)
+- **main = solo código** (shells `mundial2026.html`/`plantel.html`/`partido.html`, .py, CSS/JS).
+  Cloudflare Pages deploya `main` SOLO cuando cambia el código → casi nunca → **no más 522**.
+  Los archivos de datos están gitignorados en main.
+- **rama `data` = datos** (data.json, planteles.json, partidos.json, events_cache.json,
+  apifootball_cache.json). El cron (`update.yml`) genera y **force-pushea a `data`** (orphan,
+  1 commit). Pages NO deploya producción por esto. (Pages igual crea PREVIEW deploys de `data`
+  —Cloudflare los hace pese a excluirlos por API— pero son inofensivos: no tocan producción
+  ni cuota real, ya que sin build-command no cuentan.)
+- **El Worker sirve los datos**: `/api/data`, `/api/planteles`, `/api/partidos` → fetch de
+  `raw.githubusercontent.com/.../data/<file>`, cache 20s. El front pollea `/api/data`.
+- Flujo de update: cron → genera → push a `data` → raw GitHub → Worker (cache 20s) → front.
+  Para deployar CÓDIGO: commit a `main` (regenerar shells local con `python generate.py` y
+  commitearlos). Pages deploya esa vez.
+- Setting de Pages cambiado por API: `preview_deployment_setting` (token wrangler en
+  `%APPDATA%/xdg.config/.wrangler/config/default.toml`, scope pages:write).
 - Panel admin: `admin.html` (métricas PostHog vía Cloudflare Worker en `cloudflare-worker/worker.js`).
+- El cron sigue disparándose por cron-job.org (~60s) + schedule cada 5 min. workflow_dispatch.
 
 ## Fuentes de datos — API-Football es el proveedor PRINCIPAL (migración 2026-06-21)
 
