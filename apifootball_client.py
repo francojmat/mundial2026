@@ -148,11 +148,15 @@ class APIFootballClient:
         for grp in (resp[0].get("league") or {}).get("standings") or []:
             for row in grp:
                 g = row.get("group", "") or ""
-                if g.startswith("Group "):
-                    gkey = "GROUP_" + g.replace("Group ", "").strip()
-                    name = (row.get("team") or {}).get("name", "")
-                    if name:
-                        out[name] = gkey
+                if not g.startswith("Group "):
+                    continue
+                suffix = g[len("Group "):].strip()
+                # Solo grupos reales de una letra (A-L). Ignora el agregado "Group Stage".
+                if len(suffix) != 1 or not suffix.isalpha():
+                    continue
+                name = (row.get("team") or {}).get("name", "")
+                if name:
+                    out[name] = "GROUP_" + suffix
         return out
 
     def get_fixture_events(self, fixture_id: int) -> list:
