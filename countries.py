@@ -113,3 +113,21 @@ def capacidad_fmt(name: str):
     """Capacidad formateada con puntos de miles, o None si no se conoce."""
     cap = VENUE_CAPACITY.get(name)
     return f"{cap:,}".replace(",", ".") if cap else None
+
+
+# Fotos curadas (Wikimedia Commons, licencia libre) para los estadios que la API
+# de API-Football no trae o devuelve como placeholder. Se sirven desde /venues/.
+# Clave = nombre del estadio como viene en los fixtures de API-Football.
+VENUE_PHOTO = {
+    "AT&T Stadium":            "/venues/att-stadium.jpg",
+    "Levi's Stadium":          "/venues/levis-stadium.jpg",
+    "Lincoln Financial Field": "/venues/lincoln-financial-field.jpg",
+    "MetLife Stadium":         "/venues/metlife-stadium.jpg",
+    "NRG Stadium":             "/venues/nrg-stadium.jpg",
+    "SoFi Stadium":            "/venues/sofi-stadium.jpg",
+    "Arrowhead Stadium":       "/venues/arrowhead-stadium.jpg",
+    "Hard Rock Stadium":       "/venues/hard-rock-stadium.jpg",
+    "Mercedes-Benz Stadium":   "/venues/mercedes-benz-stadium.jpg",
+    "Lumen Field":             "/venues/lumen-field.jpg",
+    "Estadio BBVA":            "/venues/estadio-bbva.jpg",
+}

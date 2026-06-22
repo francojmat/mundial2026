@@ -22,7 +22,7 @@ MATCH_DETAILS_PER_RUN = 5 # tope de partidos a enriquecer por corrida (3 llamada
 VENUE_DETAILS_REFRESH = 604800  # detalles de estadio (foto/superficie) 1 vez por semana
 VENUE_IMG_MIN_BYTES = 35000     # debajo de esto la imagen es un placeholder de la API
 
-from countries import VENUE_CAPACITY as _VENUE_CAPACITY
+from countries import VENUE_CAPACITY as _VENUE_CAPACITY, VENUE_PHOTO as _VENUE_PHOTO
 
 
 def _now():
@@ -111,10 +111,11 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
         vdetails = cache.get("venue_details") or {}
         for v in vlist:
             d = vdetails.get(v.get("name")) or {}
-            # Capacidad oficial WC para los 16 (curada); superficie/foto solo donde la API la tiene
+            # Capacidad oficial WC para los 16 (curada); superficie solo donde la API la tiene.
+            # Foto: la de la API si existe; si no, la curada local (Wikimedia) para completar.
             v["capacity"] = _VENUE_CAPACITY.get(v.get("name"))
             v["surface"]  = d.get("surface")
-            v["image_url"] = d.get("image")
+            v["image_url"] = d.get("image") or _VENUE_PHOTO.get(v.get("name"))
     standings["_venues"] = vlist
 
     # Mapa nombre→team_id (directo de los fixtures; el match_id ya es el fixture_id)
