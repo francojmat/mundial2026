@@ -41,6 +41,7 @@ now = datetime.now(timezone.utc)
 matches_by_date = {
     "2026-06-20": [{
         "match_id": 537397, "home": "Argentina", "away": "Algeria",
+        "home_id": 26, "away_id": 28,
         "status": "IN_PLAY",
         "utc_date": "2026-06-20T16:00:00Z",
     }]
@@ -79,8 +80,8 @@ events.enrich_with_events(matches_by_date, fc, CACHE)
 print(f"requests: fixtures={fc.fixture_calls} events={fc.event_calls}")
 assert fc.event_calls == 2, "no debe pedir mas"
 
-# fixture_map debe haberse cacheado (1 sola resolucion de fecha)
-assert fc.fixture_calls == 1, f"debe resolver la fecha 1 sola vez, fue {fc.fixture_calls}"
+# post-migracion: match_id YA es el fixture_id, no se resuelve por fecha
+assert fc.fixture_calls == 0, f"ya no debe llamar get_all_fixtures, fue {fc.fixture_calls}"
 
 print("\n--- 5ta: sin partidos en vivo ni nuevos -> 0 pedidos ---")
 fc2 = FakeClient()
