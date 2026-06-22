@@ -239,6 +239,10 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .hoy-etiqueta{{font-size:.6rem;font-weight:700;color:{DIM};letter-spacing:.08em;text-transform:uppercase;vertical-align:middle}}
     .hoy-chev{{position:absolute;right:0;top:50%;transform:translateY(-50%);color:{BDR2};font-size:.65rem;transition:transform .2s;line-height:1}}
     .hoy-fila.open .hoy-chev{{transform:translateY(-50%) rotate(180deg)}}
+    .hoy-fila .hoy-head{{padding:0 58px}}
+    .hoy-fila .hoy-head::after{{content:"Abrir";position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.02em;color:{MUT};white-space:nowrap;pointer-events:none}}
+    .hoy-fila.open .hoy-head::after{{content:"Cerrar";color:{T}}}
+    @media(max-width:480px){{.hoy-fila .hoy-head{{padding:0 48px}}.hoy-fila .hoy-head::after{{font-size:.5rem;right:12px}}}}
     .hoy-detail{{display:none;border-top:1px solid {GRY};padding:8px 2px 4px;margin-top:8px}}
     .hoy-fila.open .hoy-detail{{display:block}}
     .hoy-vermatch{{display:block;text-align:center;background:{T};color:{WHT};font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:8px;border-radius:8px;text-decoration:none;margin-bottom:10px}}
