@@ -38,6 +38,7 @@ class WorldCupClient:
                 "goals":     s.get("goals") or 0,
                 "assists":   s.get("assists") or 0,
                 "penalties": s.get("penalties") or 0,
+                "played":    s.get("playedMatches") or 0,
             })
         return result
 

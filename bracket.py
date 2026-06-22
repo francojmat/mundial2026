@@ -691,6 +691,8 @@ def build_round_of_32(
             "equipo1": team1,
             "equipo2": team2,
             "provisional": prov1 or prov2,
+            "prov1": prov1,
+            "prov2": prov2,
             "tipo": f"{spec1[0]}_vs_{spec2[0]}",
             "utc_date": utc,
             "venue": venue,

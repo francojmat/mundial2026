@@ -18,7 +18,8 @@ from apifootball_client import APIFootballClient
 from bracket import build_round_of_32
 from data_renderer import render_data_json
 from html_renderer import render_html
-from pages import render_plantel_shell, render_squad_fragment
+from pages import (render_plantel_shell, render_squad_fragment,
+                   render_seleccion_fragment, render_seleccion_shell)
 from match_page import render_partido_shell, render_match_fragment
 
 
@@ -30,6 +31,17 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
     standings = build_standings(scorers_client, apifootball)
     matchups = build_round_of_32(standings, standings.get("_thirds_advancing", []))
 
+    from tournament import enrich_h2h, enrich_venue_weather
+    enrich_h2h(matchups, apifootball)
+    enrich_venue_weather(standings.get("_venues", []))
+    # 8.5 — pasar el clima de cada sede a sus partidos (para Ver Partido)
+    _wmap = {v.get("name"): v.get("weather") for v in standings.get("_venues", []) if v.get("weather")}
+    for _ms in standings.get("_matches_by_date", {}).values():
+        for _m in _ms:
+            _w = _wmap.get(_m.get("venue_name"))
+            if _w:
+                _m["weather"] = _w
+
     html = render_html(standings, matchups)
     data_json = render_data_json(standings, matchups)
 
@@ -38,15 +50,55 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
     # Páginas de plantel (solo si API-Football está activo y hay planteles cacheados)
     squads = standings.get("_squads", {})
     if squads:
-        planteles = {name: render_squad_fragment(name, sq) for name, sq in squads.items()}
+        from pages import compute_player_stats
+        pstats = compute_player_stats(standings.get("_match_details", {}))
+        planteles = {name: render_squad_fragment(name, sq, pstats) for name, sq in squads.items()}
         outputs.append(("planteles.json", json.dumps(planteles, ensure_ascii=False)))
         outputs.append(("plantel.html", render_plantel_shell()))
+
+        # 9.1 — perfil de selección: ficha + su grupo + sus partidos + acceso al plantel
+        team_group, group_data = {}, {}
+        for gkey, gval in standings.items():
+            if not isinstance(gkey, str) or not gkey.startswith("GROUP_"):
+                continue
+            ranked = gval.get("teams", [])
+            group_data[gkey] = (ranked, gval.get("stats", {}))
+            for rt in ranked:
+                team_group[rt] = gkey
+        team_matches = {}
+        for _ms in standings.get("_matches_by_date", {}).values():
+            for _m in _ms:
+                for _side in (_m.get("home"), _m.get("away")):
+                    if _side:
+                        team_matches.setdefault(_side, []).append(_m)
+        selecciones = {}
+        for t in squads.keys():
+            gname = team_group.get(t)
+            rows = []
+            label = ""
+            if gname:
+                ranked, gstats = group_data[gname]
+                label = "Grupo " + gname.replace("GROUP_", "")
+                for i, rt in enumerate(ranked):
+                    s = gstats.get(rt)
+                    rows.append({"team": rt, "pos": i + 1,
+                                 "pj": s.played if s else 0,
+                                 "pts": s.points if s else 0,
+                                 "dg": s.goal_diff if s else 0,
+                                 "me": rt == t})
+            mlist = sorted(team_matches.get(t, []), key=lambda x: x.get("utc_date") or "")
+            selecciones[t] = render_seleccion_fragment(t, label, rows, mlist)
+        outputs.append(("selecciones.json", json.dumps(selecciones, ensure_ascii=False)))
+        outputs.append(("seleccion.html", render_seleccion_shell()))
 
     # Páginas de partido — TODOS los partidos tienen su página (con detalle si está disponible,
     # header + posiciones siempre; "sin datos aún" cuando todavía no hay alineaciones/stats)
     details = standings.get("_match_details", {})
     all_matches = [m for ms in standings.get("_matches_by_date", {}).values() for m in ms]
     if all_matches:
+        # H2H para los partidos aún no jugados (reemplaza el "sin datos" hasta que arranque)
+        _upcoming = [m for m in all_matches if m.get("status") in ("TIMED", "", None)]
+        enrich_h2h(_upcoming, apifootball, k1="home", k2="away", budget=40)
         thirds_adv = {e["team"] for e in standings.get("_thirds_advancing", [])}
         partidos = {}
         for m in all_matches:

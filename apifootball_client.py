@@ -37,6 +37,35 @@ ROUND_TO_STAGE = {
     "Final":           "FINAL",
 }
 
+# Instancia (round) de un partido histórico → texto corto en español (para el H2H)
+_ROUND_ES = {
+    "Final":           "Final",
+    "Semi-finals":     "Semifinal",
+    "Quarter-finals":  "Cuartos",
+    "Round of 16":     "Octavos",
+    "Round of 32":     "16avos",
+    "3rd Place Final": "3.º puesto",
+    "Friendlies":      "Amistoso",
+}
+
+
+def _round_es(rnd: str) -> str:
+    """Normaliza la instancia de un partido a una etiqueta corta en español."""
+    if not rnd:
+        return ""
+    if rnd in _ROUND_ES:
+        return _ROUND_ES[rnd]
+    low = rnd.lower()
+    if "group" in low:
+        return "Fase de grupos"
+    if "qualif" in low:
+        return "Eliminatorias"
+    if "friendl" in low:
+        return "Amistoso"
+    if "final" in low and "semi" not in low and "quarter" not in low:
+        return "Final"
+    return rnd
+
 
 def _parse_iso(s: str):
     try:
@@ -105,6 +134,7 @@ def _player_ranking(raw: dict, value_fn) -> list:
             "name":  (p.get("player") or {}).get("name", ""),
             "team":  (st.get("team") or {}).get("name", ""),
             "value": value_fn(st) or 0,
+            "photo": (p.get("player") or {}).get("photo", ""),
         })
     return out
 
@@ -167,6 +197,35 @@ class APIFootballClient:
         except Exception:
             return []
 
+    def get_h2h(self, id1: int, id2: int, last: int = 6) -> list:
+        """Últimos enfrentamientos entre dos equipos (más nuevo primero):
+        [{date, comp, season, home, away, gh, ga}]. Solo partidos ya jugados."""
+        try:
+            raw = self._get("/fixtures/headtohead", {"h2h": f"{id1}-{id2}", "last": last})
+        except Exception:
+            return []
+        out = []
+        for fx in raw.get("response", []):
+            t = fx.get("teams") or {}
+            g = fx.get("goals") or {}
+            lg = fx.get("league") or {}
+            f = fx.get("fixture") or {}
+            gh, ga = g.get("home"), g.get("away")
+            if gh is None or ga is None:
+                continue
+            out.append({
+                "date":   (f.get("date") or "")[:10],
+                "comp":   lg.get("name", ""),
+                "round":  _round_es(lg.get("round", "")),
+                "season": lg.get("season"),
+                "home":   (t.get("home") or {}).get("name", ""),
+                "away":   (t.get("away") or {}).get("name", ""),
+                "gh":     gh,
+                "ga":     ga,
+            })
+        out.sort(key=lambda m: m.get("date", ""), reverse=True)
+        return out
+
     # ── Rankings del torneo ───────────────────────────────────────────────
     def _league_params(self) -> dict:
         return {"league": WORLD_CUP_LEAGUE_ID, "season": self.season}
@@ -208,6 +267,30 @@ class APIFootballClient:
                 "photo":    p.get("photo", ""),
             })
         return out
+
+    def get_player_club(self, player_id: int, seasons=(2025, 2026)):
+        """Club actual del jugador (7.1): {'club', 'country'} desde sus estadísticas.
+        Las ligas europeas 2025-26 están bajo temporada 2025; las de año calendario
+        bajo 2026 → probamos 2025 primero y, si no hay, 2026. None si no se encuentra.
+        Puede lanzar (red/rate-limit): el caller decide si cachear o reintentar."""
+        for season in seasons:
+            raw = self._get("/players", {"id": player_id, "season": season})
+            resp = raw.get("response") or []
+            if not resp:
+                continue
+            best = None  # (partidos, club, país)
+            for s in resp[0].get("statistics", []):
+                lg = s.get("league") or {}
+                tm = s.get("team") or {}
+                country = lg.get("country")
+                if not country or country == "World":   # descartar selección nacional
+                    continue
+                apps = ((s.get("games") or {}).get("appearences")) or 0
+                if best is None or apps > best[0]:
+                    best = (apps, tm.get("name"), country)
+            if best and best[1]:
+                return {"club": best[1], "country": best[2]}
+        return None
 
     # ── Detalle de partido ────────────────────────────────────────────────
     @staticmethod
@@ -268,6 +351,7 @@ class APIFootballClient:
                 g  = st.get("games") or {}
                 go = st.get("goals") or {}
                 players.append({
+                    "id":      pl.get("id"),
                     "name":    pl.get("name", ""),
                     "number":  g.get("number"),
                     "pos":     g.get("position", ""),

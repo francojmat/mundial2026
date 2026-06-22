@@ -5,7 +5,8 @@ from datetime import datetime
 from typing import Dict, List, Set
 
 from html_renderer import (_render_groups, _render_thirds, _render_scorers, _match_card,
-                           _render_today_matches, _render_assists, _render_yellows, _render_reds)
+                           _render_today_matches, _render_assists, _render_yellows, _render_reds,
+                           _render_rating)
 
 
 def _r32_inner(matches: List[Dict]) -> str:
@@ -25,7 +26,7 @@ def render_data_json(standings: Dict, matchups: List[Dict]) -> str:
     today_date: str = standings.get("_today_date", "")
 
     dates_html = {
-        date_str: _render_today_matches(matches)
+        date_str: _render_today_matches(matches, standings)
         for date_str, matches in matches_by_date.items()
     }
 
@@ -33,12 +34,13 @@ def render_data_json(standings: Dict, matchups: List[Dict]) -> str:
         "updated": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         "today_date": today_date,
         "dates_html": dates_html,
-        "today_html": dates_html.get(today_date, _render_today_matches([])),
+        "today_html": dates_html.get(today_date, _render_today_matches([], standings)),
         "groups_html": _render_groups(standings, live_teams, thirds_advancing_set),
         "thirds_html": _render_thirds(standings),
         "r32_left_html": _r32_inner(matchups[:8]),
         "r32_right_html": _r32_inner(matchups[8:]),
         "scorers_html": _render_scorers(standings),
+        "rating_html":  _render_rating(standings),
         "assists_html": _render_assists(standings),
         "yellows_html": _render_yellows(standings),
         "reds_html":    _render_reds(standings),

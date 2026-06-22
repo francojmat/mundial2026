@@ -19,8 +19,12 @@ cloudflare-worker/.wrangler/
 data.json
 planteles.json
 partidos.json
+selecciones.json
 events_cache.json
 apifootball_cache.json
+
+# Server de desarrollo local (no corre en Actions)
+_dev_server.py
 
 .wrangler/
 _logo_b64.txt

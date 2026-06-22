@@ -3,7 +3,8 @@
 import urllib.parse
 from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Set
-from countries import traducir, nombre_es
+from countries import traducir, nombre_es, venue_maps_url, VENUE_INFO
+from scenarios import compute_group_scenarios, team_phrase
 
 _ARG_TZ = timezone(timedelta(hours=-3))
 
@@ -105,6 +106,28 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .grupo{{background:{WHT};border:1px solid {BDR};overflow:hidden}}
     .grupo-h{{display:flex;align-items:center;justify-content:space-between;padding:9px 14px 8px;border-bottom:1px solid {BDR}}}
     .grupo-t{{font-size:.76rem;font-weight:700;color:{T};letter-spacing:.08em;text-transform:uppercase}}
+    .grupo-foot{{border-top:1px solid {GRY}}}
+    .gf-toggle{{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;cursor:pointer;user-select:none}}
+    .gf-toggle-t{{display:inline-block;font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{MUT};border:1px solid {BDR};border-radius:999px;padding:3px 11px;background:{GRY};transition:all .15s}}
+    .grupo-foot.open .gf-toggle-t{{color:{T};border-color:{T};background:rgba(194,65,12,.06)}}
+    .gf-chev{{font-size:.6rem;color:{MUT};transition:transform .2s}}
+    .grupo-foot.open .gf-chev{{transform:rotate(180deg);color:{T}}}
+    .gf-body{{display:none;padding:2px 14px 11px}}
+    .grupo-foot.open .gf-body{{display:block}}
+    .gf-stats{{font-size:.68rem;color:{MUT};font-weight:700;letter-spacing:.02em}}
+    .gf-esc{{margin-top:9px}}
+    .gf-cap{{display:inline-block;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{T};border:1px solid {T};border-radius:999px;padding:3px 10px;background:rgba(194,65,12,.05);margin-bottom:9px}}
+    .gf-row{{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 0;font-size:.78rem;color:{TXT}}}
+    .gf-tm{{display:inline-flex;align-items:center;flex-shrink:0}}
+    .gf-ph{{color:{T};font-weight:700;font-size:.66rem;text-align:right;white-space:nowrap}}
+    .corte-row td{{text-align:center;font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{T};background:rgba(194,65,12,.07);border-top:2px solid {T};border-bottom:2px solid {T};padding:5px}}
+    .terc-prov{{font-size:.54rem;color:{DIM};font-weight:700;margin-left:5px;text-transform:uppercase;letter-spacing:.03em}}
+    .terc-exp{{font-size:.8rem;color:{TXT};line-height:1.55;margin:0}}
+    .terc-exp-box{{margin-bottom:12px}}
+    .pl-cell{{display:inline-flex;align-items:center}}
+    .pl-av{{width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:7px;background:{GRY};flex-shrink:0}}
+    .rank-filter{{margin-bottom:10px;text-align:center}}
+    .rank-filter select{{font-size:.74rem;font-family:inherit;color:{TXT};background:{WHT};border:1px solid {BDR};border-radius:6px;padding:5px 12px;cursor:pointer;max-width:100%}}
     .badge{{font-size:.6rem;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;background:transparent;border:1.5px solid transparent}}
     .b-ok  {{color:{MUT};border-color:{BDR2}}}
     .b-vivo{{color:{T};border-color:{T}}}
@@ -133,6 +156,9 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 
     /* ── Bracket ── */
     .llaves-wrap{{overflow:hidden;width:100%}}
+    .bracket-leyenda{{font-size:.72rem;color:{MUT};margin:0 0 14px;padding:8px 12px;background:{GRY};border-radius:6px;line-height:1.45;max-width:760px}}
+    .bracket-leyenda b{{color:{T}}}
+    .bl-dot{{display:inline-block;width:8px;height:8px;border-radius:50%;background:{T};animation:blink 1.4s ease-in-out infinite;vertical-align:middle;margin-right:2px}}
     .llaves{{display:flex;align-items:stretch;min-height:960px;min-width:1200px;gap:0}}
 
     /* ── Responsive ── */
@@ -173,6 +199,22 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     /* ── Match card ── */
     .par{{display:flex;flex-direction:column;flex:1;justify-content:space-around}}
     .mc{{background:{WHT};border:1px solid {BDR};margin:2px 0;display:flex;flex-direction:column}}
+    .mc.on-path{{border-color:{T};box-shadow:0 0 0 2px rgba(194,65,12,.22);position:relative;z-index:3}}
+    .mc-label-r{{display:flex;align-items:center;gap:5px}}
+    .h2h-btn{{font-size:.5rem;font-weight:700;letter-spacing:.04em;color:{T};background:transparent;border:1px solid {T};border-radius:4px;padding:0 4px;cursor:pointer;line-height:1.5}}
+    .h2h-btn:hover{{background:rgba(194,65,12,.12)}}
+    .h2h-overlay{{display:none;position:fixed;inset:0;background:rgba(33,28,20,.45);z-index:100;align-items:center;justify-content:center;padding:20px}}
+    .h2h-overlay.open{{display:flex}}
+    .h2h-modal{{background:{WHT};border-radius:12px;max-width:420px;width:100%;padding:18px 20px;box-shadow:0 12px 44px rgba(0,0,0,.22)}}
+    .h2h-head{{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:.95rem;color:{TXT}}}
+    .h2h-x{{background:none;border:none;font-size:1.35rem;color:{MUT};cursor:pointer;line-height:1}}
+    .h2h-sub{{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{DIM};margin:1px 0 10px}}
+    .h2h-row{{padding:7px 0;border-top:1px solid {GRY}}}
+    .h2h-row:first-child{{border-top:none}}
+    .h2h-d{{font-size:.6rem;color:{DIM};font-weight:700;margin-right:8px}}
+    .h2h-c{{font-size:.58rem;color:{MUT}}}
+    .h2h-r{{display:block;font-size:.84rem;color:{TXT};margin-top:1px}}
+    .h2h-r b{{color:{T}}}
     .mc-label{{font-size:.58rem;font-weight:700;color:{DIM};letter-spacing:.07em;text-transform:uppercase;padding:4px 8px 3px;border-bottom:1px solid {BG};display:flex;justify-content:space-between;align-items:center;flex-shrink:0}}
     .mc-meta{{font-size:.6rem;color:{DIM};padding:3px 8px 4px;border-top:1px solid {BG};display:flex;flex-direction:column;gap:1px;flex-shrink:0}}
     .mc-meta .venue{{color:{MUT};font-size:.57rem}}
@@ -188,6 +230,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .team-row.loser{{opacity:.28;text-decoration:line-through;cursor:default}}
     .team-row.ph{{color:{DIM};font-style:italic;cursor:default;font-size:.73rem}}
     .team-row.ph:hover{{background:none}}
+    .team-row.prov{{color:{MUT};font-style:italic}}
     .team-row img{{flex-shrink:0}}
 
     /* ── Columna central ── */
@@ -245,8 +288,9 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     @media(max-width:480px){{.hoy-fila .hoy-head{{padding:0 48px}}.hoy-fila .hoy-head::after{{font-size:.5rem;right:12px}}}}
     .hoy-detail{{display:none;border-top:1px solid {GRY};padding:8px 2px 4px;margin-top:8px}}
     .hoy-fila.open .hoy-detail{{display:block}}
-    .hoy-vermatch{{display:block;text-align:center;background:{T};color:{WHT};font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:8px;border-radius:8px;text-decoration:none;margin-bottom:10px}}
-    .hoy-vermatch:hover{{opacity:.9}}
+    .hoy-vermatch{{display:flex;width:fit-content;align-items:center;gap:7px;margin:2px auto 12px;background:{T};color:{WHT};font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:8px 20px;border-radius:999px;text-decoration:none;transition:opacity .15s,transform .1s}}
+    .hoy-vermatch:hover{{opacity:.92}}
+    .hoy-vermatch:active{{transform:scale(.98)}}
     .hoy-dsec{{margin-bottom:8px}}
     .hoy-dsec:last-child{{margin-bottom:0}}
     .hoy-dsec-t{{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:{DIM};margin:0 0 4px}}
@@ -281,11 +325,17 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .ven-m-h img,.ven-m-a img{{margin-right:0;flex-shrink:0}}
     .ven-m-mid{{font-weight:700;color:{MUT};font-size:.72rem;text-align:center;min-width:38px}}
     .ven-time{{color:{T};font-weight:700;font-size:.7rem}}
-    .ven-m-ko{{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.72rem;border-top:1px dashed {BDR}}}
-    .ven-ko-label{{flex:1;color:{T};font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.03em}}
+    .ven-m-ko{{border-top:1px dashed {BDR};padding:4px 0}}
+    .ven-m-ko .ven-ko-label{{grid-column:2;text-align:right;color:{T};font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.03em}}
     .ven-img{{width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin-bottom:10px;display:block}}
-    .ven-info{{display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:10px;font-size:.78rem;color:{TXT}}}
+    .ven-info{{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;margin-bottom:10px;font-size:.78rem;color:{TXT}}}
     .ven-info .ven-k{{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{DIM};margin-right:4px}}
+    .ven-local{{font-size:.74rem;color:{MUT};margin-bottom:10px;text-align:center}}
+    .ven-map{{display:flex;width:fit-content;align-items:center;gap:6px;font-size:.7rem;font-weight:700;color:{T};
+             margin:0 auto 12px;text-decoration:none;border:1px solid {T};border-radius:999px;
+             padding:6px 13px;background:rgba(194,65,12,.05);transition:background .15s,color .15s}}
+    .ven-map:hover{{background:{T};color:#fff}}
+    .ven-map-ico{{width:12px;height:12px;flex-shrink:0}}
     @media(max-width:480px){{
       .ven-m{{font-size:.68rem;grid-template-columns:28px 1fr auto 1fr}}
       .hoy-home,.hoy-away{{font-size:.72rem}}
@@ -333,15 +383,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 <div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
 <nav class="nav-drawer" id="navDrawer">
   <div class="nav-dh"><span>Ir a sección</span><button class="nav-close" onclick="closeNav()" aria-label="Cerrar">&#10005;</button></div>
-  <button class="nav-link" onclick="navGo('hoy')"><span class="nav-dot"></span>Partidos</button>
-  <button class="nav-link" onclick="navGo('grupos')"><span class="nav-dot"></span>Posiciones</button>
-  <button class="nav-link" onclick="navGo('terceros')"><span class="nav-dot"></span>Mejor Tercero</button>
-  <button class="nav-link" onclick="navGo('bracket')"><span class="nav-dot"></span>Bracket</button>
-  <button class="nav-link" onclick="navGo('goleadores')"><span class="nav-dot"></span>Goleadores</button>
-  <button class="nav-link" onclick="navGo('asistencias')"><span class="nav-dot"></span>Asistencias</button>
-  <button class="nav-link" onclick="navGo('amarillas')"><span class="nav-dot"></span>Tarjetas amarillas</button>
-  <button class="nav-link" onclick="navGo('rojas')"><span class="nav-dot"></span>Tarjetas rojas</button>
-  <button class="nav-link" onclick="navGo('estadios')"><span class="nav-dot"></span>Estadios</button>
+  <div id="navLinks"></div>
 </nav>
 
 <div class="hdr">
@@ -349,7 +391,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div id="today-container">
-<div class="sec" id="sec-hoy">
+<div class="sec" id="sec-hoy" data-nav="Partidos">
   <div style="position:relative">
     <div class="hoy-nav">
       <button class="hoy-nav-btn" id="hoy-prev" onclick="navDay(-1)">&#8249;</button>
@@ -359,13 +401,13 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     <button class="sec-toggle" id="st-hoy" onclick="toggleSec('hoy')" style="position:absolute;right:0;top:50%;transform:translateY(-50%)">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-hoy">
-    <div id="today-body">{_render_today_matches(standings.get("_today_matches", []))}</div>
+    <div id="today-body">{_render_today_matches(standings.get("_today_matches", []), standings)}</div>
   </div>
 </div>
 <div class="divider"></div>
 </div>
 
-<div class="sec" id="sec-grupos">
+<div class="sec" id="sec-grupos" data-nav="Posiciones">
   <div class="sec-hdr" onclick="toggleSec('grupos')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Posiciones — Fase de grupos</p>
     <button class="sec-toggle" id="st-grupos">▲ CERRAR</button>
@@ -380,7 +422,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   </div>
 </div>
 
-<div class="sec" id="sec-terceros">
+<div class="sec" id="sec-terceros" data-nav="Mejor Tercero">
   <div class="sec-hdr" onclick="toggleSec('terceros')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Mejor Tercero — Mundial 2026</p>
     <button class="sec-toggle" id="st-terceros">▲ CERRAR</button>
@@ -391,12 +433,13 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 <div class="divider"></div>
 
-<div class="sec" id="sec-bracket">
+<div class="sec" id="sec-bracket" data-nav="Bracket">
   <div class="sec-hdr" onclick="toggleSec('bracket')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Bracket — Hacé clic para simular el avance</p>
     <button class="sec-toggle" id="st-bracket">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-bracket">
+    <p class="bracket-leyenda"><span class="bl-dot"></span> <b>Proyección en vivo.</b> Los cruces se recalculan a cada gol con la tabla oficial de FIFA (Anexo C). Los equipos <i>en gris</i> son provisionales: se confirman cuando termina su grupo.</p>
     <div class="llaves-wrap">
       {_render_llaves(matchups)}
     </div>
@@ -406,7 +449,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
-<div class="sec" id="sec-goleadores">
+<div class="sec" id="sec-goleadores" data-nav="Goleadores">
   <div class="sec-hdr" onclick="toggleSec('goleadores')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Goleadores — Mundial 2026</p>
     <button class="sec-toggle" id="st-goleadores">▲ CERRAR</button>
@@ -417,7 +460,18 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
-<div class="sec" id="sec-asistencias">
+<div class="sec" id="sec-valoracion" data-nav="Valoración">
+  <div class="sec-hdr" onclick="toggleSec('valoracion')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Mejor valoración — Mundial 2026</p>
+    <button class="sec-toggle" id="st-valoracion">▲ CERRAR</button>
+  </div>
+  <div class="sec-body" id="sb-valoracion">
+    <div id="rating-inner">{_render_rating(standings)}</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+<div class="sec" id="sec-asistencias" data-nav="Asistencias">
   <div class="sec-hdr" onclick="toggleSec('asistencias')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Asistencias — Mundial 2026</p>
     <button class="sec-toggle" id="st-asistencias">▲ CERRAR</button>
@@ -428,7 +482,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
-<div class="sec" id="sec-amarillas">
+<div class="sec" id="sec-amarillas" data-nav="Tarjetas amarillas">
   <div class="sec-hdr" onclick="toggleSec('amarillas')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Tarjetas amarillas — Mundial 2026</p>
     <button class="sec-toggle" id="st-amarillas">▲ CERRAR</button>
@@ -439,7 +493,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
-<div class="sec" id="sec-rojas">
+<div class="sec" id="sec-rojas" data-nav="Tarjetas rojas">
   <div class="sec-hdr" onclick="toggleSec('rojas')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Tarjetas rojas — Mundial 2026</p>
     <button class="sec-toggle" id="st-rojas">▲ CERRAR</button>
@@ -450,7 +504,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
-<div class="sec" id="sec-estadios">
+<div class="sec" id="sec-estadios" data-nav="Estadios">
   <div class="sec-hdr" onclick="toggleSec('estadios')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Estadios — Mundial 2026</p>
     <button class="sec-toggle" id="st-estadios">▲ CERRAR</button>
@@ -502,6 +556,21 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 <script>
 // ── Partidos expandibles ──────────────────────────────────────────────────
 function toggleMatch(el) {{ el.classList.toggle('open'); }}
+
+// Detalle de grupo: abrir/cerrar todos los grupos de la MISMA fila a la vez
+function toggleGroupRow(el) {{
+  var foot = el.parentNode;
+  var grupo = foot.closest('.grupo');
+  if (!grupo) return;
+  var willOpen = !foot.classList.contains('open');
+  var top = grupo.offsetTop;
+  document.querySelectorAll('#groups-inner .grupo').forEach(function(g) {{
+    if (Math.abs(g.offsetTop - top) < 4) {{
+      var f = g.querySelector('.grupo-foot');
+      if (f) f.classList.toggle('open', willOpen);
+    }}
+  }});
+}}
 
 // ── Goleadores expandibles ────────────────────────────────────────────────
 function toggleScorers() {{
@@ -593,6 +662,16 @@ function fmtTime(utcStr) {{
       timeZone: 'America/Argentina/Buenos_Aires',
       hour:'2-digit', minute:'2-digit', hour12:false
     }}).format(d);
+  }}
+}}
+function fmtShortDate(utcStr) {{
+  if (!utcStr) return '';
+  const d = new Date(utcStr);
+  const o = {{ day:'2-digit', month:'2-digit' }};
+  try {{
+    return new Intl.DateTimeFormat('es-AR', {{ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, ...o }}).format(d);
+  }} catch(e) {{
+    return new Intl.DateTimeFormat('es-AR', {{ timeZone: 'America/Argentina/Buenos_Aires', ...o }}).format(d);
   }}
 }}
 
@@ -900,7 +979,9 @@ function mbSetRound(btn, round) {{
 // ── Polling de datos en vivo (sin recarga de página) ─────────────────────
 function applyDataUtc(root) {{
   (root || document).querySelectorAll('[data-utc]').forEach(function(el) {{
-    el.innerHTML = el.dataset.format === 'time' ? fmtTime(el.dataset.utc) : fmtDate(el.dataset.utc);
+    el.innerHTML = el.dataset.format === 'time' ? fmtTime(el.dataset.utc)
+                 : el.dataset.format === 'shortdate' ? fmtShortDate(el.dataset.utc)
+                 : fmtDate(el.dataset.utc);
   }});
 }}
 
@@ -980,6 +1061,22 @@ function closeNav() {{
   document.getElementById('navDrawer').classList.remove('open');
   document.getElementById('navOverlay').classList.remove('open');
 }}
+// Arma el menú "Ir a sección" a partir de las secciones presentes en la página.
+// Cualquier sección nueva con el atributo data-nav aparece sola, sin tocar el menú.
+function buildNav() {{
+  var box = document.getElementById('navLinks');
+  if (!box) return;
+  var secs = document.querySelectorAll('.sec[data-nav]');
+  var html = '';
+  secs.forEach(function(s) {{
+    var key = s.id.replace(/^sec-/, '');
+    var label = s.getAttribute('data-nav') || key;
+    html += '<button class="nav-link" onclick="navGo(\\'' + key + '\\')">'
+          + '<span class="nav-dot"></span>' + label + '</button>';
+  }});
+  box.innerHTML = html;
+}}
+
 function navGo(secId) {{
   closeNav();
   var body = document.getElementById('sb-' + secId);
@@ -1055,10 +1152,13 @@ function pollData() {{
         mbR32.innerHTML = d.r32_left_html + d.r32_right_html;
         applyDataUtc(mbR32);
       }}
-      if (r32Updated) restore();
+      if (r32Updated) {{ restore(); initPath(); }}
 
       var si = document.getElementById('scorers-inner');
       if (si && d.scorers_html !== undefined) si.innerHTML = d.scorers_html;
+
+      var rti = document.getElementById('rating-inner');
+      if (rti && d.rating_html !== undefined) rti.innerHTML = d.rating_html;
 
       var ai = document.getElementById('assists-inner');
       if (ai && d.assists_html !== undefined) ai.innerHTML = d.assists_html;
@@ -1092,17 +1192,82 @@ function scaleBracket() {{
   }}
 }}
 
+// ── 4.1 · Camino al título: ilumina la recorrida de un cruce hasta la final ──
+function pathFrom(id) {{
+  const path = [id]; let cur = id;
+  while (FEED[cur]) {{ cur = FEED[cur].next; path.push(cur); }}
+  return path;
+}}
+function clearPath() {{
+  document.querySelectorAll('.mc.on-path').forEach(e => e.classList.remove('on-path'));
+}}
+function highlightPath(id) {{
+  clearPath();
+  pathFrom(id).forEach(n => {{
+    document.querySelectorAll('.mc[data-mid="' + n + '"]').forEach(c => c.classList.add('on-path'));
+    const el = document.getElementById(n);
+    if (el && el.classList.contains('mc')) el.classList.add('on-path');
+  }});
+}}
+function initPath() {{
+  document.querySelectorAll('.llaves-wrap .mc').forEach(card => {{
+    const id = card.dataset.mid || card.id;
+    if (!id || !FEED[id]) return;
+    card.onmouseenter = function() {{ highlightPath(id); }};
+    card.onmouseleave = clearPath;
+  }});
+}}
+
+// ── 5.5 · Filtro de ranking por selección ─────────────────────────────────
+function filterRank(sel) {{
+  var team = sel.value;
+  var wrap = sel.closest('.rank-wrap');
+  if (!wrap) return;
+  var key = sel.dataset.key;
+  var extra = document.getElementById(key + '-extra');
+  var btn = document.getElementById(key + '-btn');
+  if (team) {{                       // al filtrar, mostramos toda la lista
+    if (extra) extra.style.display = '';
+    if (btn) btn.style.display = 'none';
+  }} else {{
+    if (extra) extra.style.display = 'none';
+    if (btn) btn.style.display = '';
+  }}
+  wrap.querySelectorAll('tr[data-team]').forEach(function(r) {{
+    r.style.display = (!team || r.dataset.team === team) ? '' : 'none';
+  }});
+}}
+
 document.addEventListener("DOMContentLoaded", function() {{
   load(); restore(); restoreSecs();
+  buildNav();
   applyDataUtc();
   scaleBracket();
+  initPath();
   window.addEventListener('resize', scaleBracket);
   pollData();
   setInterval(pollData, 30000);
   pollLive();
   setInterval(pollLive, 8000);
 }});
+
+// ── 4.3 · Modal head-to-head ──────────────────────────────────────────────
+function showH2H(btn) {{
+  var data = btn.closest('.mc').querySelector('.mc-h2h');
+  if (!data) return;
+  document.getElementById('h2hTitle').textContent = data.dataset.title;
+  document.getElementById('h2hBody').innerHTML = data.innerHTML;
+  document.getElementById('h2hModal').classList.add('open');
+}}
+function closeH2H() {{ document.getElementById('h2hModal').classList.remove('open'); }}
 </script>
+<div class="h2h-overlay" id="h2hModal" onclick="if(event.target===this)closeH2H()">
+  <div class="h2h-modal">
+    <div class="h2h-head"><span id="h2hTitle"></span><button class="h2h-x" onclick="closeH2H()">&times;</button></div>
+    <div class="h2h-sub">Últimos enfrentamientos</div>
+    <div id="h2hBody"></div>
+  </div>
+</div>
 </body>
 </html>"""
 
@@ -1145,7 +1310,7 @@ def _render_groups(standings: Dict, live_teams: Set[str], thirds_advancing_set: 
                   else "0")
             name_inner = f'<span class="live-name">{traducir(team)}</span>' if is_live_team else traducir(team)
             team_q = urllib.parse.quote(team)
-            name_html = f'<a class="team-link" href="/plantel.html?t={team_q}">{name_inner}</a>'
+            name_html = f'<a class="team-link" href="/seleccion.html?t={team_q}">{name_inner}</a>'
             filas += f"""
         <tr class="{cls}">
           <td>{pos}</td><td>{name_html}</td>
@@ -1153,13 +1318,36 @@ def _render_groups(standings: Dict, live_teams: Set[str], thirds_advancing_set: 
           <td>{s.goals_for}</td><td>{s.goals_against}</td>
           <td>{dg}</td><td><span class="pts">{s.points}</span></td>
         </tr>"""
+        # 2.5 — stats agregadas del grupo
+        gp = sum(1 for m in matches if m.played)
+        stats_line = ""
+        if gp:
+            gf_total = sum((m.home_goals + m.away_goals) for m in matches if m.played)
+            stats_line = f'<div class="gf-stats">{gf_total} goles · {gf_total / gp:.1f} por partido</div>'
+        # 2.1 / 3.1 — qué se juega CADA equipo (incluido el ya clasificado: si pelea el 1.º)
+        esc_html = ""
+        if not done:
+            sc = compute_group_scenarios(teams, matches)
+            rows_e = "".join(
+                f'<div class="gf-row"><span class="gf-tm">{traducir(t)}</span>'
+                f'<span class="gf-ph">{team_phrase(sc[t])}</span></div>'
+                for t in teams if t in sc
+            )
+            if rows_e:
+                esc_html = f'<div class="gf-esc"><div class="gf-cap">Qué se juega</div>{rows_e}</div>'
+        # 2.5 — detalle del grupo plegable ("Detalles"), cerrado por defecto
+        body_inner = stats_line + esc_html
+        foot = (f'<div class="grupo-foot">'
+                f'<div class="gf-toggle" onclick="toggleGroupRow(this)">'
+                f'<span class="gf-toggle-t">Detalles</span><span class="gf-chev">&#9662;</span></div>'
+                f'<div class="gf-body">{body_inner}</div></div>') if body_inner else ""
         html += f"""
   <div class="grupo">
     <div class="grupo-h"><span class="grupo-t">Grupo {label}</span>{badge}</div>
     <table>
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
       <tbody>{filas}</tbody>
-    </table>
+    </table>{foot}
   </div>"""
     return html
 
@@ -1184,8 +1372,15 @@ def _render_thirds(standings: Dict) -> str:
       <td>{s.played}</td><td>{s.goals_for}</td><td>{s.goals_against}</td>
       <td>{dg}</td><td><span class="pts">{s.points}</span></td>
     </tr>"""
+        if i == 8:  # línea de corte: los 8 de arriba avanzan
+            filas += ('<tr class="corte-row"><td colspan="8">'
+                      'Línea de clasificación — los 8 de arriba avanzan</td></tr>')
     return f"""
     <div style="max-width:660px;margin:0 auto">
+      <div class="hoy-fila terc-exp-box" onclick="toggleMatch(this)">
+        <div class="hoy-head"><span class="hoy-etiqueta">Cómo funcionan los mejores terceros</span><span class="hoy-chev">&#9662;</span></div>
+        <div class="hoy-detail"><p class="terc-exp">El Mundial 2026 tiene 12 grupos de 4. Pasan a octavos los 2 primeros de cada grupo (24 equipos) más los <b>8 mejores terceros</b>, que se eligen comparando los 12 terceros entre sí: primero por puntos, después diferencia de gol, goles a favor, fair play y, al final, el ranking FIFA. Los 4 terceros que quedan más abajo se eliminan. Por eso esta tabla — y el nombre del sitio.</p></div>
+      </div>
       <div class="grupo">
         <table>
           <thead><tr><th>#</th><th>Equipo</th><th>Grp</th><th>PJ</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
@@ -1197,10 +1392,12 @@ def _render_thirds(standings: Dict) -> str:
 
 # ── Match card R32 ─────────────────────────────────────────────────────────
 
-def _team_row(api_name: str, mid: str) -> str:
+def _team_row(api_name: str, mid: str, prov: bool = False) -> str:
     html_val = traducir(api_name)
     safe = html_val.replace('"', '&quot;')
-    return (f'<div class="team-row" data-mid="{mid}" data-name="{api_name}" '
+    cls = "team-row prov" if prov else "team-row"
+    title = ' title="Proyección — cambia según cómo terminen los grupos"' if prov else ''
+    return (f'<div class="{cls}"{title} data-mid="{mid}" data-name="{api_name}" '
             f'data-html="{safe}" onclick="pickWinner(this)">{html_val}</div>')
 
 
@@ -1219,16 +1416,33 @@ def _match_card(m: Dict) -> str:
         status_badge = ''
 
     is_tbd = "3ro" in e2 or "post" in e2.lower() or e2.startswith("3°")
-    row1 = _team_row(e1, mid)
-    row2 = (_team_row(e2, mid) if not is_tbd
+    row1 = _team_row(e1, mid, m.get("prov1", False))
+    row2 = (_team_row(e2, mid, m.get("prov2", False)) if not is_tbd
             else f'<div class="team-row ph">{e2}</div>')
 
     data_utc_attr = f' data-utc="{utc_date}"' if utc_date else ''
 
+    # 4.3 — head-to-head: botón en el encabezado + historial embebido en la card
+    h2h = m.get("h2h") or []
+    h2h_btn, h2h_data = "", ""
+    if h2h:
+        def _h2h_comp(x):
+            comp, rnd = x.get("comp", ""), x.get("round", "")
+            return f'{comp} · {rnd}' if (comp and rnd) else (comp or rnd)
+        rows_h = "".join(
+            f'<div class="h2h-row"><span class="h2h-d">{x["date"][8:10]}/{x["date"][5:7]}/{x["date"][2:4]}</span>'
+            f'<span class="h2h-c">{_h2h_comp(x)}</span>'
+            f'<span class="h2h-r">{nombre_es(x["home"])} <b>{x["gh"]}-{x["ga"]}</b> {nombre_es(x["away"])}</span></div>'
+            for x in h2h[:6]
+        )
+        title = f'{nombre_es(e1)} vs {nombre_es(e2)}'
+        h2h_btn = '<button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button>'
+        h2h_data = f'<div class="mc-h2h" hidden data-title="{title}">{rows_h}</div>'
+
     return f"""
     <div class="mc" data-mid="{mid}">
-      <div class="mc-label"><span>Partido {num:02d}</span>{status_badge}</div>
-      {row1}{row2}
+      <div class="mc-label"><span>Partido {num:02d}</span><span class="mc-label-r">{h2h_btn}{status_badge}</span></div>
+      {row1}{row2}{h2h_data}
       <div class="mc-meta">
         <span class="r32-dt"{data_utc_attr}></span>
         {'<span class="venue">' + venue + '</span>' if venue else ''}
@@ -1457,20 +1671,81 @@ def _hoy_centro(m: dict) -> str:
     return '<span class="hoy-vs">vs</span>'
 
 
+def _attach_scorer_photos(scorers: list, squads: dict) -> None:
+    """5.1 — cruza la foto de los planteles con cada goleador, por apellido + país."""
+    import unicodedata
+
+    def _norm(s):
+        s = "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+        return s.lower().replace(".", "").strip()
+
+    def _last(name):
+        parts = _norm(name).split()
+        return parts[-1] if parts else ""
+
+    idx = {}
+    for team, entry in (squads or {}).items():
+        tes = nombre_es(team)
+        for p in entry.get("players", []):
+            ln = _last(p.get("name", ""))
+            if ln and p.get("photo"):
+                idx[(tes, ln)] = p["photo"]
+
+    for s in scorers:
+        if s.get("photo"):
+            continue
+        photo = idx.get((nombre_es(s.get("team", "")), _last(s.get("name", ""))))
+        if photo:
+            s["photo"] = photo
+
+
+def _render_rating(standings: Dict) -> str:
+    """5.2 — ranking del mejor promedio de valoración del torneo (mín. 2 partidos)."""
+    md = standings.get("_match_details", {})
+    acc = {}
+    for det in md.values():
+        for side in det.get("players", []):
+            team = side.get("team", "")
+            for p in side.get("players", []):
+                r = p.get("rating")
+                if not r or (p.get("minutes") or 0) <= 0:
+                    continue
+                try:
+                    rv = float(r)
+                except (TypeError, ValueError):
+                    continue
+                acc.setdefault((p.get("name", ""), team), []).append(rv)
+    items = []
+    for (name, team), ratings in acc.items():
+        if len(ratings) < 2:
+            continue
+        items.append({"name": name, "team": team,
+                      "value": round(sum(ratings) / len(ratings), 2),
+                      "played": len(ratings)})
+    items.sort(key=lambda x: x["value"], reverse=True)
+    _attach_scorer_photos(items, standings.get("_squads", {}))
+    return _render_ranking(items, "Prom.", "rating",
+                           "Disponible a medida que se jueguen los partidos.",
+                           extra_col=("PJ", lambda it: it.get("played", 0)))
+
+
 def _render_scorers(standings: Dict) -> str:
     scorers = standings.get("_scorers", [])
     if not scorers:
         return f'<p style="font-size:.75rem;color:{MUT};margin-top:4px">Disponible próximamente.</p>'
+    _attach_scorer_photos(scorers, standings.get("_squads", {}))
 
     def _row(i: int, s: dict) -> str:
         bg      = f'style="background:{GRY}"' if i % 2 == 0 else ''
         assists = s.get("assists") or 0
-        return (f'<tr {bg}>'
+        played  = s.get("played") or 0
+        return (f'<tr {bg} data-team="{nombre_es(s["team"])}">'
                 f'<td>{i}</td>'
-                f'<td style="text-align:left;white-space:nowrap">{s["name"]}</td>'
+                f'<td style="text-align:left;white-space:nowrap"><span class="pl-cell">{_player_avatar(s.get("photo", ""))}{s["name"]}</span></td>'
                 f'<td style="text-align:left;white-space:nowrap">{traducir(s["team"])}</td>'
                 f'<td><span class="pts">{s["goals"]}</span></td>'
                 f'<td style="color:{MUT}">{assists if assists else "—"}</td>'
+                f'<td style="color:{DIM}">{played if played else "—"}</td>'
                 f'</tr>')
 
     top   = "".join(_row(i, s) for i, s in enumerate(scorers[:10], 1))
@@ -1485,7 +1760,7 @@ def _render_scorers(standings: Dict) -> str:
                  f'Ver todos los goleadores</button></div>')
 
     return f"""
-    <div style="max-width:500px;margin:0 auto">
+    <div class="rank-wrap" style="max-width:500px;margin:0 auto">
       <div class="grupo">
         <table>
           <thead><tr>
@@ -1494,6 +1769,7 @@ def _render_scorers(standings: Dict) -> str:
             <th style="text-align:left">País</th>
             <th>Goles</th>
             <th>Asist.</th>
+            <th>PJ</th>
           </tr></thead>
           <tbody>{top}</tbody>
           {extra}
@@ -1503,9 +1779,27 @@ def _render_scorers(standings: Dict) -> str:
     </div>"""
 
 
+def _player_avatar(photo: str) -> str:
+    """Avatar redondo chico del jugador (5.1). Vacío si no hay foto."""
+    if not photo:
+        return ''
+    return (f'<img class="pl-av" src="{photo}" alt="" loading="lazy" '
+            f'onerror="this.style.display=\'none\'">')
+
+
+def _rank_filter(teams: set, key: str) -> str:
+    """5.5 — selector de país para filtrar un ranking en el cliente."""
+    teams = {t for t in teams if t}
+    if len(teams) < 2:
+        return ''
+    opts = "".join(f'<option value="{t}">{t}</option>' for t in sorted(teams))
+    return (f'<div class="rank-filter"><select data-key="{key}" onchange="filterRank(this)">'
+            f'<option value="">Todas las selecciones</option>{opts}</select></div>')
+
+
 def _render_ranking(items: list, value_header: str, key: str,
-                    empty: str = "Disponible próximamente.") -> str:
-    """Tabla de ranking de jugadores (asistencias, amarillas, rojas). Top 10 + ver todos."""
+                    empty: str = "Disponible próximamente.", extra_col=None) -> str:
+    """Tabla de ranking de jugadores. Top 10 + ver todos. extra_col=(header, fn) opcional (5.3)."""
     # Solo jugadores con al menos 1 (no rellenar con ceros)
     items = [it for it in items if (it.get("value") or 0) > 0]
     if not items:
@@ -1513,11 +1807,13 @@ def _render_ranking(items: list, value_header: str, key: str,
 
     def _row(i: int, it: dict) -> str:
         bg = f'style="background:{GRY}"' if i % 2 == 0 else ''
-        return (f'<tr {bg}>'
+        ec = f'<td style="color:{DIM}">{extra_col[1](it)}</td>' if extra_col else ''
+        return (f'<tr {bg} data-team="{nombre_es(it.get("team", ""))}">'
                 f'<td>{i}</td>'
-                f'<td style="text-align:left;white-space:nowrap">{it.get("name", "")}</td>'
+                f'<td style="text-align:left;white-space:nowrap"><span class="pl-cell">{_player_avatar(it.get("photo", ""))}{it.get("name", "")}</span></td>'
                 f'<td style="text-align:left;white-space:nowrap">{traducir(it.get("team", ""))}</td>'
                 f'<td><span class="pts">{it.get("value", 0)}</span></td>'
+                f'{ec}'
                 f'</tr>')
 
     top = "".join(_row(i, it) for i, it in enumerate(items[:10], 1))
@@ -1532,7 +1828,7 @@ def _render_ranking(items: list, value_header: str, key: str,
                f'onclick="toggleList(\'{key}\')">Ver todos</button></div>')
 
     return f"""
-    <div style="max-width:500px;margin:0 auto">
+    <div class="rank-wrap" style="max-width:500px;margin:0 auto">
       <div class="grupo">
         <table>
           <thead><tr>
@@ -1540,6 +1836,7 @@ def _render_ranking(items: list, value_header: str, key: str,
             <th style="text-align:left">Jugador</th>
             <th style="text-align:left">País</th>
             <th>{value_header}</th>
+            {('<th>' + extra_col[0] + '</th>') if extra_col else ''}
           </tr></thead>
           <tbody>{top}</tbody>
           {extra}
@@ -1562,19 +1859,17 @@ def _render_reds(standings: Dict) -> str:
 
 
 def _venue_date(iso: str) -> str:
-    try:
-        return datetime.fromisoformat(iso.replace("Z", "+00:00")).strftime("%d/%m")
-    except Exception:
-        return ""
+    """Fecha corta (día/mes), formateada en la zona del usuario (cliente)."""
+    return f'<span class="ven-m-date" data-utc="{iso}" data-format="shortdate"></span>'
 
 
 def _venue_time(iso: str) -> str:
-    """Hora de inicio del partido en hora argentina (UTC-3)."""
+    """Hora de inicio, formateada en la zona del usuario (cliente). Vacío si no hay hora."""
     try:
-        dt = datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(_ARG_TZ)
-        return dt.strftime("%H:%M")
+        datetime.fromisoformat(iso.replace("Z", "+00:00"))
     except Exception:
-        return "—"
+        return ""
+    return f'<span class="ven-time" data-utc="{iso}" data-format="time"></span>'
 
 
 # Calendario COMPLETO de eliminatorias — verificado (Wikipedia/FIFA): (fecha, estadio, ronda)
@@ -1641,14 +1936,13 @@ def _render_venues(standings: Dict) -> str:
         count = len(all_m)
         rows = ""
         for m in all_m:
-            fecha = _venue_date(m.get("date", ""))
+            iso = m.get("date", "")
+            fecha = _venue_date(iso)
             if m.get("ko"):
-                t = _venue_time(m.get("date", ""))
-                time_html = f'<span class="ven-time">{t}</span>' if t != "—" else ''
-                rows += (f'<div class="ven-m-ko">'
-                         f'<span class="ven-m-date">{fecha}</span>'
+                rows += (f'<div class="ven-m ven-m-ko">'
+                         f'{fecha}'
                          f'<span class="ven-ko-label">{m.get("label", "")}</span>'
-                         f'{time_html}'
+                         f'<span class="ven-m-mid">{_venue_time(iso)}</span>'
                          f'</div>')
                 continue
             home = traducir(m.get("home", ""))
@@ -1656,9 +1950,9 @@ def _render_venues(standings: Dict) -> str:
             if m.get("status") == "FT" and m.get("gh") is not None:
                 mid = f'<span class="pts">{m.get("gh")} - {m.get("ga")}</span>'
             else:
-                mid = f'<span class="ven-time">{_venue_time(m.get("date", ""))}</span>'
+                mid = _venue_time(iso)
             rows += (f'<div class="ven-m">'
-                     f'<span class="ven-m-date">{fecha}</span>'
+                     f'{fecha}'
                      f'<span class="ven-m-team ven-m-h">{home}</span>'
                      f'<span class="ven-m-mid">{mid}</span>'
                      f'<span class="ven-m-team ven-m-a">{away}</span>'
@@ -1669,6 +1963,7 @@ def _render_venues(standings: Dict) -> str:
             img = (f'<img class="ven-img" loading="lazy" alt="" src="{v["image_url"]}" '
                    f'onerror="this.style.display=\'none\'">')
         # Datos: capacidad + superficie
+        vinfo = VENUE_INFO.get(v.get("name", "")) or {}
         bits = []
         cap = v.get("capacity")
         if cap:
@@ -1676,12 +1971,30 @@ def _render_venues(standings: Dict) -> str:
                 bits.append(f'<span class="ven-k">Capacidad</span> {int(cap):,}'.replace(",", "."))
             except Exception:
                 pass
+        if vinfo.get("country"):  # 6.2
+            bits.append(f'<span class="ven-k">País</span> {vinfo["country"]}')
+        if vinfo.get("year"):     # 6.3
+            bits.append(f'<span class="ven-k">Inaugurado</span> {vinfo["year"]}')
         surf = v.get("surface")
         if surf:
             surf_es = {"grass": "Césped natural", "artificial turf": "Césped sintético"}.get(surf, surf)
             bits.append(f'<span class="ven-k">Superficie</span> {surf_es}')
+        # 6.1 — clima actual de la ciudad sede
+        w = v.get("weather") or {}
+        if w.get("temp") is not None:
+            desc = f' · {w.get("desc")}' if w.get("desc") else ""
+            bits.append(f'<span class="ven-k">Clima</span> {w["temp"]}°{desc}')
         info = f'<div class="ven-info">{"".join(f"<span>{b}</span>" for b in bits)}</div>' if bits else ""
-        detail = f'<div class="hoy-detail">{img}{info}<div class="hoy-dsec">{rows}</div></div>'
+        # 6.4 — link a Google Maps de la sede
+        murl = venue_maps_url(v.get("name", ""))
+        _pin = ('<svg class="ven-map-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+                '<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 '
+                '9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>')
+        maplink = (f'<a class="ven-map" href="{murl}" target="_blank" rel="noopener" '
+                   f'onclick="event.stopPropagation()">{_pin}Ver en el mapa</a>') if murl else ""
+        local = (f'<div class="ven-local"><span class="ven-k">Equipo local</span> {vinfo["home"]}</div>'
+                 if vinfo.get("home") else "")
+        detail = f'<div class="hoy-detail">{img}{info}{local}{maplink}<div class="hoy-dsec">{rows}</div></div>'
         sub = " · ".join(b for b in [v.get("city", ""),
                                      f'{count} {"partido" if count == 1 else "partidos"}'] if b)
         cards += (f'<div class="hoy-fila" onclick="toggleMatch(this)">'
@@ -1695,9 +2008,23 @@ def _render_venues(standings: Dict) -> str:
     return f'<div style="max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:8px">{cards}</div>'
 
 
-def _hoy_detail_html(m: dict) -> str:
+def _hoy_detail_html(m: dict, standings: dict = None, show_vermatch: bool = True) -> str:
     """Bloque expandible con goles, tarjetas, cambios y árbitro."""
     sections = []
+
+    # 1.7 — Qué se juega cada equipo (fase de grupos, partido aún no empezado)
+    grp = m.get("group") or ""
+    if standings and grp.startswith("GROUP_") and m.get("status") == "TIMED":
+        gd = standings.get(grp)
+        if gd:
+            sc = compute_group_scenarios(gd.get("teams", []), gd.get("matches", []))
+            rows_q = "".join(
+                f'<div class="gf-row"><span class="gf-tm">{traducir(t)}</span>'
+                f'<span class="gf-ph">{team_phrase(sc[t])}</span></div>'
+                for t in (m.get("home"), m.get("away")) if sc.get(t)
+            )
+            if rows_q:
+                sections.append(f'<div class="hoy-dsec"><p class="hoy-dsec-t">Qué se juega</p>{rows_q}</div>')
 
     goals = m.get("goals_detail") or []
     if goals:
@@ -1765,10 +2092,11 @@ def _hoy_detail_html(m: dict) -> str:
         sections.append(f'<div class="hoy-dsec"><p class="hoy-dsec-t">Estadio</p>'
                         f'<p style="font-size:.75rem;color:{MUT};margin:0">{" · ".join(vbits)}</p></div>')
 
-    # Botón VER PARTIDO arriba de todo — SIEMPRE (todos los partidos tienen su página)
+    # Botón VER PARTIDO arriba de todo — SIEMPRE (todos los partidos tienen su página).
+    # En contextos que ya tienen su propio acceso (perfil de selección) se omite.
     mid = m.get("match_id")
     vermatch = (f'<a class="hoy-vermatch" href="/partido.html?id={mid}" '
-                f'onclick="event.stopPropagation()">VER PARTIDO &#8594;</a>') if mid else ""
+                f'onclick="event.stopPropagation()">VER PARTIDO &#8594;</a>') if (mid and show_vermatch) else ""
 
     if not sections and not vermatch:
         return ""
@@ -1776,7 +2104,7 @@ def _hoy_detail_html(m: dict) -> str:
     return f'<div class="hoy-detail">{vermatch}{"".join(sections)}</div>'
 
 
-def _render_today_matches(matches: list) -> str:
+def _render_today_matches(matches: list, standings: dict = None) -> str:
     """Devuelve solo el cuerpo de partidos (sin wrapper sec ni título — los maneja el JS de navegación)."""
     if not matches:
         return f'<p style="font-size:.75rem;color:{MUT};padding:2px 0">No hay partidos programados.</p>'
@@ -1788,7 +2116,7 @@ def _render_today_matches(matches: list) -> str:
         away_html = traducir(m["away"])
         badge     = _hoy_badge(m)
         centro    = _hoy_centro(m)
-        detail    = _hoy_detail_html(m)
+        detail    = _hoy_detail_html(m, standings)
         rows += (f'<div class="hoy-fila" data-mid="{m.get("match_id")}" onclick="toggleMatch(this)">'
                  f'<div class="hoy-head">'
                  f'<span class="hoy-etiqueta">{lbl}</span>'

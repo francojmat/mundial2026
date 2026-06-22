@@ -42,6 +42,7 @@ export default {
     if (path === "/api/data"        && request.method === "GET")  return handleData("data.json", ctx);
     if (path === "/api/planteles"   && request.method === "GET")  return handleData("planteles.json", ctx);
     if (path === "/api/partidos"    && request.method === "GET")  return handleData("partidos.json", ctx);
+    if (path === "/api/selecciones" && request.method === "GET")  return handleData("selecciones.json", ctx);
     if (path === "/api/metrics"     && request.method === "GET")  return handleMetrics(request, env);
     if (path === "/api/suggest"     && request.method === "POST") return handleSuggest(request, env);
     if (path === "/api/suggestions" && request.method === "GET")  return handleList(request, env);

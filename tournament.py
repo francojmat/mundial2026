@@ -17,12 +17,60 @@ RANKINGS_REFRESH = 600    # segundos: los rankings se recalculan cada 10 min
 VENUES_REFRESH = 1800     # segundos: estadios cada 30 min (la estructura es fija, refresca scores)
 SQUADS_REFRESH = 604800   # segundos: planteles 1 vez por semana (los rosters no cambian)
 SQUADS_PER_RUN = 10       # tope de equipos a refrescar por corrida (evita ráfaga de llamadas)
+CLUBS_PER_RUN  = 80       # tope de jugadores a resolver club por corrida (1 llamada c/u, cacheado)
 MATCH_LIVE_REFRESH = 120  # segundos: detalle de partido en vivo cada 2 min
 MATCH_DETAILS_PER_RUN = 5 # tope de partidos a enriquecer por corrida (3 llamadas c/u)
 VENUE_DETAILS_REFRESH = 604800  # detalles de estadio (foto/superficie) 1 vez por semana
 VENUE_IMG_MIN_BYTES = 35000     # debajo de esto la imagen es un placeholder de la API
 
-from countries import VENUE_CAPACITY as _VENUE_CAPACITY, VENUE_PHOTO as _VENUE_PHOTO
+from countries import (VENUE_CAPACITY as _VENUE_CAPACITY, VENUE_PHOTO as _VENUE_PHOTO,
+                       VENUE_COORDS as _VENUE_COORDS)
+
+WEATHER_REFRESH = 7200  # clima de cada sede cada 2 horas
+
+# Códigos WMO de Open-Meteo → texto en español
+_WMO = {0: "Despejado", 1: "Mayormente despejado", 2: "Parcialmente nublado", 3: "Nublado",
+        45: "Niebla", 48: "Niebla", 51: "Llovizna", 53: "Llovizna", 55: "Llovizna",
+        61: "Lluvia", 63: "Lluvia", 65: "Lluvia fuerte", 66: "Lluvia helada", 67: "Lluvia helada",
+        71: "Nieve", 73: "Nieve", 75: "Nieve intensa", 77: "Nieve",
+        80: "Chubascos", 81: "Chubascos", 82: "Chubascos fuertes",
+        85: "Chubascos de nieve", 86: "Chubascos de nieve",
+        95: "Tormenta", 96: "Tormenta", 99: "Tormenta"}
+
+
+def enrich_venue_weather(venues: list, cache_path: str = "apifootball_cache.json") -> None:
+    """6.1 — agrega v['weather'] = {temp, desc} con el clima actual (Open-Meteo, sin key)."""
+    if not venues:
+        return
+    cache = _load(cache_path)
+    wcache = cache.get("weather") or {}
+    dirty = False
+    for v in venues:
+        name = v.get("name")
+        coords = _VENUE_COORDS.get(name)
+        if not coords:
+            continue
+        entry = wcache.get(name)
+        if not entry or _stale(entry, WEATHER_REFRESH):
+            try:
+                r = requests.get("https://api.open-meteo.com/v1/forecast", timeout=8, params={
+                    "latitude": coords[0], "longitude": coords[1],
+                    "current": "temperature_2m,weather_code",
+                })
+                cur = (r.json() or {}).get("current") or {}
+                temp = cur.get("temperature_2m")
+                if temp is not None:
+                    entry = {"temp": round(temp), "desc": _WMO.get(cur.get("weather_code"), ""),
+                             "last_fetch": _now().isoformat()}
+                    wcache[name] = entry
+                    dirty = True
+            except Exception:
+                entry = wcache.get(name)
+        if entry:
+            v["weather"] = {"temp": entry.get("temp"), "desc": entry.get("desc")}
+    cache["weather"] = wcache
+    if dirty:
+        _save(cache_path, cache)
 
 
 def _now():
@@ -150,6 +198,9 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
                 budget -= 1
                 dirty = True
         cache["squads"] = squads
+    # 7.1 — club de cada jugador (país del club), backfill throttleado y cacheado
+    if _enrich_player_clubs(squads, client, cache):
+        dirty = True
     standings["_squads"] = squads
 
     # Detalle de partido (alineaciones, stats de equipo, stats por jugador)
@@ -169,6 +220,43 @@ def enrich_tournament_data(standings: dict, client, cache_path: str = "apifootba
         _save(cache_path, cache)
 
 
+def _enrich_player_clubs(squads: dict, client, cache: dict) -> bool:
+    """7.1 — resuelve el club (y país del club) de cada jugador. 1 llamada por jugador,
+    cacheado para siempre. Throttleado (CLUBS_PER_RUN) → hace backfill en varias corridas.
+    Aplica club/club_country a los dicts de jugador del plantel."""
+    clubs = cache.get("player_clubs") or {}
+    budget = CLUBS_PER_RUN
+    dirty = False
+    for entry in (squads or {}).values():
+        for p in entry.get("players", []):
+            pid = p.get("id")
+            if pid is None:
+                continue
+            key = str(pid)
+            if key not in clubs and budget > 0:
+                try:
+                    info = client.get_player_club(pid)
+                except Exception:
+                    continue                # error de red/rate-limit: no cachear, reintenta luego
+                clubs[key] = info or {}     # {} marca "consultado, sin club"
+                budget -= 1
+                dirty = True
+            info = clubs.get(key)
+            if info:
+                p["club"] = info.get("club")
+                p["club_country"] = info.get("country")
+    cache["player_clubs"] = clubs
+    return dirty
+
+
+def _detail_has_player_ids(cached: dict) -> bool:
+    """True si el detalle cacheado ya trae IDs de jugador (fixtures/players con 'id')."""
+    for side in (cached.get("players") or []):
+        for p in (side.get("players") or []):
+            return p.get("id") is not None
+    return True  # sin players → no hace falta re-pedir
+
+
 def _enrich_match_details(matches_by_date: dict, details: dict, client) -> bool:
     """Trae alineaciones/stats/jugadores de partidos jugados o en vivo. Cache por partido.
     Prioriza partidos en vivo y los más recientes (que son los que la gente mira).
@@ -182,9 +270,11 @@ def _enrich_match_details(matches_by_date: dict, details: dict, client) -> bool:
             if not m.get("match_id"):
                 continue
             cached = details.get(str(m.get("match_id")))
-            if cached:
+            # Auto-reparado: si el detalle cacheado no tiene IDs de jugador (caché viejo,
+            # previo al fix de stats), se vuelve a pedir aunque esté terminado.
+            if cached and _detail_has_player_ids(cached):
                 if cached.get("status") == "FINISHED":
-                    continue  # terminado y cacheado → no cambia
+                    continue  # terminado y cacheado (con ids) → no cambia
                 if not _stale(cached, MATCH_LIVE_REFRESH):
                     continue  # en vivo pero refrescado hace poco
             candidates.append(m)
@@ -290,3 +380,48 @@ def _build_venues(fixtures: list) -> list:
         v["count"] = len(v["matches"])
     out.sort(key=lambda v: (-v["count"], v["name"]))
     return out
+
+
+# ── Head-to-head de los cruces del bracket (4.3) ──────────────────────────────
+H2H_REFRESH = 604800   # el historial entre dos selecciones se refresca 1 vez por semana
+H2H_PER_RUN = 24       # tope de pares nuevos a pedir por corrida
+
+
+def enrich_h2h(matchups: list, client, cache_path: str = "apifootball_cache.json",
+               k1: str = "equipo1", k2: str = "equipo2", budget: int = H2H_PER_RUN) -> None:
+    """Agrega a cada cruce/partido su historial (item['h2h']). Cache por par de ids.
+    k1/k2 = nombres de los campos de equipo (equipo1/equipo2 en bracket; home/away en partidos)."""
+    if client is None or not matchups:
+        return
+    from h2h_curado import h2h_curado
+    from countries import nombre_es
+    cache = _load(cache_path)
+    tid = cache.get("team_id_map") or {}
+    h2h = cache.get("h2h") or {}
+    dirty = False
+    for m in matchups:
+        e1, e2 = m.get(k1), m.get(k2)
+        i1, i2 = tid.get(e1), tid.get(e2)
+        data = None
+        if i1 and i2:
+            key = "-".join(str(x) for x in sorted([i1, i2]))
+            entry = h2h.get(key)
+            if (not entry or _stale(entry, H2H_REFRESH)) and budget > 0:
+                try:
+                    data = client.get_h2h(i1, i2)
+                    h2h[key] = {"list": data, "last_fetch": _now().isoformat()}
+                    entry = h2h[key]
+                    budget -= 1
+                    dirty = True
+                except Exception:
+                    pass
+            if entry:
+                data = entry.get("list", [])
+        # Fallback curado a mano cuando la API no tiene historial del par (clave en español)
+        if not data:
+            data = h2h_curado(nombre_es(e1), nombre_es(e2))
+        if data:
+            m["h2h"] = data
+    cache["h2h"] = h2h
+    if dirty:
+        _save(cache_path, cache)

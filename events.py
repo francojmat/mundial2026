@@ -16,7 +16,8 @@ import os
 from datetime import datetime, timezone, timedelta
 
 DAILY_BUDGET = 3000        # tope de requests/día para eventos (plan Pro = 7500 total)
-RECENT_DAYS = 4            # solo enriquecemos partidos de los últimos N días
+RECENT_DAYS = 45           # cubre todo el Mundial: enriquecemos todos los partidos
+                           # jugados (se cachean 1 vez). Los terminados no se refetchean.
 
 
 def _now_utc() -> datetime:
