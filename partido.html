@@ -32,6 +32,17 @@
     @keyframes mtblink{0%,100%{opacity:1}50%{opacity:.2}}
     .mt-venue{font-size:.72rem;color:#7c6a58;margin-top:9px}
     .mt-ref{font-size:.72rem;color:#7c6a58;margin-top:10px}
+    .mt-venue-img{width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin-top:14px;display:block}
+    .mt-gm{display:flex;flex-direction:column;gap:6px}
+    .mt-gm-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:9px 13px;background:#ffffff;border:1px solid #e8ddd0;border-radius:9px;text-decoration:none;color:#211c14;position:relative}
+    a.mt-gm-row:hover{border-color:#c8b8a8}
+    .mt-gm-cur{background:rgba(194,65,12,.06);border-color:#c2410c}
+    .mt-gm-h{justify-self:end;text-align:right;font-size:.8rem;display:flex;align-items:center;gap:6px}
+    .mt-gm-a{justify-self:start;text-align:left;font-size:.8rem;display:flex;align-items:center;gap:6px}
+    .mt-gm-fl{width:18px;height:13px;border-radius:2px}
+    .mt-gm-sc{font-size:.9rem;font-weight:700;color:#c2410c;min-width:46px;text-align:center}
+    .mt-gm-dt{font-size:.7rem;font-weight:600;color:#7c6a58;min-width:72px;text-align:center}
+    .mt-gm-live{position:absolute;top:-7px;left:50%;transform:translateX(-50%);font-size:.5rem;font-weight:700;letter-spacing:.05em;background:#c2410c;color:#fff;padding:1px 7px;border-radius:6px}
     .mt-sec{margin-bottom:26px}
     .mt-st{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#c2410c;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #e8ddd0}
     .mt-ln-grid,.mt-pl-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -132,13 +143,23 @@
       }
     })();
 
+    // Formatea los horarios de los partidos próximos del grupo a la zona del usuario
+    function fmtMatchTimes() {
+      document.querySelectorAll('.mt-gm-dt[data-utc]').forEach(function(e) {
+        var d = new Date(e.getAttribute('data-utc'));
+        if (isNaN(d)) return;
+        e.textContent = d.toLocaleDateString('es', {day:'2-digit', month:'2-digit'})
+          + ' ' + d.toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+      });
+    }
+
     function loadMatch() {
       var box = document.getElementById('match');
       fetch('/api/partidos')
         .then(function(r) { return r.json(); })
         .then(function(d) {
           var html = d[MID];
-          if (html) { box.innerHTML = html; pollMatchLive(); }
+          if (html) { box.innerHTML = html; fmtMatchTimes(); pollMatchLive(); }
           else { box.innerHTML = '<p class="loading">Detalle no disponible todavía. Probá cuando arranque el partido.</p>'; }
         })
         .catch(function() { box.innerHTML = '<p class="loading">No se pudo cargar el partido.</p>'; });

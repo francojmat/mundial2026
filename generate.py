@@ -100,6 +100,15 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
         _upcoming = [m for m in all_matches if m.get("status") in ("TIMED", "", None)]
         enrich_h2h(_upcoming, apifootball, k1="home", k2="away", budget=40)
         thirds_adv = {e["team"] for e in standings.get("_thirds_advancing", [])}
+        # Imagen de cada sede (la misma que la sección Estadios: API o foto curada)
+        venue_img_map = {v.get("name"): v.get("image_url")
+                         for v in standings.get("_venues", []) if v.get("image_url")}
+        # Partidos de cada grupo (jugados + próximos) para el bloque "Partidos del grupo"
+        group_fixtures = {}
+        for m in all_matches:
+            g = m.get("group")
+            if g and m.get("match_id"):
+                group_fixtures.setdefault(g, []).append(m)
         partidos = {}
         for m in all_matches:
             mid = str(m.get("match_id") or "")
@@ -108,7 +117,10 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
             grp = (m.get("group") or "").replace("GROUP_", "")
             stage_label = f"Grupo {grp}" if grp else (m.get("stage", "") or "").replace("_", " ").title()
             group_data = standings.get(m.get("group")) if m.get("group") else None
-            partidos[mid] = render_match_fragment(m, details.get(mid), group_data, stage_label, thirds_adv)
+            gfix = group_fixtures.get(m.get("group"))
+            vimg = venue_img_map.get(m.get("venue_name"))
+            partidos[mid] = render_match_fragment(m, details.get(mid), group_data, stage_label,
+                                                  thirds_adv, group_fixtures=gfix, venue_img=vimg)
         outputs.append(("partidos.json", json.dumps(partidos, ensure_ascii=False)))
         outputs.append(("partido.html", render_partido_shell()))
 

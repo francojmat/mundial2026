@@ -7,7 +7,7 @@ que el plantel. Identidad visual de marca.
 from datetime import datetime
 
 from html_renderer import T, TEL, BG, WHT, BDR, BDR2, TXT, MUT, DIM, GRY, WRN
-from countries import traducir, nombre_es, bandera_img
+from countries import traducir, nombre_es, bandera_img, VENUE_PHOTO
 from motm import motm_for
 
 _POS_ORDER = {"G": 0, "D": 1, "M": 2, "F": 3}
@@ -218,6 +218,35 @@ def _mt_players(detail, home_name, away_name):
     )
 
 
+def _mt_group_matches(fixtures, current_mid, label):
+    """Todos los partidos del grupo (jugados + próximos). El actual queda resaltado."""
+    if not fixtures:
+        return ""
+    rows = ""
+    for m in sorted(fixtures, key=lambda x: x.get("utc_date") or ""):
+        mid = str(m.get("match_id") or "")
+        h, a = m.get("home", ""), m.get("away", "")
+        st = m.get("status", "")
+        played = st in ("FINISHED", "IN_PLAY", "PAUSED")
+        live = st in ("IN_PLAY", "PAUSED")
+        hg, ag = m.get("home_goals"), m.get("away_goals")
+        if played and hg is not None and ag is not None:
+            center = f'<span class="mt-gm-sc">{hg} - {ag}</span>'
+        else:
+            center = f'<span class="mt-gm-dt" data-utc="{m.get("utc_date","")}">—</span>'
+        live_b = '<span class="mt-gm-live">EN VIVO</span>' if live else ""
+        inner = (f'<span class="mt-gm-h">{nombre_es(h)}{bandera_img(h, "mt-gm-fl", 18, 13)}</span>'
+                 f'{center}'
+                 f'<span class="mt-gm-a">{bandera_img(a, "mt-gm-fl", 18, 13)}{nombre_es(a)}</span>'
+                 f'{live_b}')
+        if mid == current_mid:
+            rows += f'<div class="mt-gm-row mt-gm-cur">{inner}</div>'
+        else:
+            rows += f'<a class="mt-gm-row" href="/partido.html?id={mid}">{inner}</a>'
+    return (f'<div class="mt-sec"><h3 class="mt-st">Partidos del grupo {label}</h3>'
+            f'<div class="mt-gm">{rows}</div></div>')
+
+
 def _mt_standings(group_data, label, thirds_advancing=None):
     if not group_data:
         return ""
@@ -349,7 +378,8 @@ def _mt_highlights(match):
             f'<span class="mt-hl-ico">▶</span> Ver resumen en YouTube</a></div>')
 
 
-def render_match_fragment(match, detail, group_data, stage_label, thirds_advancing=None):
+def render_match_fragment(match, detail, group_data, stage_label, thirds_advancing=None,
+                          group_fixtures=None, venue_img=None):
     """Fragmento del detalle de partido. Va en partidos.json."""
     home, away = match.get("home", ""), match.get("away", "")
     hg, ag = match.get("home_goals"), match.get("away_goals")
@@ -379,6 +409,10 @@ def render_match_fragment(match, detail, group_data, stage_label, thirds_advanci
     if w.get("temp") is not None:
         vbits.append(f'{w["temp"]}° {w.get("desc", "")}'.strip())
     venue_html = f'<div class="mt-venue">{" · ".join(vbits)}</div>' if vbits else ""
+    # Foto del estadio (la misma que en la sección Estadios), debajo del estadio
+    vphoto = venue_img or VENUE_PHOTO.get(match.get("venue_name", ""))
+    venue_img = (f'<img class="mt-venue-img" src="{vphoto}" loading="lazy" alt="" '
+                 f'onerror="this.style.display=\'none\'">') if vphoto else ""
 
     # home: nombre + bandera (bandera pegada al "vs"); away: bandera (pegada al "vs") + nombre
     home_t = f'<span class="mt-tn">{nombre_es(home)}</span>{bandera_img(home, "mt-fl", 26, 20)}'
@@ -412,8 +446,11 @@ def render_match_fragment(match, detail, group_data, stage_label, thirds_advanci
             msg = "Detalle del partido todavía no disponible. Actualizá en unos minutos."
             detail_body = f'<div class="mt-sec"><p class="mt-nodata">{msg}</p></div>'
 
-    standings_html = _mt_standings(group_data, (match.get("group") or "").replace("GROUP_", ""), thirds_advancing)
-    return f'<div class="mt-head">{header}{ref_html}</div>{detail_body}{standings_html}'
+    grp_label = (match.get("group") or "").replace("GROUP_", "")
+    standings_html = _mt_standings(group_data, grp_label, thirds_advancing)
+    fixtures_html = _mt_group_matches(group_fixtures, str(match.get("match_id") or ""), grp_label)
+    return (f'<div class="mt-head">{header}{ref_html}{venue_img}</div>'
+            f'{detail_body}{standings_html}{fixtures_html}')
 
 
 def render_partido_shell():
@@ -452,6 +489,17 @@ def render_partido_shell():
     @keyframes mtblink{{0%,100%{{opacity:1}}50%{{opacity:.2}}}}
     .mt-venue{{font-size:.72rem;color:{MUT};margin-top:9px}}
     .mt-ref{{font-size:.72rem;color:{MUT};margin-top:10px}}
+    .mt-venue-img{{width:100%;max-height:150px;object-fit:cover;border-radius:8px;margin-top:14px;display:block}}
+    .mt-gm{{display:flex;flex-direction:column;gap:6px}}
+    .mt-gm-row{{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:9px 13px;background:{WHT};border:1px solid {BDR};border-radius:9px;text-decoration:none;color:{TXT};position:relative}}
+    a.mt-gm-row:hover{{border-color:{BDR2}}}
+    .mt-gm-cur{{background:rgba(194,65,12,.06);border-color:{T}}}
+    .mt-gm-h{{justify-self:end;text-align:right;font-size:.8rem;display:flex;align-items:center;gap:6px}}
+    .mt-gm-a{{justify-self:start;text-align:left;font-size:.8rem;display:flex;align-items:center;gap:6px}}
+    .mt-gm-fl{{width:18px;height:13px;border-radius:2px}}
+    .mt-gm-sc{{font-size:.9rem;font-weight:700;color:{T};min-width:46px;text-align:center}}
+    .mt-gm-dt{{font-size:.7rem;font-weight:600;color:{MUT};min-width:72px;text-align:center}}
+    .mt-gm-live{{position:absolute;top:-7px;left:50%;transform:translateX(-50%);font-size:.5rem;font-weight:700;letter-spacing:.05em;background:{T};color:#fff;padding:1px 7px;border-radius:6px}}
     .mt-sec{{margin-bottom:26px}}
     .mt-st{{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:{T};margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid {BDR}}}
     .mt-ln-grid,.mt-pl-grid{{display:grid;grid-template-columns:1fr 1fr;gap:14px}}
@@ -552,13 +600,23 @@ def render_partido_shell():
       }}
     }})();
 
+    // Formatea los horarios de los partidos próximos del grupo a la zona del usuario
+    function fmtMatchTimes() {{
+      document.querySelectorAll('.mt-gm-dt[data-utc]').forEach(function(e) {{
+        var d = new Date(e.getAttribute('data-utc'));
+        if (isNaN(d)) return;
+        e.textContent = d.toLocaleDateString('es', {{day:'2-digit', month:'2-digit'}})
+          + ' ' + d.toLocaleTimeString('es', {{hour:'2-digit', minute:'2-digit'}});
+      }});
+    }}
+
     function loadMatch() {{
       var box = document.getElementById('match');
       fetch('/api/partidos')
         .then(function(r) {{ return r.json(); }})
         .then(function(d) {{
           var html = d[MID];
-          if (html) {{ box.innerHTML = html; pollMatchLive(); }}
+          if (html) {{ box.innerHTML = html; fmtMatchTimes(); pollMatchLive(); }}
           else {{ box.innerHTML = '<p class="loading">Detalle no disponible todavía. Probá cuando arranque el partido.</p>'; }}
         }})
         .catch(function() {{ box.innerHTML = '<p class="loading">No se pudo cargar el partido.</p>'; }});
