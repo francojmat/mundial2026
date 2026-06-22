@@ -230,6 +230,18 @@ detalle de partidos viejos). Auto-reparado de caché: `_detail_has_player_ids` r
 cacheados sin `id` (para que prod se cure sola tras el fix de stats). Foto de estadio: `VENUE_PHOTO`
 en countries.py (11 curadas) + imagen de la API (resto).
 
+## SSR para bots — Cloudflare Pages Functions (2026-06-22)
+Las páginas internas (Ver Partido/Plantel/Perfil) son shells que rellena el JS → invisibles
+para bots sin JS. Solución: **Pages Functions** en `functions/` (NO el Worker — Cloudflare Pages
+tiene precedencia sobre las rutas del Worker para las páginas que sirve; probado y descartado).
+- `functions/{partido,plantel,seleccion}.js` rutean las URLs limpias (`/partido`, etc.; Pages
+  redirige `/partido.html` → `/partido` con 308). `functions/_ssr.js` tiene la lógica.
+- **Humanos:** `context.next()` → Pages sirve el shell estático normal (cero riesgo, sin overhead).
+- **Bots** (regex de UA: google/claude/gpt/perplexity/social previews): toma el shell vía `next()`,
+  busca el fragmento en `/data` branch JSON, y lo inyecta en el `<div id>` + reemplaza title/description/
+  og + agrega canonical y JSON-LD (`SportsEvent` por partido, `SportsTeam` por selección). Fail-safe:
+  cualquier error → `context.next()` (shell normal). Se deploya con `git push` (Pages detecta functions/).
+
 ## Gotcha operativo (corregido 2026-06-22)
 **main = solo código; rama `data` = datos** (el cron force-pushea a `data`, NO a `main`). Para
 deployar: commit a `main` (Pages redeploya) → `gh workflow run update.yml` (regenera la rama data) →
