@@ -88,12 +88,51 @@ async function handleData(file, ctx) {
 }
 
 // ── GET /api/live ────────────────────────────────────────────────────────────
-// Marcadores en vivo desde API-Football, cacheados 10s (sin importar el tráfico,
-// la API se pide como mucho 1 vez cada 10s → respeta el rate limit).
+// Marcadores en vivo desde API-Football. Para cuidar la cuota diaria:
+//  1) Gating por horario: solo se consulta la API si hay un partido dentro de su
+//     ventana (live_windows.json, generado por el cron). Fuera de horario → 0 llamadas.
+//     Fail-open: si no se pueden leer las ventanas, se consulta igual (prioriza el vivo).
+//  2) Tope diario duro (DAILY_LIVE_BUDGET): backstop ante picos de tráfico. Si se llega,
+//     se sirve el último resultado bueno en vez de seguir gastando cuota.
+//  3) Cache de 15s: la API se pide como mucho 1 vez cada 15s sin importar el tráfico.
+const LIVE_CACHE_TTL    = 15;    // seg que se cachea la respuesta servida
+const DAILY_LIVE_BUDGET = 4000;  // tope de llamadas/día a API-Football desde /api/live
+
+// Ventanas horarias (epoch ms) de partidos no terminados. Se leen de la rama 'data'
+// (costo casi nulo) y se cachean ~5 min. Devuelve un array [[start,end],...] o null.
+async function getLiveWindows(cache, ctx) {
+  const key = new Request("https://live.internal/windows");
+  const hit = await cache.match(key);
+  if (hit) { try { return await hit.json(); } catch (e) { return null; } }
+  try {
+    const r = await fetch(
+      "https://raw.githubusercontent.com/francojmat/mundial2026/data/live_windows.json",
+      { cf: { cacheTtl: 60 } }
+    );
+    if (!r.ok) return null;
+    const data = await r.json();
+    const wins = Array.isArray(data.windows) ? data.windows : null;
+    ctx.waitUntil(cache.put(key, new Response(JSON.stringify(wins),
+      { headers: { "Cache-Control": "max-age=300" } })));
+    return wins;
+  } catch (e) { return null; }
+}
+
+// Contador de presupuesto diario, en el cache (sin límite de escrituras como el KV).
+// La clave incluye la fecha UTC → se resetea solo cada día.
+function _budgetKey() {
+  return new Request("https://live.internal/budget/" + new Date().toISOString().slice(0, 10));
+}
+async function _getBudget(cache) {
+  const hit = await cache.match(_budgetKey());
+  if (!hit) return 0;
+  try { return Number(await hit.text()) || 0; } catch (e) { return 0; }
+}
+
 async function handleLive(request, env, ctx) {
   const KEY = (env.APIFOOTBALL_KEY || "").trim();
   const cache = caches.default;
-  const fresh = new Request("https://live.internal/wc2026");       // respuesta servida (8s)
+  const fresh = new Request("https://live.internal/wc2026");       // respuesta servida (15s)
   const good  = new Request("https://live.internal/wc2026-good");  // último resultado NO vacío (60s)
 
   const hit = await cache.match(fresh);
@@ -102,8 +141,21 @@ async function handleLive(request, env, ctx) {
   // Estados "en vivo" (incluye entretiempo y prórroga)
   const LIVE = new Set(["1H", "2H", "HT", "ET", "BT", "P", "LIVE", "INT"]);
 
-  let matches = null;  // null = el fetch falló; [] = no hay en vivo de verdad
-  if (KEY) {
+  // ¿Consultamos la API? Solo si hay partido en ventana y no agotamos el presupuesto.
+  let allowFetch = true;
+  const wins = await getLiveWindows(cache, ctx);
+  if (wins) {                       // null = no sabemos las ventanas → fail-open
+    const now = Date.now();
+    allowFetch = wins.some(w => now >= w[0] && now <= w[1]);
+  }
+  let count = 0;
+  if (allowFetch) {
+    count = await _getBudget(cache);
+    if (count >= DAILY_LIVE_BUDGET) allowFetch = false;  // tope duro
+  }
+
+  let matches = null;  // null = no se consultó / falló; [] = no hay en vivo de verdad
+  if (allowFetch && KEY) {
     try {
       const r = await fetch(
         "https://v3.football.api-sports.io/fixtures?league=1&season=2026",
@@ -121,8 +173,11 @@ async function handleLive(request, env, ctx) {
             a:       fx.goals.away,
           }));
       }
+      // Contamos la llamada efectiva (la clave de 15s la limita a ~1 cada 15s).
+      ctx.waitUntil(cache.put(_budgetKey(), new Response(String(count + 1),
+        { headers: { "Cache-Control": "max-age=86400" } })));
     } catch (e) { matches = null; }
-  } else {
+  } else if (!KEY) {
     matches = [];
   }
 
@@ -131,8 +186,8 @@ async function handleLive(request, env, ctx) {
     ctx.waitUntil(cache.put(good, new Response(JSON.stringify(matches),
       { headers: { "Cache-Control": "max-age=60" } })));
   } else {
-    // Vacío o error: si hay un "último bueno" reciente, servirlo (mata el flapeo en vivo).
-    // Si genuinamente no hay en vivo, el último bueno ya expiró → []
+    // No se consultó / vacío / error: si hay un "último bueno" reciente, servirlo
+    // (mata el flapeo). Si genuinamente no hay en vivo, ya expiró → []
     const lg = await cache.match(good);
     matches = lg ? await lg.json() : [];
   }
@@ -140,7 +195,7 @@ async function handleLive(request, env, ctx) {
   const resp = new Response(JSON.stringify({ updated: Date.now(), matches }), {
     headers: {
       "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=8",
+      "Cache-Control": "public, max-age=" + LIVE_CACHE_TTL,
       ...cors(),
     },
   });

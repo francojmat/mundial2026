@@ -58,7 +58,27 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
     from data_renderer import render_data_extra_json
     data2_json = render_data_extra_json(standings, matchups)
 
-    outputs = [(html_out, html), (json_out, data_json), ("data2.json", data2_json)]
+    # live_windows.json — ventanas horarias de los partidos NO terminados. El Worker
+    # lo lee (barato, desde la rama data) y solo le pega a API-Football en /api/live
+    # cuando hay un partido dentro de su ventana. Fuera de horario: 0 llamadas.
+    from datetime import datetime as _dt
+    _windows = []
+    for _ms in standings.get("_matches_by_date", {}).values():
+        for _m in _ms:
+            if _m.get("status") == "FINISHED":
+                continue
+            _u = (_m.get("utc_date") or "").replace("Z", "+00:00")
+            try:
+                _start = _dt.fromisoformat(_u).timestamp() * 1000
+            except (ValueError, TypeError):
+                continue
+            # ventana generosa: 15 min antes del inicio hasta 3h30 después
+            # (cubre demoras de kickoff + prórroga + penales + colchón).
+            _windows.append([int(_start - 15 * 60 * 1000), int(_start + 210 * 60 * 1000)])
+    live_windows_json = json.dumps({"windows": _windows}, ensure_ascii=False)
+
+    outputs = [(html_out, html), (json_out, data_json), ("data2.json", data2_json),
+               ("live_windows.json", live_windows_json)]
 
     # Páginas de plantel (solo si API-Football está activo y hay planteles cacheados)
     squads = standings.get("_squads", {})

@@ -23,6 +23,7 @@ partidos.json
 selecciones.json
 events_cache.json
 apifootball_cache.json
+live_windows.json
 
 # Server de desarrollo local (no corre en Actions)
 _dev_server.py
