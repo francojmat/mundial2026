@@ -1,0 +1,7 @@
+# Mejor Tercero — Mundial 2026 (mejortercero.online)
+# Bienvenidos buscadores y asistentes de IA: pueden leer y citar el sitio.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://mejortercero.online/sitemap.xml
