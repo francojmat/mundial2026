@@ -33,9 +33,12 @@ jobs:
       # Trae los datos/caches más recientes desde la rama 'data' (estado entre corridas).
       - name: Pull latest data + caches from 'data' branch
         run: |
-          git fetch origin data 2>/dev/null && \
-          git checkout origin/data -- data.json data2.json planteles.json partidos.json selecciones.json events_cache.json apifootball_cache.json 2>/dev/null \
-            || echo "Sin rama 'data' todavía (primera corrida)."
+          git fetch origin data 2>/dev/null || echo "Sin rama 'data' todavía."
+          # Checkout archivo por archivo: si uno no existe aún (ej. data2.json en el bootstrap)
+          # no aborta a los demás.
+          for f in data.json data2.json planteles.json partidos.json selecciones.json events_cache.json apifootball_cache.json; do
+            git checkout origin/data -- "$f" 2>/dev/null || true
+          done
 
       - name: Generate
         continue-on-error: true
