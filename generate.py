@@ -29,6 +29,17 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
     print(f"Proveedor: API-Football. Goleadores: {'football-data' if scorers_client else 'sin lista'}.")
     print("Fetching datos...")
     standings = build_standings(scorers_client, apifootball)
+
+    # GUARDA DE RESILIENCIA: si API-Football no devolvió fixtures (rate limit del día,
+    # outage, key vencida), los grupos quedan vacíos. Regenerar y publicar eso TIRA el
+    # sitio en vivo (home en blanco). Mejor congelar la última versión buena: abortamos
+    # sin escribir NINGÚN archivo, así el cron re-publica lo que ya estaba (bueno).
+    _real_groups = [k for k in standings if isinstance(k, str) and k.startswith("GROUP_")]
+    if not _real_groups:
+        print("ABORT: API-Football devolvió 0 grupos (rate limit / outage). "
+              "No se sobrescribe ningún archivo; se mantiene la última versión buena.")
+        return
+
     matchups = build_round_of_32(standings, standings.get("_thirds_advancing", []))
 
     from tournament import enrich_h2h, enrich_venue_weather
