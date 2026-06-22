@@ -1,0 +1,22 @@
+# Mejor Tercero — Mundial 2026 en vivo
+
+> Sitio en español que sigue la Copa Mundial de la FIFA 2026 en tiempo real: posiciones por grupo (con los desempates oficiales de FIFA), los 8 mejores terceros, bracket de eliminatorias (32avos a la final), goleadores, valoraciones, tarjetas, estadios, planteles y perfiles de selección. Los datos se actualizan al instante vía una API JSON propia.
+
+El nombre "Mejor Tercero" viene de la regla del Mundial 2026: con 12 grupos de 4, clasifican los 2 primeros de cada grupo más los 8 mejores terceros.
+
+## Páginas principales
+- [Inicio / en vivo](https://mejortercero.online/): posiciones por grupo, mejores terceros, bracket, goleadores, valoraciones, tarjetas y estadios.
+- [Ver Partido](https://mejortercero.online/partido.html?id=ID): alineaciones, cronología minuto a minuto, estadísticas, historial entre las dos selecciones y posiciones del grupo. Reemplazá ID por el id del partido.
+- [Plantel](https://mejortercero.online/plantel.html?t=PAIS): jugadores con club y país, posiciones, números del torneo y director técnico.
+- [Perfil de selección](https://mejortercero.online/seleccion.html?t=PAIS): ranking FIFA, palmarés mundialista, su grupo y sus partidos.
+
+## Datos en tiempo real (API JSON)
+- https://mejortercero.online/api/data — posiciones por grupo, partidos del día, mejores terceros y bracket.
+- https://mejortercero.online/api/data2 — rankings: goleadores, mejor valoración, tarjetas amarillas y rojas.
+- https://mejortercero.online/api/partidos — detalle HTML de cada partido (alineaciones, eventos, stats).
+- https://mejortercero.online/api/planteles — planteles por selección.
+- https://mejortercero.online/api/selecciones — perfiles de selección.
+- https://mejortercero.online/api/live — marcadores en vivo (se actualizan cada pocos segundos).
+
+## Sobre el proyecto
+Hecho por aficionados, en español rioplatense. Todo el contenido (nombres de países y equipos incluidos) está traducido al español. La fuente de datos es API-Football; los goleadores se complementan con football-data.org.

@@ -44,8 +44,10 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
 
     html = render_html(standings, matchups)
     data_json = render_data_json(standings, matchups)
+    from data_renderer import render_data_extra_json
+    data2_json = render_data_extra_json(standings, matchups)
 
-    outputs = [(html_out, html), (json_out, data_json)]
+    outputs = [(html_out, html), (json_out, data_json), ("data2.json", data2_json)]
 
     # Páginas de plantel (solo si API-Football está activo y hay planteles cacheados)
     squads = standings.get("_squads", {})
@@ -123,6 +125,24 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
                                                   thirds_adv, group_fixtures=gfix, venue_img=vimg)
         outputs.append(("partidos.json", json.dumps(partidos, ensure_ascii=False)))
         outputs.append(("partido.html", render_partido_shell()))
+
+    # SEO/GEO — sitemap.xml con todas las URLs (home + partidos + selecciones + planteles)
+    import urllib.parse as _up
+    _base = "https://mejortercero.online"
+    _urls = [f"{_base}/"]
+    for _m in all_matches:
+        _mid = _m.get("match_id")
+        if _mid:
+            _urls.append(f"{_base}/partido.html?id={_mid}")
+    for _t in standings.get("_squads", {}).keys():
+        _q = _up.quote(_t)
+        _urls.append(f"{_base}/seleccion.html?t={_q}")
+        _urls.append(f"{_base}/plantel.html?t={_q}")
+    _smap = ('<?xml version="1.0" encoding="UTF-8"?>'
+             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+             + "".join(f"<url><loc>{u}</loc></url>" for u in _urls)
+             + "</urlset>")
+    outputs.append(("sitemap.xml", _smap))
 
     for path, content in outputs:
         tmp = path + ".tmp"

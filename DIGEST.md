@@ -192,8 +192,47 @@ NOTA: al pasar a pago, API-Football cambia la API key (la del free queda muerta)
   Plantel por país (con foto) y Ver Partido. Feature "Lesionados/Sancionados" NO se hizo: el
   endpoint `injuries` devuelve 0 para selecciones en el Mundial (sin datos).
 
-## Gotcha operativo
-El cron pushea a `main` cada ~60s. Al trabajar local, los push chocan seguido. Patrón:
-`git pull origin main --no-rebase` → `git checkout --theirs data.json mundial2026.html` →
-`git add .` → `git push`. (`events_cache.json` también lo toca el bot ahora.)
-No disparar el workflow muchas veces seguidas: football-data.org corta con 429 (rate limit).
+## Sesión 2026-06-22 — 30 features + Perfil de selección (TODO LIVE)
+Se implementaron 30 features de un plan (1.3, 1.6, 1.7, 2.1, 2.5, 3.1-3.3, 4.1, 4.3, 5.1-5.5,
+6.1-6.4, 7.1-7.4, 8.3-8.6, 9.1, 10.6). Trabajado en local (`_dev_server.py`, puerto 8765,
+gitignored) y deployado. Todo verificado E2E en producción.
+
+**Archivos nuevos:**
+- `pages.py` → ahora también arma el **Perfil de selección** (`seleccion.html` + `selecciones.json`,
+  ruta `/api/selecciones` en el Worker): ficha (rank FIFA + palmarés) + tabla del grupo + partidos
+  expandibles + acceso al plantel. `render_seleccion_fragment` / `render_seleccion_shell`.
+- `seleccion_data.py` → ranking FIFA (ed. 11/06/2026) + palmarés por selección, curado a mano.
+  Keyed por nombre football-data. **Refrescar ranking ~20/07/2026 (próxima edición FIFA).**
+- `motm.py` → figura del partido (MOTM oficial FIFA) curada a mano, keyed por `frozenset` en español.
+  **Franco lo actualiza cada día.**
+- `h2h_curado.py` → historial de los 72 cruces de grupo (últimos 5: fecha/torneo/instancia, PRE-2026),
+  keyed por `frozenset` de nombres en español. Fallback cuando la API no tiene el par.
+- `scenarios.py` → escenarios de clasificación de grupo (qué se juega cada equipo).
+
+**Plantel (`pages.py`):** perfil de jugador expandible · **stats del torneo por ID de jugador**
+(antes por apellido → homónimos colapsaban, los 3 Martínez compartían stats; FIX por id, y
+`get_fixture_players` ahora guarda `id`) · ficha de selección · **club (país del club) en gris**
+bajo el nombre (de `/players?id=&season`; OJO: ligas europeas 2025-26 están bajo **season 2025**,
+no 2026 → se consulta 2025 y 2026; backfill throttleado `CLUBS_PER_RUN=80`, cache `player_clubs`).
+
+**Ver Partido (`match_page.py`):** cancha sin solape · cronología estilo home · figura del partido
+(`_mt_h2h` muestra "Historial reciente" o "Primer enfrentamiento" hasta que arranca) · bloque
+**"Partidos del grupo"** (jugados+próximos, actual resaltado) · **foto del estadio** (`VENUE_PHOTO`
+o imagen de la API, misma que Estadios) · posiciones del grupo clickeables al perfil · posiciones
+en español (Arquero/Defensor/Mediocampista/Delantero) · botón **"Volver a [selección]"** (link con `&t=&tn=`).
+
+**Home:** nav "Ir a sección" DINÁMICO (`buildNav` se arma de `<div class="sec" data-nav="...">`;
+sección nueva con `data-nav` aparece sola) · Sugerencias + "Seguinos en redes" (IG @mejortercero.online,
+X @mejortercero) en la **sidebar** (antes flotantes) · grupos con "Detalles" plegable + qué se juega 4 equipos.
+
+**Fixes técnicos clave:** `RECENT_DAYS` 4→45 (eventos de TODO el Mundial, no solo 4 días → arregla
+detalle de partidos viejos). Auto-reparado de caché: `_detail_has_player_ids` re-pide detalles
+cacheados sin `id` (para que prod se cure sola tras el fix de stats). Foto de estadio: `VENUE_PHOTO`
+en countries.py (11 curadas) + imagen de la API (resto).
+
+## Gotcha operativo (corregido 2026-06-22)
+**main = solo código; rama `data` = datos** (el cron force-pushea a `data`, NO a `main`). Para
+deployar: commit a `main` (Pages redeploya) → `gh workflow run update.yml` (regenera la rama data) →
+si tocaste rutas del Worker, `cd cloudflare-worker && npx wrangler deploy`. `/api/*` propaga en ~5 min
+(CDN de GitHub raw). `wrangler` está autenticado con la cuenta de Franco. NUNCA commitear `.env`,
+los data JSON, ni `_dev_server.py` (todos en `.gitignore`). No tipear la API key — la pega Franco.

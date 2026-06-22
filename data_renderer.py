@@ -25,11 +25,12 @@ def render_data_json(standings: Dict, matchups: List[Dict]) -> str:
     matches_by_date: Dict[str, list] = standings.get("_matches_by_date", {})
     today_date: str = standings.get("_today_date", "")
 
+    # data.json: TODO lo vivo / arriba del fold (incluye dates_html → navInit/pollData
+    # quedan IDÉNTICOS, cero riesgo al flujo en vivo). Solo se sacan los rankings.
     dates_html = {
         date_str: _render_today_matches(matches, standings)
         for date_str, matches in matches_by_date.items()
     }
-
     data = {
         "updated": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         "today_date": today_date,
@@ -39,6 +40,15 @@ def render_data_json(standings: Dict, matchups: List[Dict]) -> str:
         "thirds_html": _render_thirds(standings),
         "r32_left_html": _r32_inner(matchups[:8]),
         "r32_right_html": _r32_inner(matchups[8:]),
+    }
+    return json.dumps(data, ensure_ascii=False)
+
+
+def render_data_extra_json(standings: Dict, matchups: List[Dict]) -> str:
+    """data2.json PESADO: solo los rankings (valoración/goleadores/asist/tarjetas).
+    Son secciones colapsadas, no vivas → se cargan diferidas (después del primer
+    pintado) y se refrescan en un timer lento. No afecta nada del polling en vivo."""
+    data = {
         "scorers_html": _render_scorers(standings),
         "rating_html":  _render_rating(standings),
         "assists_html": _render_assists(standings),

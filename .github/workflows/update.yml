@@ -34,7 +34,7 @@ jobs:
       - name: Pull latest data + caches from 'data' branch
         run: |
           git fetch origin data 2>/dev/null && \
-          git checkout origin/data -- data.json planteles.json partidos.json selecciones.json events_cache.json apifootball_cache.json 2>/dev/null \
+          git checkout origin/data -- data.json data2.json planteles.json partidos.json selecciones.json events_cache.json apifootball_cache.json 2>/dev/null \
             || echo "Sin rama 'data' todavía (primera corrida)."
 
       - name: Generate
@@ -52,7 +52,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git checkout --orphan data-tmp
           git reset
-          git add -f data.json planteles.json partidos.json selecciones.json events_cache.json apifootball_cache.json
+          git add -f data.json data2.json planteles.json partidos.json selecciones.json events_cache.json apifootball_cache.json
           if git diff --staged --quiet; then
             echo "Sin cambios en datos."
           else

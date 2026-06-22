@@ -17,6 +17,7 @@ cloudflare-worker/.wrangler/
 
 # Datos generados (viven en la rama 'data', servidos por el Worker)
 data.json
+data2.json
 planteles.json
 partidos.json
 selecciones.json

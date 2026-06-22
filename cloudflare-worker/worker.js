@@ -40,6 +40,7 @@ export default {
 
     if (path === "/api/live"        && request.method === "GET")  return handleLive(request, env, ctx);
     if (path === "/api/data"        && request.method === "GET")  return handleData("data.json", ctx);
+    if (path === "/api/data2"       && request.method === "GET")  return handleData("data2.json", ctx);
     if (path === "/api/planteles"   && request.method === "GET")  return handleData("planteles.json", ctx);
     if (path === "/api/partidos"    && request.method === "GET")  return handleData("partidos.json", ctx);
     if (path === "/api/selecciones" && request.method === "GET")  return handleData("selecciones.json", ctx);

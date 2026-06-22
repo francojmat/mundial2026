@@ -69,7 +69,8 @@ _PAISES = {
 
 def _flag_img(iso: str, nombre: str) -> str:
     url = f"/flags/20x15/{iso}.png"
-    return f'<img src="{url}" alt="{nombre}" width="20" height="15" style="vertical-align:middle;margin-right:6px;flex-shrink:0">'
+    return (f'<img src="{url}" alt="{nombre}" width="20" height="15" loading="lazy" '
+            f'style="vertical-align:middle;margin-right:6px;flex-shrink:0">')
 
 
 # País de la liga (API-Football) → español, para mostrar el club del jugador (7.1)
@@ -110,7 +111,7 @@ def bandera_img(nombre_api: str, cls: str = "", w: int = 20, h: int = 15) -> str
         return ""
     c = f' class="{cls}"' if cls else ""
     return (f'<img{c} src="/flags/20x15/{iso}.png" alt="{nombre_es(nombre_api)}" '
-            f'width="{w}" height="{h}" style="vertical-align:middle;flex-shrink:0">')
+            f'width="{w}" height="{h}" loading="lazy" style="vertical-align:middle;flex-shrink:0">')
 
 
 def traducir(nombre_api: str) -> str:

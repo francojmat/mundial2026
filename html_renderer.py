@@ -55,12 +55,45 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     updated = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     ko_json = _ko_schedule_json()
 
+    # SEO/GEO — datos estructurados (Schema.org): sitio + el Mundial como SportsEvent
+    import json as _json
+    _jsonld = _json.dumps({
+        "@context": "https://schema.org",
+        "@graph": [
+            {"@type": "WebSite", "name": "Mejor Tercero",
+             "url": "https://mejortercero.online/", "inLanguage": "es",
+             "description": "Mundial 2026 en vivo: posiciones por grupo, mejores terceros, "
+                            "bracket, goleadores y estadios, actualizados al instante."},
+            {"@type": "SportsEvent", "name": "Copa Mundial de la FIFA 2026",
+             "alternateName": "Mundial 2026", "sport": "Fútbol",
+             "startDate": "2026-06-11", "endDate": "2026-07-19",
+             "eventStatus": "https://schema.org/EventScheduled",
+             "location": {"@type": "Place", "name": "Estados Unidos, México y Canadá"},
+             "url": "https://mejortercero.online/"},
+        ],
+    }, ensure_ascii=False)
+
     return f"""<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Mejor Tercero · Mundial 2026</title>
+  <title>Mejor Tercero · Mundial 2026 en vivo: posiciones, terceros, bracket y goleadores</title>
+  <meta name="description" content="Seguí el Mundial 2026 en vivo: posiciones por grupo con desempates FIFA, los mejores terceros, bracket de 32avos, goleadores, valoraciones y estadios. Resultados y escenarios de clasificación al instante.">
+  <link rel="canonical" href="https://mejortercero.online/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mejor Tercero">
+  <meta property="og:title" content="Mejor Tercero · Mundial 2026 en vivo">
+  <meta property="og:description" content="Posiciones, mejores terceros, bracket, goleadores y estadios del Mundial 2026, actualizados al instante.">
+  <meta property="og:image" content="https://mejortercero.online/og.png">
+  <meta property="og:url" content="https://mejortercero.online/">
+  <meta property="og:locale" content="es_AR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Mejor Tercero · Mundial 2026 en vivo">
+  <meta name="twitter:description" content="Posiciones, mejores terceros, bracket, goleadores y estadios del Mundial 2026, al instante.">
+  <meta name="twitter:image" content="https://mejortercero.online/og.png">
+  <meta name="theme-color" content="#c2410c">
+  <script type="application/ld+json">{_jsonld}</script>
   <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
   <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
   <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
@@ -466,7 +499,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     <button class="sec-toggle" id="st-goleadores">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-goleadores">
-    <div id="scorers-inner">{_render_scorers(standings)}</div>
+    <div id="scorers-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div>
   </div>
 </div>
 
@@ -477,7 +510,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     <button class="sec-toggle" id="st-valoracion">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-valoracion">
-    <div id="rating-inner">{_render_rating(standings)}</div>
+    <div id="rating-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div>
   </div>
 </div>
 
@@ -488,7 +521,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     <button class="sec-toggle" id="st-asistencias">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-asistencias">
-    <div id="assists-inner">{_render_assists(standings)}</div>
+    <div id="assists-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div>
   </div>
 </div>
 
@@ -499,7 +532,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     <button class="sec-toggle" id="st-amarillas">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-amarillas">
-    <div id="yellows-inner">{_render_yellows(standings)}</div>
+    <div id="yellows-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div>
   </div>
 </div>
 
@@ -510,7 +543,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     <button class="sec-toggle" id="st-rojas">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-rojas">
-    <div id="reds-inner">{_render_reds(standings)}</div>
+    <div id="reds-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div>
   </div>
 </div>
 
@@ -1189,6 +1222,22 @@ function pollData() {{
     .catch(function(e) {{ console.warn('[poll]', e); }});
 }}
 
+// Rankings (valoración/goleadores/asist/tarjetas) — carga diferida desde /api/data2
+// para no pesar el primer pintado. No es data en vivo; refresca en un timer lento.
+function loadExtra() {{
+  fetch('/api/data2')
+    .then(function(r) {{ return r.json(); }})
+    .then(function(d) {{
+      var map = {{'scorers-inner':'scorers_html','rating-inner':'rating_html',
+                 'assists-inner':'assists_html','yellows-inner':'yellows_html','reds-inner':'reds_html'}};
+      Object.keys(map).forEach(function(id) {{
+        var el = document.getElementById(id);
+        if (el && d[map[id]] !== undefined) el.innerHTML = d[map[id]];
+      }});
+    }})
+    .catch(function() {{}});
+}}
+
 // ── Bracket responsivo: escalar para caber en pantalla ────────────────────
 function scaleBracket() {{
   var wrap = document.querySelector('.llaves-wrap');
@@ -1263,6 +1312,9 @@ document.addEventListener("DOMContentLoaded", function() {{
   setInterval(pollData, 30000);
   pollLive();
   setInterval(pollLive, 8000);
+  // Rankings: diferidos tras el primer pintado + refresco lento (no son data en vivo)
+  setTimeout(loadExtra, 60);
+  setInterval(loadExtra, 120000);
 }});
 
 // ── 4.3 · Modal head-to-head ──────────────────────────────────────────────

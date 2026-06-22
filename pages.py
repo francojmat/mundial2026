@@ -252,7 +252,16 @@ def render_seleccion_shell() -> str:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Selección · Mundial 2026</title>
+  <title>Perfil de selección · Mundial 2026</title>
+  <meta name="description" content="Perfil de la selección en el Mundial 2026: ranking FIFA, palmarés mundialista, su grupo, partidos y acceso al plantel completo.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mejor Tercero">
+  <meta property="og:title" content="Perfil de selección · Mundial 2026">
+  <meta property="og:description" content="Ranking FIFA, palmarés, grupo y partidos de la selección en el Mundial 2026.">
+  <meta property="og:image" content="https://mejortercero.online/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://mejortercero.online/og.png">
+  <meta name="theme-color" content="#c2410c">
   <link rel="icon" href="/favicon.ico">
   <style>
     *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
@@ -372,6 +381,15 @@ def render_plantel_shell() -> str:
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Plantel · Mundial 2026</title>
+  <meta name="description" content="Plantel completo de la selección en el Mundial 2026: jugadores con club y país, posiciones, números del torneo y director técnico.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Mejor Tercero">
+  <meta property="og:title" content="Plantel · Mundial 2026">
+  <meta property="og:description" content="Jugadores, posiciones, club y DT de la selección en el Mundial 2026.">
+  <meta property="og:image" content="https://mejortercero.online/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://mejortercero.online/og.png">
+  <meta name="theme-color" content="#c2410c">
   <link rel="icon" href="/favicon.ico">
   <style>
     *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
