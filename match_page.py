@@ -273,9 +273,9 @@ def render_partido_shell():
     .mt-sep{{color:{DIM};font-weight:700}}
     .mt-vs{{font-size:.85rem;color:{DIM};font-weight:700}}
     .mt-badge-wrap{{margin-top:10px}}
-    .mt-badge{{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:4px 11px;border-radius:999px;display:inline-flex;align-items:center;gap:5px}}
-    .mt-fin{{background:{GRY};color:{MUT}}}
-    .mt-live{{background:rgba(194,65,12,.12);color:{T}}}
+    .mt-badge{{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:4px 11px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;background:transparent;border:1.5px solid transparent}}
+    .mt-fin{{color:{MUT};border-color:{BDR2}}}
+    .mt-live{{color:{T};border-color:{T}}}
     .mt-dot{{width:6px;height:6px;border-radius:50%;background:{T};animation:mtblink 1.4s ease-in-out infinite}}
     @keyframes mtblink{{0%,100%{{opacity:1}}50%{{opacity:.2}}}}
     .mt-venue{{font-size:.72rem;color:{MUT};margin-top:9px}}
@@ -285,7 +285,7 @@ def render_partido_shell():
     .mt-ln-grid,.mt-pl-grid{{display:grid;grid-template-columns:1fr 1fr;gap:14px}}
     .mt-ln-team,.mt-pl-team{{background:{WHT};border:1px solid {BDR};border-radius:10px;padding:12px}}
     .mt-ln-h{{font-size:.82rem;font-weight:700;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between;gap:6px}}
-    .mt-form{{font-size:.64rem;font-weight:700;color:{T};background:{GRY};border-radius:8px;padding:2px 7px}}
+    .mt-form{{font-size:.64rem;font-weight:700;color:{T};background:transparent;border:1.5px solid {T};border-radius:8px;padding:2px 7px}}
     .mt-ln-list{{display:flex;flex-direction:column;gap:3px}}
     .mt-pl{{display:flex;align-items:center;gap:8px;font-size:.78rem;padding:2px 0}}
     .mt-pl-n{{color:{T};font-weight:700;min-width:18px;text-align:center;font-size:.72rem}}

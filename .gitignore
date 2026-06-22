@@ -21,3 +21,6 @@ planteles.json
 partidos.json
 events_cache.json
 apifootball_cache.json
+
+.wrangler/
+_logo_b64.txt

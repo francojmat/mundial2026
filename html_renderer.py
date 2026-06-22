@@ -84,6 +84,8 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:{BG};color:{TXT};padding:28px 24px}}
 
     .hdr{{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:18px;text-align:center}}
+    .hdr-logo{{height:68px;width:auto;display:block}}
+    @media(max-width:480px){{.hdr-logo{{height:54px}}}}
     h1{{font-size:1.55rem;font-weight:700;letter-spacing:-.02em}}
     .pill{{display:inline-flex;align-items:center;gap:5px;background:rgba(194,65,12,.1);border:1px solid rgba(194,65,12,.35);color:{T};font-size:.68rem;font-weight:700;padding:3px 10px;letter-spacing:.08em;text-transform:uppercase}}
     .dot{{width:6px;height:6px;border-radius:50%;background:{T};animation:blink 1.4s ease-in-out infinite}}
@@ -103,10 +105,10 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .grupo{{background:{WHT};border:1px solid {BDR};overflow:hidden}}
     .grupo-h{{display:flex;align-items:center;justify-content:space-between;padding:9px 14px 8px;border-bottom:1px solid {BDR}}}
     .grupo-t{{font-size:.76rem;font-weight:700;color:{T};letter-spacing:.08em;text-transform:uppercase}}
-    .badge{{font-size:.6rem;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase}}
-    .b-ok  {{color:{MUT};background:{GRY};border:1px solid {BDR}}}
-    .b-vivo{{color:{T};background:rgba(194,65,12,.1);border:1px solid rgba(194,65,12,.3)}}
-    .b-live{{color:{WHT};background:{T};padding:2px 9px;border-radius:999px;font-size:.6rem;font-weight:700;text-transform:uppercase;display:inline-flex;align-items:center;gap:4px}}
+    .badge{{font-size:.6rem;font-weight:700;padding:2px 9px;border-radius:999px;letter-spacing:.05em;text-transform:uppercase;background:transparent;border:1.5px solid transparent}}
+    .b-ok  {{color:{MUT};border-color:{BDR2}}}
+    .b-vivo{{color:{T};border-color:{T}}}
+    .b-live{{color:{T};border-color:{T};display:inline-flex;align-items:center;gap:4px}}
 
     table{{width:100%;border-collapse:collapse}}
     th{{font-size:.61rem;font-weight:600;color:{DIM};letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;text-align:center;border-bottom:1px solid {BDR}}}
@@ -175,7 +177,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .mc-meta{{font-size:.6rem;color:{DIM};padding:3px 8px 4px;border-top:1px solid {BG};display:flex;flex-direction:column;gap:1px;flex-shrink:0}}
     .mc-meta .venue{{color:{MUT};font-size:.57rem}}
 
-    .badge-live-sm{{color:{WHT};background:{T};font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:999px;text-transform:uppercase;display:inline-flex;align-items:center;gap:3px}}
+    .badge-live-sm{{color:{T};background:transparent;border:1.5px solid {T};font-size:.55rem;font-weight:700;padding:1px 7px;border-radius:999px;text-transform:uppercase;display:inline-flex;align-items:center;gap:3px}}
     .badge-live-sm .dot{{width:4px;height:4px}}
 
     /* Filas de equipo — clicables */
@@ -339,7 +341,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </nav>
 
 <div class="hdr">
-  <h1>Mejor Tercero - Mundial 2026</h1>
+  <img src="/logo.png" alt="Mejor Tercero - Mundial 2026" class="hdr-logo">
 </div>
 
 <div id="today-container">
