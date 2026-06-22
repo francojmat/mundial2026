@@ -156,9 +156,10 @@ def _mt_players(detail, home_name, away_name):
     )
 
 
-def _mt_standings(group_data, label):
+def _mt_standings(group_data, label, thirds_advancing=None):
     if not group_data:
         return ""
+    thirds_advancing = thirds_advancing or set()
     teams = group_data.get("teams", [])
     stats = group_data.get("stats", {})
     rows = ""
@@ -166,7 +167,12 @@ def _mt_standings(group_data, label):
         s = stats.get(team)
         if not s:
             continue
-        cls = "mt-cls" if pos <= 2 else ""
+        if pos <= 2:
+            cls = "mt-cls"
+        elif pos == 3 and team in thirds_advancing:
+            cls = "mt-third"
+        else:
+            cls = ""
         rows += (
             f'<tr class="{cls}"><td>{pos}</td><td class="mt-p-name">{traducir(team)}</td>'
             f'<td>{s.played}</td><td>{s.goal_diff:+d}</td><td><span class="mt-rating">{s.points}</span></td></tr>'
@@ -187,7 +193,7 @@ def _mt_date(iso):
         return ""
 
 
-def render_match_fragment(match, detail, group_data, stage_label):
+def render_match_fragment(match, detail, group_data, stage_label, thirds_advancing=None):
     """Fragmento del detalle de partido. Va en partidos.json."""
     home, away = match.get("home", ""), match.get("away", "")
     hg, ag = match.get("home_goals"), match.get("away_goals")
@@ -240,7 +246,7 @@ def render_match_fragment(match, detail, group_data, stage_label):
             msg = "Detalle del partido todavía no disponible. Actualizá en unos minutos."
         detail_body = f'<div class="mt-sec"><p class="mt-nodata">{msg}</p></div>'
 
-    standings_html = _mt_standings(group_data, (match.get("group") or "").replace("GROUP_", ""))
+    standings_html = _mt_standings(group_data, (match.get("group") or "").replace("GROUP_", ""), thirds_advancing)
     return f'<div class="mt-head">{header}{ref_html}</div>{detail_body}{standings_html}'
 
 
@@ -307,6 +313,7 @@ def render_partido_shell():
     .mt-rating{{background:{T};color:{WHT};border-radius:6px;padding:1px 6px;font-weight:700;font-size:.72rem}}
     .mt-cap{{font-size:.55rem;background:{MUT};color:{WHT};border-radius:3px;padding:0 3px;font-weight:700;vertical-align:middle}}
     .mt-stand .mt-cls{{background:rgba(13,148,136,.08)}}
+    .mt-stand .mt-third{{background:rgba(194,65,12,.08)}}
     .mt-nodata{{text-align:center;color:{MUT};font-size:.8rem;background:{WHT};border:1px dashed {BDR2};border-radius:10px;padding:20px 16px}}
     .loading{{text-align:center;color:{MUT};font-size:.85rem;margin-top:40px}}
     @media(max-width:560px){{
