@@ -232,6 +232,19 @@ gitignored) y deployado. Todo verificado E2E en producción.
 - `h2h_curado.py` → historial de los 72 cruces de grupo (últimos 5: fecha/torneo/instancia, PRE-2026),
   keyed por `frozenset` de nombres en español. Fallback cuando la API no tiene el par.
 - `scenarios.py` → escenarios de clasificación de grupo (qué se juega cada equipo).
+  `team_phrase(entry, opponent)` nombra al rival y el stake exacto, derivado del motor (una sola
+  enumeración compartida → frases consistentes, no se contradicen). `_opp_name(entry)` da el rival.
+- **"Detalles" de grupo (`_group_detalles_html` en html_renderer.py):** ritmo de gol, goleador del
+  grupo (matchea `_scorers` de football-data con los equipos por `nombre_es`; bandera del equipo del
+  grupo que matchea), valla menos vencida, goleada/partidazo, definición, y destinos de 16avos
+  (`bracket.r32_destination(letter, pos)` → ciudad+rival; dato de GRUPO, no por equipo).
+- **GOTCHA fechas/horas:** todo lo que se cargue por `loadExtra`/`innerHTML` con spans `data-utc`
+  DEBE llamar `applyDataUtc(el)` después, o las fechas/horas quedan en blanco (pasó con los estadios
+  al moverlos a placeholder). Lo hacen bien navRender, el bracket y ahora loadExtra de venues.
+- **Banderas que escalan con la fuente:** `.gd-v img / .gf-tm img / .gf-ph img` usan `height:~1em;
+  width:auto` (en vez de 20×15 fijo) para que se adapten al tamaño del texto de cada dato.
+- **Perf:** `#venues-inner` es placeholder en el shell (lo llena loadExtra) → shell 287→217KB.
+  Pendiente: deferir `dates_html` (242KB, 69% de data.json; entrelazado con el "Hoy" vivo).
 
 **Plantel (`pages.py`):** perfil de jugador expandible · **stats del torneo por ID de jugador**
 (antes por apellido → homónimos colapsaban, los 3 Martínez compartían stats; FIX por id, y
