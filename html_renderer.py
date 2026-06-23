@@ -58,10 +58,11 @@ CRUCES_CSS = (
     f".cz-sel:hover{{background:{GRY}}}"
     # en mobile achicar para que entren las 3 columnas (rival incluido)
     f"@media (max-width:600px){{"
-    f".cz-matrix{{font-size:.6rem}}"
-    f".cz-matrix th{{padding:5px 6px;font-size:.47rem;letter-spacing:0}}"
-    f".cz-matrix td,.cz-matrix td:first-child{{padding:5px 6px;font-size:.6rem}}"
-    f".cz-matrix td.cz-riv img{{margin:0 2px 0 0}}.cz-rk{{font-size:.8em}}"
+    f".cz-g{{display:none}}"
+    f".cz-matrix{{font-size:.64rem}}"
+    f".cz-matrix th{{padding:5px 7px;font-size:.5rem;letter-spacing:0}}"
+    f".cz-matrix td,.cz-matrix td:first-child{{padding:6px 7px;font-size:.64rem}}"
+    f".cz-matrix td.cz-riv img{{margin:0 2px 0 0}}.cz-rk{{font-size:.82em}}"
     f".cz-head{{font-size:.74rem}}.cz-sub{{font-size:.64rem}}"
     f"}}"
 )

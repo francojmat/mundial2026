@@ -210,13 +210,12 @@ def _render_matrix(mx: dict, head: str) -> str:
     color = {t: _CELL_BG[i % len(_CELL_BG)] for i, t in enumerate(order)}
 
     def cell(letter, m):
-        if letter == "H":
-            txt, bg = "Gana " + nombre_es(m["home"]), color[m["home"]]
-        elif letter == "A":
-            txt, bg = "Gana " + nombre_es(m["away"]), color[m["away"]]
-        else:
-            txt, bg = "Empate", _DRAW_BG
-        return f'<td style="background:{bg}">{txt}</td>'
+        if letter == "D":
+            return f'<td style="background:{_DRAW_BG}">Empate</td>'
+        team = m["home"] if letter == "H" else m["away"]
+        bg = color[team]
+        # "Gana " va en un span que se oculta en mobile (el color ya indica quién gana)
+        return f'<td style="background:{bg}"><span class="cz-g">Gana </span>{nombre_es(team)}</td>'
 
     def riv_html(o):
         rk = _rank_of(o)
