@@ -60,6 +60,23 @@ busca la tarjeta por `data-mid` y actualiza el `.hoy-score`. Latencia ~8-10s. El
 el secret `APIFOOTBALL_KEY` (cargado vía `wrangler secret put`). Deploy del Worker: `wrangler deploy`
 desde `cloudflare-worker/` (wrangler está autenticado con la cuenta del usuario).
 
+## Blindaje de cuota API-Football (2026-06-22) — POR QUÉ
+Incidente: se agotó la cuota diaria (7500/día) y el cron publicaba datos VACÍOS encima de los
+buenos → home en blanco. Protecciones, en orden:
+- **Guarda anti-blanco** (`generate.py`): si `build_standings` devuelve 0 grupos (`GROUP_*`),
+  `main()` aborta SIN escribir nada → el workflow re-publica la última versión buena. Una caída
+  de la API NUNCA deja el sitio en blanco; congela lo último bueno.
+- **`/api/live` consciente del horario**: `generate.py` emite `live_windows.json` (ventanas
+  epoch-ms de partidos no terminados: inicio−15min a +210min). El Worker (`getLiveWindows`,
+  cache 5min) solo consulta API-Football si `now` cae en una ventana; fuera de horario, 0
+  llamadas. **Fail-open** si no hay ventanas (404/error) → consulta igual.
+- **Tope diario duro** en `/api/live`: `DAILY_LIVE_BUDGET=4000`, contado en `caches.default`
+  con clave por fecha UTC (NO en KV, que tiene 1000 escrituras/día). Al tope, sirve último bueno.
+- **Cache de `/api/live` 8s→15s.** **cron-job.org bajado de 1min a 5min** (en la cuenta de Franco).
+- **Nota de capacidad:** los visitantes NO consumen cuota (el Worker cachea). El límite de escala
+  es el plan del Worker (Free 100k req/día ≈ ~50 concurrentes en un partido). Palanca gratis no
+  implementada: Cache Rule delante del Worker.
+
 ## Datos de API-Football disponibles y NO usados (WC 2026, league=1, season=2026)
 Hoy solo usamos `fixtures` (mapeo) y `fixtures/events` (goles/tarjetas/cambios). El plan Pro
 da MUCHO más, todo verificado que devuelve datos para 2026 (por si se suman features):
