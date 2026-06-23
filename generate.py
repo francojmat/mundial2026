@@ -78,8 +78,40 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
             _windows.append([int(_start - 15 * 60 * 1000), int(_start + 210 * 60 * 1000)])
     live_windows_json = json.dumps({"windows": _windows}, ensure_ascii=False)
 
+    # sim.json — datos de grupos estructurados para el simulador (motor en JS).
+    # Los jugados van con su resultado; los pendientes con played=False (los fija el usuario).
+    sim_groups = {}
+    for gkey, gval in standings.items():
+        if not (isinstance(gkey, str) and gkey.startswith("GROUP_")):
+            continue
+        sim_groups[gkey.replace("GROUP_", "")] = {
+            "teams": gval.get("teams", []),
+            "matches": [{"h": m.home, "a": m.away, "hg": m.home_goals, "ag": m.away_goals,
+                         "played": m.played, "status": m.status} for m in gval.get("matches", [])],
+        }
+    # Estructura estática del bracket + Anexo C, serializadas DESDE el Python (misma fuente
+    # que el server) para que el motor JS arme el R32 igual. Clave Anexo C = 8 letras ordenadas.
+    from bracket import _ANNEX_C, _BRACKET, _SLOT_TO_PARTIDO, _SCHEDULE
+    sim_annexc = {"".join(sorted(k)): v for k, v in _ANNEX_C.items()}
+    sim_bracket = [[num, list(s1), list(s2)] for num, s1, s2 in _BRACKET]
+    from countries import _PAISES, nombre_es
+    _sim_teams = sorted({t for g in sim_groups.values() for t in g["teams"]})
+    sim_json = json.dumps({
+        "groups": sim_groups,
+        "annexC": sim_annexc,
+        "bracket": sim_bracket,
+        "slotToPartido": _SLOT_TO_PARTIDO,
+        "schedule": {str(n): list(v) for n, v in _SCHEDULE.items()},
+        "iso": {t: _PAISES.get(t, (t, ""))[1] for t in _sim_teams},
+        "name": {t: nombre_es(t) for t in _sim_teams},
+    }, ensure_ascii=False)
+    from simulador import render_simulador_shell
+    from bracket_widget import BRACKET_CSS, BRACKET_JS  # bracket compartido con el home
+
     outputs = [(html_out, html), (json_out, data_json), ("data2.json", data2_json),
-               ("live_windows.json", live_windows_json)]
+               ("live_windows.json", live_windows_json), ("sim.json", sim_json),
+               ("simulador.html", render_simulador_shell(matchups)),
+               ("bracket.css", BRACKET_CSS), ("bracket.js", BRACKET_JS)]
 
     # Páginas de plantel (solo si API-Football está activo y hay planteles cacheados)
     squads = standings.get("_squads", {})
@@ -190,7 +222,7 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
     # SEO/GEO — sitemap.xml con todas las URLs (home + partidos + selecciones + planteles)
     import urllib.parse as _up
     _base = "https://mejortercero.online"
-    _urls = [f"{_base}/"]
+    _urls = [f"{_base}/", f"{_base}/simulador.html"]
     for _m in all_matches:
         _mid = _m.get("match_id")
         if _mid:

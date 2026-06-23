@@ -36,7 +36,7 @@ jobs:
           git fetch origin data 2>/dev/null || echo "Sin rama 'data' todavía."
           # Checkout archivo por archivo: si uno no existe aún (ej. data2.json en el bootstrap)
           # no aborta a los demás.
-          for f in data.json data2.json planteles.json partidos.json selecciones.json events_cache.json apifootball_cache.json live_windows.json cruces.json; do
+          for f in data.json data2.json planteles.json partidos.json selecciones.json events_cache.json apifootball_cache.json live_windows.json cruces.json sim.json; do
             git checkout origin/data -- "$f" 2>/dev/null || true
           done
 
@@ -55,7 +55,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git checkout --orphan data-tmp
           git reset
-          git add -f data.json data2.json planteles.json partidos.json selecciones.json events_cache.json apifootball_cache.json live_windows.json cruces.json
+          git add -f data.json data2.json planteles.json partidos.json selecciones.json events_cache.json apifootball_cache.json live_windows.json cruces.json sim.json
           if git diff --staged --quiet; then
             echo "Sin cambios en datos."
           else

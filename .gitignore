@@ -31,3 +31,7 @@ _dev_server.py
 
 .wrangler/
 _logo_b64.txt
+sim.json
+_sim_driver.js
+_extract_bracket.py
+.claude/

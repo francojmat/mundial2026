@@ -85,11 +85,53 @@
     #voice-status{font-size:.7rem;color:#7c6a58;margin-top:5px;min-height:1em}
     .chat-hint{font-size:.7rem;color:#b09880;margin-top:8px}
 
+    /* ── Instagram ── */
+    #ig-drop{border:2px dashed #d8c9b6;background:#fff;padding:44px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+    #ig-drop:hover,#ig-drop.drag{border-color:#c2410c;background:#fff7f2}
+    #ig-drop:focus{outline:none;border-color:#c2410c}
+    .ig-drop-big{font-size:1rem;font-weight:700;color:#211c14}
+    .ig-drop-sml{font-size:.76rem;color:#b09880;margin-top:6px}
+    .ig-controls{display:flex;flex-wrap:wrap;gap:18px 24px;align-items:flex-start;margin-bottom:20px}
+    .ig-grp{display:flex;flex-direction:column;gap:7px}
+    .ig-grp-lbl{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#b09880}
+    .ig-grp-lbl em{font-style:normal;color:#c2410c}
+    .ig-seg{display:flex;gap:0;border:1px solid #e8ddd0;background:#fff;width:fit-content}
+    .ig-opt{display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;border:none;background:none;color:#7c6a58;border-right:1px solid #e8ddd0}
+    .ig-opt:last-child{border-right:none}
+    .ig-opt small{font-size:.62rem;font-weight:600;color:#b09880;letter-spacing:.02em}
+    .ig-opt.active{background:#c2410c;color:#fff}
+    .ig-opt.active small{color:#ffd9c7}
+    .ig-swatches{display:flex;gap:6px}
+    .ig-sw{width:30px;height:30px;border:2px solid #e8ddd0;cursor:pointer;padding:0}
+    .ig-sw.active{border-color:#c2410c;box-shadow:0 0 0 2px #fff7f2}
+    .ig-check{font-size:.8rem;color:#211c14;display:flex;align-items:center;gap:7px;cursor:pointer;padding-top:18px}
+    #ig-margin{width:150px;accent-color:#c2410c}
+    .ig-stage{display:flex;gap:24px;align-items:flex-start}
+    .ig-preview-wrap{flex:0 0 auto}
+    #ig-canvas{max-width:340px;max-height:60vh;width:auto;height:auto;display:block;border:1px solid #e8ddd0;background:#fff}
+    .ig-dims{font-size:.7rem;color:#b09880;margin-top:6px;text-align:center}
+    .ig-side{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
+    .ig-actions{display:flex;flex-direction:column;gap:8px}
+    .ig-btn{border:none;cursor:pointer;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:11px 16px;text-align:center}
+    .ig-btn-dl{background:#c2410c;color:#fff}
+    .ig-btn-dl:hover{background:#a83509}
+    .ig-btn-all{background:#16a34a;color:#fff}
+    .ig-btn-add{background:#211c14;color:#fff}
+    .ig-btn-clear{background:none;border:1px solid #e8ddd0;color:#7c6a58}
+    .ig-thumbs{display:flex;flex-wrap:wrap;gap:8px}
+    .ig-thumb{position:relative;width:62px;height:62px;border:2px solid #e8ddd0;cursor:pointer;overflow:hidden;background:#faf8f4}
+    .ig-thumb.active{border-color:#c2410c}
+    .ig-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .ig-thumb-x{position:absolute;top:1px;right:1px;width:16px;height:16px;line-height:15px;text-align:center;background:rgba(33,28,20,.78);color:#fff;font-size:.7rem;font-weight:700;border:none;cursor:pointer}
+
     @media(max-width:600px){
       .m-cards{grid-template-columns:repeat(2,1fr)}
       .m-two-col{grid-template-columns:1fr}
       body{padding:20px 16px}
       #chat-wrap{height:calc(100vh - 210px)}
+      .ig-stage{flex-direction:column}
+      #ig-canvas{max-width:100%;max-height:none}
+      .ig-preview-wrap{width:100%}
     }
   </style>
 </head>
@@ -110,6 +152,7 @@
     <button class="tab active" onclick="switchTab('sugs')">Sugerencias</button>
     <button class="tab"        onclick="switchTab('metrics')">Métricas</button>
     <button class="tab"        onclick="switchTab('chat')">Asistente IA</button>
+    <button class="tab"        onclick="switchTab('ig')">Instagram</button>
   </div>
 
   <!-- ── Sugerencias ── -->
@@ -189,6 +232,66 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Instagram ── -->
+  <div id="tab-ig" class="tab-pane">
+    <div id="ig-drop" tabindex="0">
+      <p class="ig-drop-big">📲 Arrastrá una captura acá</p>
+      <p class="ig-drop-sml">o tocá para elegirla · podés pegar con Ctrl+V · podés cargar varias</p>
+      <input id="ig-file" type="file" accept="image/*" multiple hidden>
+    </div>
+
+    <div id="ig-editor" style="display:none">
+      <div class="ig-controls">
+        <div class="ig-grp">
+          <span class="ig-grp-lbl">Formato</span>
+          <div class="ig-seg">
+            <button class="ig-opt active" data-fmt="post">Publicación · 4:5<small>1080×1350</small></button>
+            <button class="ig-opt"        data-fmt="carousel">Carrusel · 1:1<small>1080×1080</small></button>
+          </div>
+        </div>
+        <div class="ig-grp">
+          <span class="ig-grp-lbl">Encaje</span>
+          <div class="ig-seg">
+            <button class="ig-opt active" data-fit="contain">Ajustar<small>no recorta</small></button>
+            <button class="ig-opt"        data-fit="cover">Llenar<small>recorta</small></button>
+          </div>
+        </div>
+        <div class="ig-grp">
+          <span class="ig-grp-lbl">Fondo</span>
+          <div class="ig-swatches">
+            <button class="ig-sw active" data-bg="#faf8f4" style="background:#faf8f4" title="Crema"></button>
+            <button class="ig-sw"        data-bg="#ffffff" style="background:#ffffff" title="Blanco"></button>
+            <button class="ig-sw"        data-bg="#211c14" style="background:#211c14" title="Negro"></button>
+            <button class="ig-sw"        data-bg="#c2410c" style="background:#c2410c" title="Terracota"></button>
+          </div>
+        </div>
+        <div class="ig-grp">
+          <span class="ig-grp-lbl">Margen <em id="ig-margin-val">4%</em></span>
+          <input id="ig-margin" type="range" min="0" max="20" value="4">
+        </div>
+        <div class="ig-grp">
+          <label class="ig-check"><input id="ig-brand" type="checkbox"> Marca @mejortercero.online</label>
+        </div>
+      </div>
+
+      <div class="ig-stage">
+        <div class="ig-preview-wrap">
+          <canvas id="ig-canvas"></canvas>
+          <p class="ig-dims" id="ig-dims"></p>
+        </div>
+        <div class="ig-side">
+          <div class="ig-actions">
+            <button class="ig-btn ig-btn-dl" onclick="igDownloadCurrent()">⬇ Descargar esta</button>
+            <button class="ig-btn ig-btn-all" id="ig-dl-all" onclick="igDownloadAll()" style="display:none">⬇ Descargar todas</button>
+            <button class="ig-btn ig-btn-add" onclick="document.getElementById('ig-file').click()">+ Agregar fotos</button>
+            <button class="ig-btn ig-btn-clear" onclick="igClear()">Limpiar</button>
+          </div>
+          <div id="ig-thumbs" class="ig-thumbs"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -255,7 +358,7 @@ function showPanel() {
 }
 
 function switchTab(name) {
-  const names = ['sugs', 'metrics', 'chat'];
+  const names = ['sugs', 'metrics', 'chat', 'ig'];
   document.querySelectorAll('.tab').forEach((t, i) =>
     t.classList.toggle('active', names[i] === name));
   names.forEach(n => {
@@ -635,6 +738,225 @@ function toggleMic() {
 
   _recognition.start();
 }
+
+// ── Instagram — armador de imágenes ─────────────────────────────────────────────
+
+const IG_FORMATS = {
+  post:     { w:1080, h:1350, name:'post-4x5',     label:'4:5' },
+  carousel: { w:1080, h:1080, name:'carrusel-1x1', label:'1:1' },
+};
+
+let _igItems   = [];   // [{img, name}]
+let _igActive  = -1;   // índice de la foto en preview
+let _igFormat  = IG_FORMATS.post;
+let _igFit     = 'contain';
+let _igBg      = '#faf8f4';
+let _igMargin  = 4;
+let _igBrand   = false;
+
+function igCanvas() { return document.getElementById('ig-canvas'); }
+
+// Pinta una foto en un canvas según el formato/ajuste actuales. Reusable para preview y descarga.
+function igPaint(canvas, img) {
+  const f = _igFormat;
+  canvas.width = f.w; canvas.height = f.h;
+  const ctx = canvas.getContext('2d');
+
+  // Fondo
+  ctx.fillStyle = _igBg;
+  ctx.fillRect(0, 0, f.w, f.h);
+
+  // Caja útil (descontando el margen elegido)
+  const m  = Math.round(Math.min(f.w, f.h) * (_igMargin / 100));
+  const bw = f.w - m * 2;
+  const bh = f.h - m * 2;
+
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const scale = _igFit === 'cover'
+    ? Math.max(bw / iw, bh / ih)
+    : Math.min(bw / iw, bh / ih);
+  const dw = iw * scale, dh = ih * scale;
+  const dx = (f.w - dw) / 2, dy = (f.h - dh) / 2;
+
+  if (_igFit === 'cover') {
+    // Recorta a la caja útil para que no invada el margen
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(m, m, bw, bh);
+    ctx.clip();
+    ctx.drawImage(img, dx, dy, dw, dh);
+    ctx.restore();
+  } else {
+    ctx.drawImage(img, dx, dy, dw, dh);
+  }
+
+  if (_igBrand) {
+    const dark = _igBg === '#211c14' || _igBg === '#c2410c';
+    ctx.fillStyle = dark ? 'rgba(255,255,255,.92)' : 'rgba(33,28,20,.78)';
+    ctx.font = '600 26px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText('@mejortercero.online', f.w / 2, f.h - Math.max(m, 28) - 6);
+  }
+}
+
+function igRenderPreview() {
+  if (_igActive < 0 || !_igItems[_igActive]) return;
+  igPaint(igCanvas(), _igItems[_igActive].img);
+  document.getElementById('ig-dims').textContent =
+    `${_igFormat.w} × ${_igFormat.h} px · ${_igFormat.label}`;
+}
+
+function igRenderThumbs() {
+  const wrap = document.getElementById('ig-thumbs');
+  wrap.innerHTML = _igItems.map((it, i) =>
+    `<div class="ig-thumb ${i === _igActive ? 'active' : ''}" onclick="igSelect(${i})">
+       <img src="${it.url}" alt="">
+       <button class="ig-thumb-x" onclick="event.stopPropagation();igRemove(${i})" title="Quitar">×</button>
+     </div>`).join('');
+  document.getElementById('ig-dl-all').style.display = _igItems.length > 1 ? 'block' : 'none';
+}
+
+function igSelect(i) {
+  _igActive = i;
+  igRenderThumbs();
+  igRenderPreview();
+}
+
+function igRemove(i) {
+  URL.revokeObjectURL(_igItems[i].url);
+  _igItems.splice(i, 1);
+  if (!_igItems.length) { igClear(); return; }
+  if (_igActive >= _igItems.length) _igActive = _igItems.length - 1;
+  igRenderThumbs();
+  igRenderPreview();
+}
+
+function igClear() {
+  _igItems.forEach(it => URL.revokeObjectURL(it.url));
+  _igItems = [];
+  _igActive = -1;
+  document.getElementById('ig-editor').style.display = 'none';
+  document.getElementById('ig-drop').style.display = 'block';
+  document.getElementById('ig-file').value = '';
+}
+
+function igAddFiles(files) {
+  const imgs = [...files].filter(f => f.type.startsWith('image/'));
+  if (!imgs.length) return;
+  let pending = imgs.length;
+  imgs.forEach(file => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      _igItems.push({ img, url, name: (file.name || 'captura').replace(/\.[^.]+$/, '') });
+      if (--pending === 0) {
+        document.getElementById('ig-drop').style.display = 'none';
+        document.getElementById('ig-editor').style.display = 'block';
+        if (_igActive < 0) _igActive = 0;
+        igRenderThumbs();
+        igRenderPreview();
+      }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); if (--pending === 0) { igRenderThumbs(); igRenderPreview(); } };
+    img.src = url;
+  });
+}
+
+function igDownloadCanvas(canvas, filename) {
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }, 'image/png');
+}
+
+function igDownloadCurrent() {
+  if (_igActive < 0) return;
+  const it = _igItems[_igActive];
+  igDownloadCanvas(igCanvas(), `mejortercero-${_igFormat.name}-${it.name}.png`);
+}
+
+// Descarga todas con un canvas temporal, escalonando para que el navegador no junte las descargas.
+function igDownloadAll() {
+  const off = document.createElement('canvas');
+  _igItems.forEach((it, i) => {
+    setTimeout(() => {
+      igPaint(off, it.img);
+      igDownloadCanvas(off, `mejortercero-${_igFormat.name}-${String(i + 1).padStart(2, '0')}-${it.name}.png`);
+    }, i * 600);
+  });
+}
+
+// Wiring de controles (una sola vez)
+(function igInit() {
+  const drop = document.getElementById('ig-drop');
+  const file = document.getElementById('ig-file');
+  if (!drop) return;
+
+  drop.addEventListener('click', () => file.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.click(); } });
+  file.addEventListener('change', e => igAddFiles(e.target.files));
+
+  ['dragenter', 'dragover'].forEach(ev =>
+    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
+  ['dragleave', 'drop'].forEach(ev =>
+    drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+  drop.addEventListener('drop', e => igAddFiles(e.dataTransfer.files));
+
+  // Pegar con Ctrl+V cuando la pestaña Instagram está activa
+  document.addEventListener('paste', e => {
+    if (!document.getElementById('tab-ig').classList.contains('active')) return;
+    const items = [...(e.clipboardData?.items || [])]
+      .filter(it => it.type.startsWith('image/'))
+      .map(it => it.getAsFile())
+      .filter(Boolean);
+    if (items.length) igAddFiles(items);
+  });
+
+  // Formato y encaje (segmentos)
+  document.querySelectorAll('.ig-opt[data-fmt]').forEach(b =>
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.ig-opt[data-fmt]').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      _igFormat = IG_FORMATS[b.dataset.fmt];
+      igRenderPreview();
+    }));
+  document.querySelectorAll('.ig-opt[data-fit]').forEach(b =>
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.ig-opt[data-fit]').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      _igFit = b.dataset.fit;
+      igRenderPreview();
+    }));
+
+  // Fondo
+  document.querySelectorAll('.ig-sw').forEach(b =>
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.ig-sw').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      _igBg = b.dataset.bg;
+      igRenderPreview();
+    }));
+
+  // Margen
+  const margin = document.getElementById('ig-margin');
+  margin.addEventListener('input', () => {
+    _igMargin = +margin.value;
+    document.getElementById('ig-margin-val').textContent = _igMargin + '%';
+    igRenderPreview();
+  });
+
+  // Marca
+  document.getElementById('ig-brand').addEventListener('change', e => {
+    _igBrand = e.target.checked;
+    igRenderPreview();
+  });
+})();
 </script>
 </body>
 </html>

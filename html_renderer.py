@@ -614,6 +614,18 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
+<div class="sec" id="sec-simulador" data-nav="Simulador">
+  <a href="/simulador.html" style="display:flex;align-items:center;justify-content:space-between;gap:18px;background:{WHT};border:1px solid {BDR};border-left:3px solid {T};border-radius:12px;padding:18px 22px;text-decoration:none">
+    <span style="min-width:0">
+      <span style="display:block;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:{T};margin-bottom:6px">Simulador de llaves</span>
+      <span style="display:block;font-size:1.06rem;font-weight:800;color:{TXT};letter-spacing:-.02em;margin-bottom:4px">Armá tu propio bracket</span>
+      <span style="display:block;font-size:.8rem;color:{MUT};line-height:1.45">Cargá los resultados que faltan, de los grupos a la final — con la lógica oficial de FIFA.</span>
+    </span>
+    <span style="display:inline-flex;align-items:center;gap:7px;background:{T};color:#fff;padding:10px 19px;border-radius:999px;font-size:.78rem;font-weight:700;white-space:nowrap;flex-shrink:0">Simular <span style="font-size:1.05rem;line-height:1">&#8594;</span></span>
+  </a>
+</div>
+
+<div class="divider"></div>
 <div class="sec" id="sec-goleadores" data-nav="Goleadores">
   <div class="sec-hdr" onclick="toggleSec('goleadores')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Goleadores — Mundial 2026</p>

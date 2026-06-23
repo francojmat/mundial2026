@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Simulá las llaves · Mundial 2026</title>
+  <meta name="description" content="Simulador del Mundial 2026: cargá los resultados pendientes de los grupos y armá el bracket completo hasta la final.">
+  <meta name="theme-color" content="#c2410c">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/bracket.css">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#faf8f4;color:#211c14;padding:20px 16px 60px}
+    .wrap{max-width:1240px;margin:0 auto}
+    .topbar{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+    .back{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;color:#c2410c;text-decoration:none;border:1px solid #e8ddd0;border-radius:8px;padding:7px 13px;background:#ffffff}
+    h1{font-size:1.45rem;font-weight:800;letter-spacing:-.02em}
+    .reset{font-size:.74rem;font-weight:700;color:#c2410c;border:1px solid #c2410c;border-radius:8px;padding:7px 13px;background:#ffffff;cursor:pointer;margin-left:auto}
+    .reset:hover{background:#c2410c;color:#fff}
+    .intro{font-size:.82rem;color:#7c6a58;margin:4px 0 18px;line-height:1.5;max-width:760px}
+    .sec-t{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#c2410c;margin:26px 0 12px;padding-bottom:7px;border-bottom:1px solid #e8ddd0}
+    .sec-tog{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+    .sec-tog:hover .tog-btn{color:#c2410c}
+    .tog-btn{font-size:.62rem;font-weight:700;color:#b09880;letter-spacing:.04em}
+    #groups-wrap.collapsed{display:none}
+    /* editores de grupo */
+    .sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+    .sg{background:#ffffff;border:1px solid #e8ddd0;border-radius:12px;padding:12px 14px}
+    .sg-h{font-size:.78rem;font-weight:800;margin-bottom:8px}
+    .sg-r{display:flex;align-items:center;gap:6px;font-size:.76rem;padding:3px 0}
+    .sg-p{color:#b09880;width:15px;flex-shrink:0}
+    .sg-t{flex:1;display:flex;align-items:center;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sg-dg{color:#7c6a58;width:30px;text-align:right}
+    .sg-pts{font-weight:800;width:24px;text-align:right}
+    .sg-m{margin-top:10px;padding-top:9px;border-top:1px solid #f0ebe4;display:flex;flex-direction:column;gap:7px}
+    .sg-mr{display:flex;align-items:center;gap:5px;font-size:.72rem}
+    .sg-mt{flex:1;display:flex;align-items:center;justify-content:flex-end;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+    .sg-mt.a{justify-content:flex-start;text-align:left}
+    .sg-mt img{margin:0 0 0 5px!important}
+    .sg-mt.a img{margin:0 5px 0 0!important}
+    .sg-in{width:34px;height:30px;border:1px solid #c8b8a8;border-radius:7px;text-align:center;font-size:.82rem;font-weight:700;color:#211c14;font-family:inherit;background:#faf8f4;-moz-appearance:textfield;flex-shrink:0}
+    .sg-in::-webkit-outer-spin-button,.sg-in::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+    .sg-in:focus{outline:none;border-color:#c2410c;background:#ffffff}
+    .sg-x{color:#b09880;font-weight:700;flex-shrink:0}
+    .bracket-leyenda{font-size:.72rem;color:#7c6a58;margin:0 0 14px;padding:8px 12px;background:#f0ebe4;border-radius:6px;line-height:1.45;max-width:760px}
+    .bracket-leyenda b{color:#c2410c}
+    @media(max-width:640px){ body{padding:14px 10px} h1{font-size:1.2rem} }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="back" href="/">&#8592; Volver</a>
+    <h1>Simulá las llaves</h1>
+    <button class="reset" onclick="resetSim()">&#8635; Resetear</button>
+  </div>
+  <p class="intro">Primero cargá los resultados que faltan en cada grupo (los ya jugados quedan fijos). El bracket de abajo se arma solo con la lógica oficial de FIFA. Después hacé clic en el ganador de cada llave para avanzar hasta la final. Se guarda solo.</p>
+
+  <div class="sec-t sec-tog" onclick="toggleGroups()">
+    <span>1 · Resultados de los grupos</span>
+    <span class="tog-btn" id="grp-tog">&#9650; CERRAR</span>
+  </div>
+  <div id="groups-wrap"><div id="groups" class="sgrid"></div></div>
+
+  <div class="sec-t">2 · Tu bracket</div>
+  <p class="bracket-leyenda"><b>Tu simulación.</b> El R32 se recalcula al toque con cada resultado que cargás (puntos, diferencia de gol, goles a favor y Anexo C, igual que el real). Hacé clic en un equipo para elegir quién pasa de ronda.</p>
+  <div class="llaves-wrap">
+    
+<div class="llaves">
+  <div class="mitad izq"><div class="col r32" id="r32-left"><div class="par">
+    <div class="mc" data-mid="74">
+      <div class="mc-label"><span>Partido 74</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row" title="Posición asegurada" data-mid="74" data-name="Germany" data-html="<img src=&quot;/flags/20x15/de.png&quot; alt=&quot;Alemania&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Alemania" onclick="pickWinner(this)"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania<svg class="tr-lock" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><title>Posición asegurada</title><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg></div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="74" data-name="Scotland" data-html="<img src=&quot;/flags/20x15/gb-sct.png&quot; alt=&quot;Escocia&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Escocia" onclick="pickWinner(this)"><img src="/flags/20x15/gb-sct.png" alt="Escocia" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Escocia</div><div class="mc-h2h" hidden data-title="Alemania vs Escocia"><div class="h2h-row"><span class="h2h-d">14/06/24</span><span class="h2h-c">Euro Championship · Fase de grupos</span><span class="h2h-r">Alemania <b>5-1</b> Escocia</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-29T20:30:00Z"></span>
+        <span class="venue">Gillette Stadium, Boston</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="77">
+      <div class="mc-label"><span>Partido 77</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="77" data-name="France" data-html="<img src=&quot;/flags/20x15/fr.png&quot; alt=&quot;Francia&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Francia" onclick="pickWinner(this)"><img src="/flags/20x15/fr.png" alt="Francia" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Francia</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="77" data-name="Sweden" data-html="<img src=&quot;/flags/20x15/se.png&quot; alt=&quot;Suecia&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Suecia" onclick="pickWinner(this)"><img src="/flags/20x15/se.png" alt="Suecia" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suecia</div><div class="mc-h2h" hidden data-title="Francia vs Suecia"><div class="h2h-row"><span class="h2h-d">17/11/20</span><span class="h2h-c">UEFA Nations League · League A - 6</span><span class="h2h-r">Francia <b>4-2</b> Suecia</span></div><div class="h2h-row"><span class="h2h-d">05/09/20</span><span class="h2h-c">UEFA Nations League · League A - 1</span><span class="h2h-r">Suecia <b>0-1</b> Francia</span></div><div class="h2h-row"><span class="h2h-d">09/06/17</span><span class="h2h-c">World Cup - Qualification Europe · 1st Round - 6</span><span class="h2h-r">Suecia <b>2-1</b> Francia</span></div><div class="h2h-row"><span class="h2h-d">11/11/16</span><span class="h2h-c">World Cup - Qualification Europe · 1st Round - 4</span><span class="h2h-r">Francia <b>2-1</b> Suecia</span></div><div class="h2h-row"><span class="h2h-d">19/06/12</span><span class="h2h-c">Euro Championship · Fase de grupos</span><span class="h2h-r">Suecia <b>2-0</b> Francia</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-30T21:00:00Z"></span>
+        <span class="venue">MetLife Stadium, New Jersey</span>
+      </div>
+    </div></div><div class="par">
+    <div class="mc" data-mid="73">
+      <div class="mc-label"><span>Partido 73</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="73" data-name="South Korea" data-html="<img src=&quot;/flags/20x15/kr.png&quot; alt=&quot;Corea del Sur&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Corea del Sur" onclick="pickWinner(this)"><img src="/flags/20x15/kr.png" alt="Corea del Sur" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Corea del Sur</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="73" data-name="Switzerland" data-html="<img src=&quot;/flags/20x15/ch.png&quot; alt=&quot;Suiza&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Suiza" onclick="pickWinner(this)"><img src="/flags/20x15/ch.png" alt="Suiza" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suiza</div><div class="mc-h2h" hidden data-title="Corea del Sur vs Suiza"><div class="h2h-row"><span class="h2h-d">23/06/06</span><span class="h2h-c">Mundial · Fase de grupos</span><span class="h2h-r">Suiza <b>2-0</b> Corea del Sur</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-28T19:00:00Z"></span>
+        <span class="venue">SoFi Stadium, Los Ángeles</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="75">
+      <div class="mc-label"><span>Partido 75</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="75" data-name="Netherlands" data-html="<img src=&quot;/flags/20x15/nl.png&quot; alt=&quot;Países Bajos&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Países Bajos" onclick="pickWinner(this)"><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="75" data-name="Morocco" data-html="<img src=&quot;/flags/20x15/ma.png&quot; alt=&quot;Marruecos&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Marruecos" onclick="pickWinner(this)"><img src="/flags/20x15/ma.png" alt="Marruecos" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Marruecos</div><div class="mc-h2h" hidden data-title="Países Bajos vs Marruecos"><div class="h2h-row"><span class="h2h-d">31/05/17</span><span class="h2h-c">Friendlies · Amistoso</span><span class="h2h-r">Marruecos <b>1-2</b> Países Bajos</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-30T01:00:00Z"></span>
+        <span class="venue">Estadio BBVA, Monterrey</span>
+      </div>
+    </div></div><div class="par">
+    <div class="mc" data-mid="83">
+      <div class="mc-label"><span>Partido 83</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="83" data-name="Colombia" data-html="<img src=&quot;/flags/20x15/co.png&quot; alt=&quot;Colombia&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Colombia" onclick="pickWinner(this)"><img src="/flags/20x15/co.png" alt="Colombia" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Colombia</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="83" data-name="Ghana" data-html="<img src=&quot;/flags/20x15/gh.png&quot; alt=&quot;Ghana&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Ghana" onclick="pickWinner(this)"><img src="/flags/20x15/gh.png" alt="Ghana" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ghana</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-02T23:00:00Z"></span>
+        <span class="venue">BMO Field, Toronto</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="84">
+      <div class="mc-label"><span>Partido 84</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="84" data-name="Spain" data-html="<img src=&quot;/flags/20x15/es.png&quot; alt=&quot;España&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>España" onclick="pickWinner(this)"><img src="/flags/20x15/es.png" alt="España" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">España</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="84" data-name="Austria" data-html="<img src=&quot;/flags/20x15/at.png&quot; alt=&quot;Austria&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Austria" onclick="pickWinner(this)"><img src="/flags/20x15/at.png" alt="Austria" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Austria</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-02T19:00:00Z"></span>
+        <span class="venue">SoFi Stadium, Los Ángeles</span>
+      </div>
+    </div></div><div class="par">
+    <div class="mc" data-mid="81">
+      <div class="mc-label"><span>Partido 81</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row" title="Posición asegurada" data-mid="81" data-name="USA" data-html="<img src=&quot;/flags/20x15/us.png&quot; alt=&quot;Estados Unidos&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Estados Unidos" onclick="pickWinner(this)"><img src="/flags/20x15/us.png" alt="Estados Unidos" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Estados Unidos<svg class="tr-lock" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><title>Posición asegurada</title><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg></div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="81" data-name="Algeria" data-html="<img src=&quot;/flags/20x15/dz.png&quot; alt=&quot;Argelia&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Argelia" onclick="pickWinner(this)"><img src="/flags/20x15/dz.png" alt="Argelia" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Argelia</div><div class="mc-h2h" hidden data-title="Estados Unidos vs Argelia"><div class="h2h-row"><span class="h2h-d">23/06/10</span><span class="h2h-c">World Cup · Fase de grupos</span><span class="h2h-r">Estados Unidos <b>1-0</b> Argelia</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-02T00:00:00Z"></span>
+        <span class="venue">Levi's Stadium, San Francisco</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="82">
+      <div class="mc-label"><span>Partido 82</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="82" data-name="Egypt" data-html="<img src=&quot;/flags/20x15/eg.png&quot; alt=&quot;Egipto&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Egipto" onclick="pickWinner(this)"><img src="/flags/20x15/eg.png" alt="Egipto" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Egipto</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="82" data-name="Czechia" data-html="<img src=&quot;/flags/20x15/cz.png&quot; alt=&quot;Rep. Checa&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Rep. Checa" onclick="pickWinner(this)"><img src="/flags/20x15/cz.png" alt="Rep. Checa" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Rep. Checa</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-01T20:00:00Z"></span>
+        <span class="venue">Lumen Field, Seattle</span>
+      </div>
+    </div></div></div><div class="conn"><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div></div><div class="col r16">
+      <div class="mc" id="r16-L-0">
+        <div class="mc-label"><span>Octavos</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-r16-L-0" data-utc="2026-07-04T21:00:00Z"></span>
+          <span class="venue">Lincoln Financial Field, Filadelfia</span>
+        </div>
+      </div>
+      <div class="mc" id="r16-L-1">
+        <div class="mc-label"><span>Octavos</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-r16-L-1" data-utc="2026-07-04T17:00:00Z"></span>
+          <span class="venue">NRG Stadium, Houston</span>
+        </div>
+      </div>
+      <div class="mc" id="r16-L-2">
+        <div class="mc-label"><span>Octavos</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-r16-L-2" data-utc="2026-07-06T19:00:00Z"></span>
+          <span class="venue">AT&T Stadium, Dallas</span>
+        </div>
+      </div>
+      <div class="mc" id="r16-L-3">
+        <div class="mc-label"><span>Octavos</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-r16-L-3" data-utc="2026-07-07T00:00:00Z"></span>
+          <span class="venue">Lumen Field, Seattle</span>
+        </div>
+      </div></div><div class="conn"><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div></div><div class="col qf">
+      <div class="mc" id="qf-L-0">
+        <div class="mc-label"><span>Cuartos</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-qf-L-0" data-utc="2026-07-09T20:00:00Z"></span>
+          <span class="venue">Gillette Stadium, Boston</span>
+        </div>
+      </div>
+      <div class="mc" id="qf-L-1">
+        <div class="mc-label"><span>Cuartos</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-qf-L-1" data-utc="2026-07-10T19:00:00Z"></span>
+          <span class="venue">SoFi Stadium, Los Ángeles</span>
+        </div>
+      </div></div><div class="conn"><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div></div><div class="col sf">
+      <div class="mc" id="sf-L-0">
+        <div class="mc-label"><span>Semifinal</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-sf-L-0" data-utc="2026-07-14T19:00:00Z"></span>
+          <span class="venue">AT&T Stadium, Dallas</span>
+        </div>
+      </div></div></div>
+  
+    <div class="final-col">
+      <div class="champ-card" id="champ-card" style="display:none">
+        <img src="./copa.avif" class="champ-trophy-img" alt="Copa Mundial">
+        <div class="champ-card-flag" id="champ-flag"></div>
+        <div class="champ-card-country" id="champ-country"></div>
+        <div class="champ-card-subtitle">Campe&oacute;n Mundial 2026</div>
+      </div>
+
+      <div class="final-box">
+        <div class="final-inner">
+          <div class="final-title">Final</div>
+          <div class="final-date" id="dt-final" data-utc="2026-07-19T19:00:00Z"></div>
+          <div class="final-venue">MetLife Stadium, New Jersey</div>
+        </div>
+        <div class="final-teams" id="slot-final">
+          <div class="team-row ph" style="justify-content:center">— Por definir</div>
+          <div class="team-row ph" style="justify-content:center">— Por definir</div>
+        </div>
+      </div>
+
+      <div class="tercer-box">
+        <div class="tercer-inner">
+          <div class="tercer-title">3er y 4to Puesto</div>
+          <div class="tercer-date" id="dt-tercer" data-utc="2026-07-18T21:00:00Z"></div>
+          <div class="tercer-venue">Hard Rock Stadium, Miami</div>
+        </div>
+        <div class="tercer-teams" id="slot-tercer">
+          <div class="team-row ph" style="justify-content:center">— Por definir</div>
+          <div class="team-row ph" style="justify-content:center">— Por definir</div>
+        </div>
+      </div>
+    </div>
+  <div class="mitad der"><div class="col sf">
+      <div class="mc" id="sf-R-0">
+        <div class="mc-label"><span>Semifinal</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-sf-R-0" data-utc="2026-07-15T19:00:00Z"></span>
+          <span class="venue">Mercedes-Benz Stadium, Atlanta</span>
+        </div>
+      </div></div><div class="conn"><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div></div><div class="col qf">
+      <div class="mc" id="qf-R-0">
+        <div class="mc-label"><span>Cuartos</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-qf-R-0" data-utc="2026-07-11T21:00:00Z"></span>
+          <span class="venue">Hard Rock Stadium, Miami</span>
+        </div>
+      </div>
+      <div class="mc" id="qf-R-1">
+        <div class="mc-label"><span>Cuartos</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-qf-R-1" data-utc="2026-07-12T01:00:00Z"></span>
+          <span class="venue">Arrowhead Stadium, Kansas City</span>
+        </div>
+      </div></div><div class="conn"><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div></div><div class="col r16">
+      <div class="mc" id="r16-R-0">
+        <div class="mc-label"><span>Octavos</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-r16-R-0" data-utc="2026-07-05T20:00:00Z"></span>
+          <span class="venue">MetLife Stadium, New Jersey</span>
+        </div>
+      </div>
+      <div class="mc" id="r16-R-1">
+        <div class="mc-label"><span>Octavos</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-r16-R-1" data-utc="2026-07-06T00:00:00Z"></span>
+          <span class="venue">Estadio Azteca, CDMX</span>
+        </div>
+      </div>
+      <div class="mc" id="r16-R-2">
+        <div class="mc-label"><span>Octavos</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-r16-R-2" data-utc="2026-07-07T16:00:00Z"></span>
+          <span class="venue">Mercedes-Benz Stadium, Atlanta</span>
+        </div>
+      </div>
+      <div class="mc" id="r16-R-3">
+        <div class="mc-label"><span>Octavos</span></div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="team-row ph">— Por definir</div>
+        <div class="mc-meta">
+          <span id="dt-r16-R-3" data-utc="2026-07-07T20:00:00Z"></span>
+          <span class="venue">BC Place, Vancouver</span>
+        </div>
+      </div></div><div class="conn"><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div><div class="arm"><div class="arm-t"></div><div class="arm-b"></div></div></div><div class="col r32" id="r32-right"><div class="par">
+    <div class="mc" data-mid="76">
+      <div class="mc-label"><span>Partido 76</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="76" data-name="Brazil" data-html="<img src=&quot;/flags/20x15/br.png&quot; alt=&quot;Brasil&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Brasil" onclick="pickWinner(this)"><img src="/flags/20x15/br.png" alt="Brasil" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Brasil</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="76" data-name="Japan" data-html="<img src=&quot;/flags/20x15/jp.png&quot; alt=&quot;Japón&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Japón" onclick="pickWinner(this)"><img src="/flags/20x15/jp.png" alt="Japón" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Japón</div><div class="mc-h2h" hidden data-title="Brasil vs Japón"><div class="h2h-row"><span class="h2h-d">14/10/25</span><span class="h2h-c">Friendlies · Amistoso</span><span class="h2h-r">Japón <b>3-2</b> Brasil</span></div><div class="h2h-row"><span class="h2h-d">06/06/22</span><span class="h2h-c">Friendlies · Amistoso</span><span class="h2h-r">Japón <b>0-1</b> Brasil</span></div><div class="h2h-row"><span class="h2h-d">10/11/17</span><span class="h2h-c">Friendlies · Amistoso</span><span class="h2h-r">Japón <b>1-3</b> Brasil</span></div><div class="h2h-row"><span class="h2h-d">15/06/13</span><span class="h2h-c">Confederations Cup · Fase de grupos</span><span class="h2h-r">Brasil <b>3-0</b> Japón</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-29T17:00:00Z"></span>
+        <span class="venue">NRG Stadium, Houston</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="78">
+      <div class="mc-label"><span>Partido 78</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="78" data-name="Ivory Coast" data-html="<img src=&quot;/flags/20x15/ci.png&quot; alt=&quot;Costa de Marfil&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Costa de Marfil" onclick="pickWinner(this)"><img src="/flags/20x15/ci.png" alt="Costa de Marfil" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Costa de Marfil</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="78" data-name="Norway" data-html="<img src=&quot;/flags/20x15/no.png&quot; alt=&quot;Noruega&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Noruega" onclick="pickWinner(this)"><img src="/flags/20x15/no.png" alt="Noruega" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Noruega</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-30T17:00:00Z"></span>
+        <span class="venue">AT&T Stadium, Dallas</span>
+      </div>
+    </div></div><div class="par">
+    <div class="mc" data-mid="79">
+      <div class="mc-label"><span>Partido 79</span><span class="mc-label-r"></span></div>
+      <div class="team-row" title="Posición asegurada" data-mid="79" data-name="Mexico" data-html="<img src=&quot;/flags/20x15/mx.png&quot; alt=&quot;México&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>México" onclick="pickWinner(this)"><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México<svg class="tr-lock" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><title>Posición asegurada</title><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg></div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="79" data-name="Cape Verde Islands" data-html="<img src=&quot;/flags/20x15/cv.png&quot; alt=&quot;Cabo Verde&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Cabo Verde" onclick="pickWinner(this)"><img src="/flags/20x15/cv.png" alt="Cabo Verde" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Cabo Verde</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-01T01:00:00Z"></span>
+        <span class="venue">Estadio Azteca, CDMX</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="80">
+      <div class="mc-label"><span>Partido 80</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="80" data-name="England" data-html="<img src=&quot;/flags/20x15/gb-eng.png&quot; alt=&quot;Inglaterra&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Inglaterra" onclick="pickWinner(this)"><img src="/flags/20x15/gb-eng.png" alt="Inglaterra" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Inglaterra</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="80" data-name="Congo DR" data-html="<img src=&quot;/flags/20x15/cd.png&quot; alt=&quot;Congo RD&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Congo RD" onclick="pickWinner(this)"><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-01T16:00:00Z"></span>
+        <span class="venue">Mercedes-Benz Stadium, Atlanta</span>
+      </div>
+    </div></div><div class="par">
+    <div class="mc" data-mid="86">
+      <div class="mc-label"><span>Partido 86</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row" title="Posición asegurada" data-mid="86" data-name="Argentina" data-html="<img src=&quot;/flags/20x15/ar.png&quot; alt=&quot;Argentina&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Argentina" onclick="pickWinner(this)"><img src="/flags/20x15/ar.png" alt="Argentina" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Argentina<svg class="tr-lock" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><title>Posición asegurada</title><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg></div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="86" data-name="Uruguay" data-html="<img src=&quot;/flags/20x15/uy.png&quot; alt=&quot;Uruguay&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Uruguay" onclick="pickWinner(this)"><img src="/flags/20x15/uy.png" alt="Uruguay" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Uruguay</div><div class="mc-h2h" hidden data-title="Argentina vs Uruguay"><div class="h2h-row"><span class="h2h-d">21/03/25</span><span class="h2h-c">World Cup - Qualification South America · Fase de grupos</span><span class="h2h-r">Uruguay <b>0-1</b> Argentina</span></div><div class="h2h-row"><span class="h2h-d">17/11/23</span><span class="h2h-c">World Cup - Qualification South America · Fase de grupos</span><span class="h2h-r">Argentina <b>0-2</b> Uruguay</span></div><div class="h2h-row"><span class="h2h-d">12/11/21</span><span class="h2h-c">World Cup - Qualification South America · Fase de grupos</span><span class="h2h-r">Uruguay <b>0-1</b> Argentina</span></div><div class="h2h-row"><span class="h2h-d">10/10/21</span><span class="h2h-c">World Cup - Qualification South America · Fase de grupos</span><span class="h2h-r">Argentina <b>3-0</b> Uruguay</span></div><div class="h2h-row"><span class="h2h-d">19/06/21</span><span class="h2h-c">Copa America · Fase de grupos</span><span class="h2h-r">Argentina <b>1-0</b> Uruguay</span></div><div class="h2h-row"><span class="h2h-d">18/11/19</span><span class="h2h-c">Friendlies · Amistoso</span><span class="h2h-r">Argentina <b>2-2</b> Uruguay</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-03T22:00:00Z"></span>
+        <span class="venue">Hard Rock Stadium, Miami</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="88">
+      <div class="mc-label"><span>Partido 88</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="88" data-name="Australia" data-html="<img src=&quot;/flags/20x15/au.png&quot; alt=&quot;Australia&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Australia" onclick="pickWinner(this)"><img src="/flags/20x15/au.png" alt="Australia" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Australia</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="88" data-name="Iran" data-html="<img src=&quot;/flags/20x15/ir.png&quot; alt=&quot;Irán&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Irán" onclick="pickWinner(this)"><img src="/flags/20x15/ir.png" alt="Irán" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irán</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-03T18:00:00Z"></span>
+        <span class="venue">AT&T Stadium, Dallas</span>
+      </div>
+    </div></div><div class="par">
+    <div class="mc" data-mid="85">
+      <div class="mc-label"><span>Partido 85</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="85" data-name="Canada" data-html="<img src=&quot;/flags/20x15/ca.png&quot; alt=&quot;Canadá&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Canadá" onclick="pickWinner(this)"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="85" data-name="Belgium" data-html="<img src=&quot;/flags/20x15/be.png&quot; alt=&quot;Bélgica&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Bélgica" onclick="pickWinner(this)"><img src="/flags/20x15/be.png" alt="Bélgica" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bélgica</div><div class="mc-h2h" hidden data-title="Canadá vs Bélgica"><div class="h2h-row"><span class="h2h-d">23/11/22</span><span class="h2h-c">World Cup · Fase de grupos</span><span class="h2h-r">Bélgica <b>1-0</b> Canadá</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-03T03:00:00Z"></span>
+        <span class="venue">BC Place, Vancouver</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="87">
+      <div class="mc-label"><span>Partido 87</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="87" data-name="Portugal" data-html="<img src=&quot;/flags/20x15/pt.png&quot; alt=&quot;Portugal&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Portugal" onclick="pickWinner(this)"><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="87" data-name="Paraguay" data-html="<img src=&quot;/flags/20x15/py.png&quot; alt=&quot;Paraguay&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Paraguay" onclick="pickWinner(this)"><img src="/flags/20x15/py.png" alt="Paraguay" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Paraguay</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-04T01:30:00Z"></span>
+        <span class="venue">Arrowhead Stadium, Kansas City</span>
+      </div>
+    </div></div></div></div>
+</div>
+  </div>
+  <div class="mobile-bracket"><div class="mb-tabs"><button class="mb-tab mb-active" onclick="mbSetRound(this,'r32')">R32</button><button class="mb-tab" onclick="mbSetRound(this,'r16')">R16</button><button class="mb-tab" onclick="mbSetRound(this,'qf')">QF</button><button class="mb-tab" onclick="mbSetRound(this,'sf')">SF</button><button class="mb-tab" onclick="mbSetRound(this,'f')">Final</button></div><div class="mb-panel" id="mb-r32">
+    <div class="mc" data-mid="74">
+      <div class="mc-label"><span>Partido 74</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row" title="Posición asegurada" data-mid="74" data-name="Germany" data-html="<img src=&quot;/flags/20x15/de.png&quot; alt=&quot;Alemania&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Alemania" onclick="pickWinner(this)"><img src="/flags/20x15/de.png" alt="Alemania" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Alemania<svg class="tr-lock" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><title>Posición asegurada</title><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg></div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="74" data-name="Scotland" data-html="<img src=&quot;/flags/20x15/gb-sct.png&quot; alt=&quot;Escocia&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Escocia" onclick="pickWinner(this)"><img src="/flags/20x15/gb-sct.png" alt="Escocia" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Escocia</div><div class="mc-h2h" hidden data-title="Alemania vs Escocia"><div class="h2h-row"><span class="h2h-d">14/06/24</span><span class="h2h-c">Euro Championship · Fase de grupos</span><span class="h2h-r">Alemania <b>5-1</b> Escocia</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-29T20:30:00Z"></span>
+        <span class="venue">Gillette Stadium, Boston</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="77">
+      <div class="mc-label"><span>Partido 77</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="77" data-name="France" data-html="<img src=&quot;/flags/20x15/fr.png&quot; alt=&quot;Francia&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Francia" onclick="pickWinner(this)"><img src="/flags/20x15/fr.png" alt="Francia" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Francia</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="77" data-name="Sweden" data-html="<img src=&quot;/flags/20x15/se.png&quot; alt=&quot;Suecia&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Suecia" onclick="pickWinner(this)"><img src="/flags/20x15/se.png" alt="Suecia" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suecia</div><div class="mc-h2h" hidden data-title="Francia vs Suecia"><div class="h2h-row"><span class="h2h-d">17/11/20</span><span class="h2h-c">UEFA Nations League · League A - 6</span><span class="h2h-r">Francia <b>4-2</b> Suecia</span></div><div class="h2h-row"><span class="h2h-d">05/09/20</span><span class="h2h-c">UEFA Nations League · League A - 1</span><span class="h2h-r">Suecia <b>0-1</b> Francia</span></div><div class="h2h-row"><span class="h2h-d">09/06/17</span><span class="h2h-c">World Cup - Qualification Europe · 1st Round - 6</span><span class="h2h-r">Suecia <b>2-1</b> Francia</span></div><div class="h2h-row"><span class="h2h-d">11/11/16</span><span class="h2h-c">World Cup - Qualification Europe · 1st Round - 4</span><span class="h2h-r">Francia <b>2-1</b> Suecia</span></div><div class="h2h-row"><span class="h2h-d">19/06/12</span><span class="h2h-c">Euro Championship · Fase de grupos</span><span class="h2h-r">Suecia <b>2-0</b> Francia</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-30T21:00:00Z"></span>
+        <span class="venue">MetLife Stadium, New Jersey</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="73">
+      <div class="mc-label"><span>Partido 73</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="73" data-name="South Korea" data-html="<img src=&quot;/flags/20x15/kr.png&quot; alt=&quot;Corea del Sur&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Corea del Sur" onclick="pickWinner(this)"><img src="/flags/20x15/kr.png" alt="Corea del Sur" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Corea del Sur</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="73" data-name="Switzerland" data-html="<img src=&quot;/flags/20x15/ch.png&quot; alt=&quot;Suiza&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Suiza" onclick="pickWinner(this)"><img src="/flags/20x15/ch.png" alt="Suiza" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Suiza</div><div class="mc-h2h" hidden data-title="Corea del Sur vs Suiza"><div class="h2h-row"><span class="h2h-d">23/06/06</span><span class="h2h-c">Mundial · Fase de grupos</span><span class="h2h-r">Suiza <b>2-0</b> Corea del Sur</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-28T19:00:00Z"></span>
+        <span class="venue">SoFi Stadium, Los Ángeles</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="75">
+      <div class="mc-label"><span>Partido 75</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="75" data-name="Netherlands" data-html="<img src=&quot;/flags/20x15/nl.png&quot; alt=&quot;Países Bajos&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Países Bajos" onclick="pickWinner(this)"><img src="/flags/20x15/nl.png" alt="Países Bajos" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Países Bajos</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="75" data-name="Morocco" data-html="<img src=&quot;/flags/20x15/ma.png&quot; alt=&quot;Marruecos&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Marruecos" onclick="pickWinner(this)"><img src="/flags/20x15/ma.png" alt="Marruecos" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Marruecos</div><div class="mc-h2h" hidden data-title="Países Bajos vs Marruecos"><div class="h2h-row"><span class="h2h-d">31/05/17</span><span class="h2h-c">Friendlies · Amistoso</span><span class="h2h-r">Marruecos <b>1-2</b> Países Bajos</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-30T01:00:00Z"></span>
+        <span class="venue">Estadio BBVA, Monterrey</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="83">
+      <div class="mc-label"><span>Partido 83</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="83" data-name="Colombia" data-html="<img src=&quot;/flags/20x15/co.png&quot; alt=&quot;Colombia&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Colombia" onclick="pickWinner(this)"><img src="/flags/20x15/co.png" alt="Colombia" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Colombia</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="83" data-name="Ghana" data-html="<img src=&quot;/flags/20x15/gh.png&quot; alt=&quot;Ghana&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Ghana" onclick="pickWinner(this)"><img src="/flags/20x15/gh.png" alt="Ghana" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Ghana</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-02T23:00:00Z"></span>
+        <span class="venue">BMO Field, Toronto</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="84">
+      <div class="mc-label"><span>Partido 84</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="84" data-name="Spain" data-html="<img src=&quot;/flags/20x15/es.png&quot; alt=&quot;España&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>España" onclick="pickWinner(this)"><img src="/flags/20x15/es.png" alt="España" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">España</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="84" data-name="Austria" data-html="<img src=&quot;/flags/20x15/at.png&quot; alt=&quot;Austria&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Austria" onclick="pickWinner(this)"><img src="/flags/20x15/at.png" alt="Austria" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Austria</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-02T19:00:00Z"></span>
+        <span class="venue">SoFi Stadium, Los Ángeles</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="81">
+      <div class="mc-label"><span>Partido 81</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row" title="Posición asegurada" data-mid="81" data-name="USA" data-html="<img src=&quot;/flags/20x15/us.png&quot; alt=&quot;Estados Unidos&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Estados Unidos" onclick="pickWinner(this)"><img src="/flags/20x15/us.png" alt="Estados Unidos" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Estados Unidos<svg class="tr-lock" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><title>Posición asegurada</title><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg></div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="81" data-name="Algeria" data-html="<img src=&quot;/flags/20x15/dz.png&quot; alt=&quot;Argelia&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Argelia" onclick="pickWinner(this)"><img src="/flags/20x15/dz.png" alt="Argelia" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Argelia</div><div class="mc-h2h" hidden data-title="Estados Unidos vs Argelia"><div class="h2h-row"><span class="h2h-d">23/06/10</span><span class="h2h-c">World Cup · Fase de grupos</span><span class="h2h-r">Estados Unidos <b>1-0</b> Argelia</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-02T00:00:00Z"></span>
+        <span class="venue">Levi's Stadium, San Francisco</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="82">
+      <div class="mc-label"><span>Partido 82</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="82" data-name="Egypt" data-html="<img src=&quot;/flags/20x15/eg.png&quot; alt=&quot;Egipto&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Egipto" onclick="pickWinner(this)"><img src="/flags/20x15/eg.png" alt="Egipto" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Egipto</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="82" data-name="Czechia" data-html="<img src=&quot;/flags/20x15/cz.png&quot; alt=&quot;Rep. Checa&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Rep. Checa" onclick="pickWinner(this)"><img src="/flags/20x15/cz.png" alt="Rep. Checa" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Rep. Checa</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-01T20:00:00Z"></span>
+        <span class="venue">Lumen Field, Seattle</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="76">
+      <div class="mc-label"><span>Partido 76</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="76" data-name="Brazil" data-html="<img src=&quot;/flags/20x15/br.png&quot; alt=&quot;Brasil&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Brasil" onclick="pickWinner(this)"><img src="/flags/20x15/br.png" alt="Brasil" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Brasil</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="76" data-name="Japan" data-html="<img src=&quot;/flags/20x15/jp.png&quot; alt=&quot;Japón&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Japón" onclick="pickWinner(this)"><img src="/flags/20x15/jp.png" alt="Japón" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Japón</div><div class="mc-h2h" hidden data-title="Brasil vs Japón"><div class="h2h-row"><span class="h2h-d">14/10/25</span><span class="h2h-c">Friendlies · Amistoso</span><span class="h2h-r">Japón <b>3-2</b> Brasil</span></div><div class="h2h-row"><span class="h2h-d">06/06/22</span><span class="h2h-c">Friendlies · Amistoso</span><span class="h2h-r">Japón <b>0-1</b> Brasil</span></div><div class="h2h-row"><span class="h2h-d">10/11/17</span><span class="h2h-c">Friendlies · Amistoso</span><span class="h2h-r">Japón <b>1-3</b> Brasil</span></div><div class="h2h-row"><span class="h2h-d">15/06/13</span><span class="h2h-c">Confederations Cup · Fase de grupos</span><span class="h2h-r">Brasil <b>3-0</b> Japón</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-29T17:00:00Z"></span>
+        <span class="venue">NRG Stadium, Houston</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="78">
+      <div class="mc-label"><span>Partido 78</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="78" data-name="Ivory Coast" data-html="<img src=&quot;/flags/20x15/ci.png&quot; alt=&quot;Costa de Marfil&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Costa de Marfil" onclick="pickWinner(this)"><img src="/flags/20x15/ci.png" alt="Costa de Marfil" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Costa de Marfil</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="78" data-name="Norway" data-html="<img src=&quot;/flags/20x15/no.png&quot; alt=&quot;Noruega&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Noruega" onclick="pickWinner(this)"><img src="/flags/20x15/no.png" alt="Noruega" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Noruega</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-06-30T17:00:00Z"></span>
+        <span class="venue">AT&T Stadium, Dallas</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="79">
+      <div class="mc-label"><span>Partido 79</span><span class="mc-label-r"></span></div>
+      <div class="team-row" title="Posición asegurada" data-mid="79" data-name="Mexico" data-html="<img src=&quot;/flags/20x15/mx.png&quot; alt=&quot;México&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>México" onclick="pickWinner(this)"><img src="/flags/20x15/mx.png" alt="México" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">México<svg class="tr-lock" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><title>Posición asegurada</title><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg></div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="79" data-name="Cape Verde Islands" data-html="<img src=&quot;/flags/20x15/cv.png&quot; alt=&quot;Cabo Verde&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Cabo Verde" onclick="pickWinner(this)"><img src="/flags/20x15/cv.png" alt="Cabo Verde" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Cabo Verde</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-01T01:00:00Z"></span>
+        <span class="venue">Estadio Azteca, CDMX</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="80">
+      <div class="mc-label"><span>Partido 80</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="80" data-name="England" data-html="<img src=&quot;/flags/20x15/gb-eng.png&quot; alt=&quot;Inglaterra&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Inglaterra" onclick="pickWinner(this)"><img src="/flags/20x15/gb-eng.png" alt="Inglaterra" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Inglaterra</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="80" data-name="Congo DR" data-html="<img src=&quot;/flags/20x15/cd.png&quot; alt=&quot;Congo RD&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Congo RD" onclick="pickWinner(this)"><img src="/flags/20x15/cd.png" alt="Congo RD" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Congo RD</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-01T16:00:00Z"></span>
+        <span class="venue">Mercedes-Benz Stadium, Atlanta</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="86">
+      <div class="mc-label"><span>Partido 86</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row" title="Posición asegurada" data-mid="86" data-name="Argentina" data-html="<img src=&quot;/flags/20x15/ar.png&quot; alt=&quot;Argentina&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Argentina" onclick="pickWinner(this)"><img src="/flags/20x15/ar.png" alt="Argentina" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Argentina<svg class="tr-lock" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><title>Posición asegurada</title><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg></div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="86" data-name="Uruguay" data-html="<img src=&quot;/flags/20x15/uy.png&quot; alt=&quot;Uruguay&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Uruguay" onclick="pickWinner(this)"><img src="/flags/20x15/uy.png" alt="Uruguay" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Uruguay</div><div class="mc-h2h" hidden data-title="Argentina vs Uruguay"><div class="h2h-row"><span class="h2h-d">21/03/25</span><span class="h2h-c">World Cup - Qualification South America · Fase de grupos</span><span class="h2h-r">Uruguay <b>0-1</b> Argentina</span></div><div class="h2h-row"><span class="h2h-d">17/11/23</span><span class="h2h-c">World Cup - Qualification South America · Fase de grupos</span><span class="h2h-r">Argentina <b>0-2</b> Uruguay</span></div><div class="h2h-row"><span class="h2h-d">12/11/21</span><span class="h2h-c">World Cup - Qualification South America · Fase de grupos</span><span class="h2h-r">Uruguay <b>0-1</b> Argentina</span></div><div class="h2h-row"><span class="h2h-d">10/10/21</span><span class="h2h-c">World Cup - Qualification South America · Fase de grupos</span><span class="h2h-r">Argentina <b>3-0</b> Uruguay</span></div><div class="h2h-row"><span class="h2h-d">19/06/21</span><span class="h2h-c">Copa America · Fase de grupos</span><span class="h2h-r">Argentina <b>1-0</b> Uruguay</span></div><div class="h2h-row"><span class="h2h-d">18/11/19</span><span class="h2h-c">Friendlies · Amistoso</span><span class="h2h-r">Argentina <b>2-2</b> Uruguay</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-03T22:00:00Z"></span>
+        <span class="venue">Hard Rock Stadium, Miami</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="88">
+      <div class="mc-label"><span>Partido 88</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="88" data-name="Australia" data-html="<img src=&quot;/flags/20x15/au.png&quot; alt=&quot;Australia&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Australia" onclick="pickWinner(this)"><img src="/flags/20x15/au.png" alt="Australia" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Australia</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="88" data-name="Iran" data-html="<img src=&quot;/flags/20x15/ir.png&quot; alt=&quot;Irán&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Irán" onclick="pickWinner(this)"><img src="/flags/20x15/ir.png" alt="Irán" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Irán</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-03T18:00:00Z"></span>
+        <span class="venue">AT&T Stadium, Dallas</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="85">
+      <div class="mc-label"><span>Partido 85</span><span class="mc-label-r"><button class="h2h-btn" onclick="showH2H(this)" title="Historial entre los dos">H2H</button></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="85" data-name="Canada" data-html="<img src=&quot;/flags/20x15/ca.png&quot; alt=&quot;Canadá&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Canadá" onclick="pickWinner(this)"><img src="/flags/20x15/ca.png" alt="Canadá" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Canadá</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="85" data-name="Belgium" data-html="<img src=&quot;/flags/20x15/be.png&quot; alt=&quot;Bélgica&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Bélgica" onclick="pickWinner(this)"><img src="/flags/20x15/be.png" alt="Bélgica" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Bélgica</div><div class="mc-h2h" hidden data-title="Canadá vs Bélgica"><div class="h2h-row"><span class="h2h-d">23/11/22</span><span class="h2h-c">World Cup · Fase de grupos</span><span class="h2h-r">Bélgica <b>1-0</b> Canadá</span></div></div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-03T03:00:00Z"></span>
+        <span class="venue">BC Place, Vancouver</span>
+      </div>
+    </div>
+    <div class="mc" data-mid="87">
+      <div class="mc-label"><span>Partido 87</span><span class="mc-label-r"></span></div>
+      <div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="87" data-name="Portugal" data-html="<img src=&quot;/flags/20x15/pt.png&quot; alt=&quot;Portugal&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Portugal" onclick="pickWinner(this)"><img src="/flags/20x15/pt.png" alt="Portugal" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Portugal</div><div class="team-row prov" title="Proyección — cambia según cómo terminen los grupos" data-mid="87" data-name="Paraguay" data-html="<img src=&quot;/flags/20x15/py.png&quot; alt=&quot;Paraguay&quot; width=&quot;20&quot; height=&quot;15&quot; loading=&quot;lazy&quot; style=&quot;vertical-align:middle;margin-right:6px;flex-shrink:0&quot;>Paraguay" onclick="pickWinner(this)"><img src="/flags/20x15/py.png" alt="Paraguay" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">Paraguay</div>
+      <div class="mc-meta">
+        <span class="r32-dt" data-utc="2026-07-04T01:30:00Z"></span>
+        <span class="venue">Arrowhead Stadium, Kansas City</span>
+      </div>
+    </div></div><div class="mb-panel" id="mb-r16" style="display:none"><div class="mc" id="m-r16-L-0"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-04T21:00:00Z"></span><span class="venue">Lincoln Financial Field, Filadelfia</span></div></div><div class="mc" id="m-r16-L-1"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-04T17:00:00Z"></span><span class="venue">NRG Stadium, Houston</span></div></div><div class="mc" id="m-r16-L-2"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-06T19:00:00Z"></span><span class="venue">AT&T Stadium, Dallas</span></div></div><div class="mc" id="m-r16-L-3"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-07T00:00:00Z"></span><span class="venue">Lumen Field, Seattle</span></div></div><div class="mc" id="m-r16-R-0"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-05T20:00:00Z"></span><span class="venue">MetLife Stadium, New Jersey</span></div></div><div class="mc" id="m-r16-R-1"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-06T00:00:00Z"></span><span class="venue">Estadio Azteca, CDMX</span></div></div><div class="mc" id="m-r16-R-2"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-07T16:00:00Z"></span><span class="venue">Mercedes-Benz Stadium, Atlanta</span></div></div><div class="mc" id="m-r16-R-3"><div class="mc-label"><span>Octavos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-07T20:00:00Z"></span><span class="venue">BC Place, Vancouver</span></div></div></div><div class="mb-panel" id="mb-qf" style="display:none"><div class="mc" id="m-qf-L-0"><div class="mc-label"><span>Cuartos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-09T20:00:00Z"></span><span class="venue">Gillette Stadium, Boston</span></div></div><div class="mc" id="m-qf-L-1"><div class="mc-label"><span>Cuartos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-10T19:00:00Z"></span><span class="venue">SoFi Stadium, Los Ángeles</span></div></div><div class="mc" id="m-qf-R-0"><div class="mc-label"><span>Cuartos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-11T21:00:00Z"></span><span class="venue">Hard Rock Stadium, Miami</span></div></div><div class="mc" id="m-qf-R-1"><div class="mc-label"><span>Cuartos</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-12T01:00:00Z"></span><span class="venue">Arrowhead Stadium, Kansas City</span></div></div></div><div class="mb-panel" id="mb-sf" style="display:none"><div class="mc" id="m-sf-L-0"><div class="mc-label"><span>Semifinal</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-14T19:00:00Z"></span><span class="venue">AT&T Stadium, Dallas</span></div></div><div class="mc" id="m-sf-R-0"><div class="mc-label"><span>Semifinal</span></div><div class="team-row ph">— Por definir</div><div class="team-row ph">— Por definir</div><div class="mc-meta"><span data-utc="2026-07-15T19:00:00Z"></span><span class="venue">Mercedes-Benz Stadium, Atlanta</span></div></div></div><div class="mb-panel" id="mb-f" style="display:none"><div class="mc" style="border-top:2px solid #c2410c;margin-bottom:8px"><div class="mc-label" style="color:#c2410c"><span>Final</span></div><div id="m-final-rows"><div class="team-row ph" style="justify-content:center">— Por definir</div><div class="team-row ph" style="justify-content:center">— Por definir</div></div><div class="mc-meta"><span data-utc="2026-07-19T19:00:00Z"></span><span class="venue">MetLife Stadium, New Jersey</span></div></div><div class="mc" style="border-top:2px solid #0d9488"><div class="mc-label" style="color:#0d9488"><span>3er y 4to Puesto</span></div><div id="m-tercer-rows"><div class="team-row ph" style="justify-content:center">— Por definir</div><div class="team-row ph" style="justify-content:center">— Por definir</div></div><div class="mc-meta"><span data-utc="2026-07-18T21:00:00Z"></span><span class="venue">Hard Rock Stadium, Miami</span></div></div></div></div>
+</div>
+
+<script src="/sim-engine.js"></script>
+<script src="/bracket.js"></script>
+<script>
+var SIM = null;
+var RES = loadRes();   // resultados pendientes que carga el usuario: {clave:{h,a}}
+
+function loadRes(){ try { return JSON.parse(localStorage.getItem('sim_res')) || {}; } catch(e){ return {}; } }
+function saveRes(){ localStorage.setItem('sim_res', JSON.stringify(RES)); }
+function mkey(m){ return m.h + '|' + m.a; }
+function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+
+// HTML bandera+nombre, idéntico a traducir() del server (mismo data-html que propaga el bracket)
+function teamHtml(api){
+  var iso = SIM.iso[api], es = SIM.name[api] || api;
+  var img = iso ? '<img src="/flags/20x15/' + iso + '.png" alt="' + es + '" width="20" height="15" loading="lazy" style="vertical-align:middle;margin-right:6px;flex-shrink:0">' : '';
+  return img + es;
+}
+
+// clona los grupos y aplica los resultados cargados (jugado solo si tiene los DOS goles)
+function appliedGroups(){
+  var g = JSON.parse(JSON.stringify(SIM.groups));
+  Object.keys(g).forEach(function(L){
+    g[L].matches.forEach(function(m){
+      if(!m.played){
+        var r = RES[mkey(m)];
+        if(r && r.h !== undefined && r.h !== '' && r.a !== undefined && r.a !== ''){
+          m.played = true; m.hg = parseInt(r.h,10)||0; m.ag = parseInt(r.a,10)||0;
+        }
+      }
+    });
+  });
+  return g;
+}
+
+// ── R32: regenerar las cards igual que _match_card/_team_row del server ──────
+function teamRow(api, mid){
+  var h = teamHtml(api), safe = h.replace(/"/g,'&quot;');
+  return '<div class="team-row" data-mid="' + mid + '" data-name="' + api + '" data-html="' + safe + '" onclick="pickWinner(this)">' + h + '</div>';
+}
+function matchCard(m){
+  var num = m.partido, mid = '' + num, ks = SIM.schedule['' + num] || ['',''];
+  return '<div class="mc" data-mid="' + mid + '">' +
+    '<div class="mc-label"><span>Partido ' + pad2(num) + '</span><span class="mc-label-r"></span></div>' +
+    teamRow(m.e1, mid) + teamRow(m.e2, mid) +
+    '<div class="mc-meta"><span class="r32-dt" data-utc="' + ks[0] + '"></span>' +
+    (ks[1] ? '<span class="venue">' + ks[1] + '</span>' : '') + '</div></div>';
+}
+function r32Inner(ms){
+  var h = '';
+  for(var i=0;i<ms.length;i+=2){ h += '<div class="par">' + matchCard(ms[i]) + (ms[i+1]?matchCard(ms[i+1]):'') + '</div>'; }
+  return h;
+}
+function r32Names(mid){
+  var c = document.querySelector('.mc[data-mid="' + mid + '"]');
+  return c ? [].slice.call(c.querySelectorAll('.team-row[data-name]')).map(function(r){return r.dataset.name;}) : [];
+}
+
+// al cambiar el R32, descartar las elecciones de eliminatoria que dejaron de ser válidas
+function revalidate(){
+  for(var n=73;n<=88;n++){
+    var k=''+n, nm=r32Names(k);
+    if(S[k] && S[k].winner && nm.indexOf(S[k].winner.name)<0) delete S[k];
+  }
+  SLOT_ORDER.forEach(function(slot){
+    if(slot==='slot-tercer') return;
+    var fw = feedersOf(slot).map(getWinner).filter(Boolean).map(function(w){return w.name;});
+    if(S[slot] && S[slot].winner && fw.indexOf(S[slot].winner.name)<0){
+      delete S[slot].winner; if(S[slot].loser) delete S[slot].loser;
+    }
+  });
+  save();
+}
+
+function updateBracket(){
+  var sim = {groups:appliedGroups(), annexC:SIM.annexC, bracket:SIM.bracket, slotToPartido:SIM.slotToPartido};
+  var r32 = SimEngine.buildR32(sim), left = r32.slice(0,8), right = r32.slice(8);
+  var rl = document.getElementById('r32-left'), rr = document.getElementById('r32-right');
+  if(rl) rl.innerHTML = r32Inner(left);
+  if(rr) rr.innerHTML = r32Inner(right);
+  var mb = document.getElementById('mb-r32');
+  if(mb) mb.innerHTML = r32Inner(left) + r32Inner(right);
+  applyDataUtc();
+  revalidate();
+  restore();          // re-aplica las elecciones válidas y repinta los slots
+  scaleBracket();
+}
+
+// ── Editores de grupo ───────────────────────────────────────────────────────
+function standHtml(L, g){
+  var grp = g[L], st = SimEngine.computeStats(grp.teams, grp.matches);
+  var rk = SimEngine.rankGroup(grp.teams, st, grp.matches);
+  return rk.map(function(t,i){
+    var s = st[t];
+    return '<div class="sg-r"><span class="sg-p">' + (i+1) + '</span>' +
+      '<span class="sg-t">' + teamHtml(t) + '</span>' +
+      '<span class="sg-dg">' + (s.gd>0?'+':'') + s.gd + '</span>' +
+      '<span class="sg-pts">' + s.pts + '</span></div>';
+  }).join('');
+}
+function matchesHtml(L){
+  return SIM.groups[L].matches.map(function(m){
+    if(m.played) return '';                 // jugado real → fijo
+    var k = mkey(m), r = RES[k] || {};
+    var inp = function(side){
+      var v = (r[side]!==undefined?r[side]:'');
+      return '<input class="sg-in" type="number" min="0" inputmode="numeric" value="' + v +
+             '" oninput="setScore(\'' + k + '\',\'' + side + '\',this.value)">';
+    };
+    return '<div class="sg-mr"><span class="sg-mt">' + teamHtml(m.h) + '</span>' +
+      inp('h') + '<span class="sg-x">-</span>' + inp('a') +
+      '<span class="sg-mt a">' + teamHtml(m.a) + '</span></div>';
+  }).join('');
+}
+function renderGroups(){
+  var g = appliedGroups(), html = '';
+  Object.keys(g).sort().forEach(function(L){
+    var mh = matchesHtml(L);
+    html += '<div class="sg"><div class="sg-h">Grupo ' + L + '</div>' +
+      '<div id="stand-' + L + '">' + standHtml(L,g) + '</div>' +
+      (mh ? '<div class="sg-m">' + mh + '</div>' : '') + '</div>';
+  });
+  document.getElementById('groups').innerHTML = html;
+}
+function refreshStandings(){
+  var g = appliedGroups();
+  Object.keys(SIM.groups).forEach(function(L){
+    var el = document.getElementById('stand-' + L);
+    if(el) el.innerHTML = standHtml(L,g);
+  });
+}
+function setScore(k, side, val){
+  RES[k] = RES[k] || {};
+  if(val === '') delete RES[k][side]; else RES[k][side] = val;
+  if(RES[k].h === undefined && RES[k].a === undefined) delete RES[k];
+  saveRes();
+  refreshStandings();   // tablas sin re-render de inputs (no se pierde el foco)
+  updateBracket();
+}
+function toggleGroups(){
+  var w = document.getElementById('groups-wrap'), t = document.getElementById('grp-tog');
+  var closed = w.classList.toggle('collapsed');
+  t.innerHTML = closed ? '&#9660; ABRIR' : '&#9650; CERRAR';
+  localStorage.setItem('sim_grp_closed', closed ? '1' : '0');
+}
+function resetSim(){
+  RES = {}; saveRes();
+  resetBracket();       // limpia las elecciones de eliminatoria (bracket.js)
+  renderGroups();
+  updateBracket();
+}
+
+fetch('/api/sim').then(function(r){return r.json();}).then(function(d){
+  SIM = d;
+  load();               // estado del bracket (bracket.js, key 'wc26sim')
+  renderGroups();
+  if(localStorage.getItem('sim_grp_closed') === '1'){
+    document.getElementById('groups-wrap').classList.add('collapsed');
+    document.getElementById('grp-tog').innerHTML = '&#9660; ABRIR';
+  }
+  updateBracket();
+  window.addEventListener('resize', scaleBracket);
+}).catch(function(e){
+  document.getElementById('groups').innerHTML = '<p style="color:#999">No se pudo cargar el simulador.</p>';
+});
+</script>
+</body>
+</html>
