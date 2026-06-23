@@ -766,23 +766,28 @@ function igPaint(canvas, img) {
   ctx.fillStyle = _igBg;
   ctx.fillRect(0, 0, f.w, f.h);
 
-  // Caja útil (descontando el margen elegido)
+  // Franja reservada abajo para la marca (así nunca pisa la imagen)
+  const band = _igBrand ? Math.round(f.h * 0.07) : 0;
+
+  // Caja útil (descontando el margen elegido y la franja de marca)
   const m  = Math.round(Math.min(f.w, f.h) * (_igMargin / 100));
+  const bx = m, by = m;
   const bw = f.w - m * 2;
-  const bh = f.h - m * 2;
+  const bh = f.h - m * 2 - band;
 
   const iw = img.naturalWidth, ih = img.naturalHeight;
   const scale = _igFit === 'cover'
     ? Math.max(bw / iw, bh / ih)
     : Math.min(bw / iw, bh / ih);
   const dw = iw * scale, dh = ih * scale;
-  const dx = (f.w - dw) / 2, dy = (f.h - dh) / 2;
+  const dx = bx + (bw - dw) / 2;   // centrada dentro de la caja
+  const dy = by + (bh - dh) / 2;
 
   if (_igFit === 'cover') {
-    // Recorta a la caja útil para que no invada el margen
+    // Recorta a la caja útil para que no invada el margen ni la franja
     ctx.save();
     ctx.beginPath();
-    ctx.rect(m, m, bw, bh);
+    ctx.rect(bx, by, bw, bh);
     ctx.clip();
     ctx.drawImage(img, dx, dy, dw, dh);
     ctx.restore();
@@ -795,8 +800,9 @@ function igPaint(canvas, img) {
     ctx.fillStyle = dark ? 'rgba(255,255,255,.92)' : 'rgba(33,28,20,.78)';
     ctx.font = '600 26px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText('@mejortercero.online', f.w / 2, f.h - Math.max(m, 28) - 6);
+    ctx.textBaseline = 'middle';
+    // Centrada verticalmente dentro de la franja reservada
+    ctx.fillText('@mejortercero.online', f.w / 2, f.h - m - band / 2);
   }
 }
 
