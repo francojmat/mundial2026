@@ -124,6 +124,13 @@ generar 1 archivo por entidad). `generate.py` escribe la shell y el JSON cada co
   fuente Wikipedia/FIFA — la API solo tiene 8 y con capacidad general). Superficie + foto desde la API
   (solo 8 con id). Las fotos placeholder se filtran por tamaño (`_image_is_real`, <35KB = placeholder).
   En la lista de partidos por estadio: resultado si jugado, si no el horario (hora argentina).
+  **El bloque de estadios (`_render_venues`) se publica en `data2.json` (`venues_html`) y se
+  refresca vía `loadExtra` (sin pisar tarjeta abierta `.hoy-fila.open`).** Vivía solo en el shell
+  estático → resultados congelados hasta un redeploy; el cron no regenera el shell, solo la rama data.
+- **Worker `handleData`** (`/api/data*`) se apoya solo en el edge cache de Cloudflare sobre el
+  fetch a raw (`cf:{cacheTtl:15}`), NO en `caches.default` (cuyas entradas quedaban pegadas sin
+  expirar al `max-age`, obligando a bumpear la cacheKey a mano). El bracket R32 (sedes/fechas) está
+  en `bracket.py` `_SCHEDULE` — verificado vs calendario oficial FIFA.
 - `tournament.py` cachea en `apifootball_cache.json`: rankings (asist/amar/rojas, refresh 10min),
   estadios (refresh 30min), `team_id_map` + `fixture_id_map`, `squads` (semanal, 10 equipos/corrida),
   y `match_details` (por partido; FINISHED se cachea para siempre, en vivo refresca cada 2min, tope
