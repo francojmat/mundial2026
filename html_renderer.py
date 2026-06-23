@@ -54,6 +54,13 @@ CRUCES_CSS = (
     f".cz-camino-k{{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{T};display:block;margin-bottom:6px}}"
     f".cz-path{{display:flex;flex-wrap:wrap;align-items:center;gap:4px 7px;font-size:.68rem;color:{TXT}}}"
     f".cz-step{{white-space:nowrap}}.cz-rnd{{color:{MUT};font-size:.85em}}.cz-arrow{{color:{DIM}}}"
+    f".cz-defwho{{font-size:.66rem;color:{MUT};margin-top:9px;padding-top:8px;border-top:1px solid {GRY}}}"
+    f".cz-defwho b{{color:{T}}}.cz-defwho img{{height:1em;width:auto;vertical-align:-.1em;border-radius:1px}}"
+    f".cz-evitar{{margin:2px 0 18px;background:rgba(194,65,12,.04);border:1px solid {BDR};border-radius:10px;padding:11px 13px}}"
+    f".cz-ev-row{{display:flex;align-items:center;gap:10px;font-size:.74rem;padding:3px 0}}"
+    f".cz-ev-p{{color:{MUT};min-width:74px;flex-shrink:0}}.cz-ev-row img{{height:1em;width:auto;vertical-align:-.1em;border-radius:1px;margin-right:3px}}"
+    f".cz-ev-tip{{font-size:.72rem;margin-top:7px;padding-top:8px;border-top:1px solid {GRY};color:{TXT}}}.cz-ev-tip b{{color:{T}}}"
+    f".cz-ev-note{{font-size:.63rem;color:{MUT};margin-top:7px;font-style:italic;line-height:1.4}}.cz-ev-note b{{color:{T};font-style:normal}}"
     # propios de la sección del home — selector de marca
     f".cz-sel-wrap{{position:relative;display:block;width:100%;max-width:340px;margin-bottom:18px}}"
     f".cz-sel-wrap::after{{content:'▾';position:absolute;right:15px;top:50%;transform:translateY(-50%);color:{T};font-size:.72rem;pointer-events:none}}"
@@ -1390,6 +1397,13 @@ function loadCruces() {{
       _cruces = d;
       var sel = document.getElementById('cruces-sel');
       if (sel && d._groups) {{
+        // Argentina destacada arriba de todo (nuestros visitantes son argentinos);
+        // igual sigue apareciendo en su grupo más abajo.
+        if (d['Argentina']) {{
+          var oarg = document.createElement('option');
+          oarg.value = 'Argentina'; oarg.textContent = '★ Argentina';
+          sel.appendChild(oarg);
+        }}
         d._groups.forEach(function(g) {{
           var og = document.createElement('optgroup');
           og.label = g[0];

@@ -137,6 +137,8 @@ def team_cruces(team, group, finishers, slot_thirds, standings, fifa_rankings=No
             branches.append({
                 "pos": pos, "partido": num, "city": _city_of_partido(num),
                 "utc": utc, "opp_type": _opp_label(opp), "opponents": opps,
+                # grupos que definen al rival si es un 3.º (los candidatos del Anexo C)
+                "cands": opp[1].split("/") if opp[0] == "3" else None,
                 # grilla tipo Excel SOLO si esta rama enfrenta una posición concreta
                 "matrix": opponent_matrix(team, group, pos, standings, fifa_rankings),
             })

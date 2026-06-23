@@ -278,9 +278,43 @@ def _render_set_branch(b: dict, exact: bool, head: str) -> str:
     n = len(opps)
     tag = ('rival posible' if n == 1 else f'{n} rivales posibles')
     tag += '' if exact else ' · se define al cerrar los grupos'
+    # #3 — qué define al rival: si es un 3.º, los grupos candidatos del Anexo C
+    defwho = ""
+    if b.get("cands"):
+        defwho = (f'<div class="cz-defwho">Tu rival sale del <b>3.º</b> de los grupos '
+                  f'<b>{", ".join(b["cands"])}</b> (según el Anexo C de FIFA)</div>')
     return (f'<div class="cz-block"><div class="cz-branch"><div class="cz-head">{head}</div>'
             f'<div class="cz-tag">{tag}</div>'
-            f'<div class="cz-opps">{chips}</div>{bw}{_render_camino(b["partido"])}</div></div>')
+            f'<div class="cz-opps">{chips}</div>{bw}{defwho}'
+            f'{_render_camino(b["partido"])}</div></div>')
+
+
+def _render_evitar(entry: dict) -> str:
+    """#2 — 'evitá al más fuerte': para equipos que pueden salir 1.º o 2.º, el peor rival
+    posible (menor ranking FIFA) de cada posición + qué te conviene para esquivarlo."""
+    if entry.get("locked_pos"):
+        return ""  # con el puesto fijo no hay elección
+    info = []
+    any_open = False
+    for b in entry.get("branches", []):
+        opps = [o for o in b.get("opponents", []) if _rank_of(o) != 999]
+        if opps:
+            worst = min(opps, key=_rank_of)
+            info.append((b["pos"], worst, _rank_of(worst)))
+            if len(b.get("opponents", [])) > 1:
+                any_open = True   # el grupo rival todavía no está definido
+    if len(info) < 2:
+        return ""
+    info.sort(key=lambda x: x[0])
+    rows = "".join(
+        f'<div class="cz-ev-row"><span class="cz-ev-p">Si salís {p}.º</span>'
+        f'<span>{traducir(w)} · #{r}</span></div>' for p, w, r in info)
+    best = max(info, key=lambda x: x[2])   # peor-caso más débil (rank más alto)
+    tip = f'Para evitar al más fuerte, te conviene salir <b>{best[0]}.º</b>'
+    note = ('<div class="cz-ev-note">Peor rival <b>posible</b>: el otro grupo todavía no '
+            'tiene posiciones fijas, así que puede cambiar.</div>') if any_open else ''
+    return (f'<div class="cz-evitar"><span class="cz-camino-k">Evitá al rival más fuerte</span>'
+            f'{rows}<div class="cz-ev-tip">{tip}</div>{note}</div>')
 
 
 def render_cruces_block(entry: dict, exact: bool) -> str:
@@ -310,6 +344,7 @@ def render_cruces_block(entry: dict, exact: bool) -> str:
             head = (f'{prefix} {b["pos"]}.º del {group} → 16avos en {b["city"]} · '
                     f'contra {b["opp_type"]}')
             parts.append(_render_set_branch(b, exact, head))
+    parts.append(_render_evitar(entry))   # #2 — evitar al rival más fuerte
     parts = [p for p in parts if p]
     return _wrap_cz("".join(parts)) if parts else ""
 
