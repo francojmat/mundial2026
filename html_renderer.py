@@ -322,6 +322,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .team-row.ph{{color:{DIM};font-style:italic;cursor:default;font-size:.73rem}}
     .team-row.ph:hover{{background:none}}
     .team-row.prov{{color:{MUT};font-style:italic}}
+    .tr-lock{{width:12px;height:12px;color:{T};margin-left:auto;flex-shrink:0;opacity:.85}}
     .team-row img{{flex-shrink:0}}
 
     /* ── Columna central ── */
@@ -1660,13 +1661,24 @@ def _render_thirds(standings: Dict) -> str:
 
 # ── Match card R32 ─────────────────────────────────────────────────────────
 
+_LOCK_SVG = ('<svg class="tr-lock" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+             '<title>Posición asegurada</title>'
+             '<path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 '
+             '2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg>')
+
+
 def _team_row(api_name: str, mid: str, prov: bool = False) -> str:
     html_val = traducir(api_name)
     safe = html_val.replace('"', '&quot;')
     cls = "team-row prov" if prov else "team-row"
-    title = ' title="Proyección — cambia según cómo terminen los grupos"' if prov else ''
+    if prov:
+        title = ' title="Proyección — cambia según cómo terminen los grupos"'
+        lock = ''
+    else:
+        title = ' title="Posición asegurada"'
+        lock = _LOCK_SVG  # candado: el puesto ya está fijo, no se mueve
     return (f'<div class="{cls}"{title} data-mid="{mid}" data-name="{api_name}" '
-            f'data-html="{safe}" onclick="pickWinner(this)">{html_val}</div>')
+            f'data-html="{safe}" onclick="pickWinner(this)">{html_val}{lock}</div>')
 
 
 def _match_card(m: Dict) -> str:
