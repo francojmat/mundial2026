@@ -59,32 +59,27 @@ export default {
 
 // ── GET /api/data | /api/planteles | /api/partidos ────────────────────────────
 // Sirve los datos desde la rama 'data' del repo (que Cloudflare Pages NO deploya).
-// Cachea ~20s → el sitio se actualiza sin redeployar Pages (se acaban los 522).
-async function handleData(file, ctx) {
-  const cache = caches.default;
-  // v3: se versiona la clave para invalidar entradas viejas pegadas en el edge cache.
-  const cacheKey = new Request("https://data.internal/v3/" + file);
-  const hit = await cache.match(cacheKey);
-  if (hit) return hit;
-
+// Se apoya SOLO en el edge cache de Cloudflare sobre el fetch a raw (cf.cacheTtl):
+// se respeta el TTL de forma confiable y se re-busca el origen cada ~15s. Antes se
+// usaba caches.default con clave versionada, pero esas entradas quedaban pegadas
+// (no expiraban al max-age) y había que bumpear la versión a mano en cada cambio.
+async function handleData(file) {
   let body = "{}";
   try {
     const r = await fetch(
       "https://raw.githubusercontent.com/francojmat/mundial2026/data/" + file,
-      { cf: { cacheTtl: 10 } }
+      { cf: { cacheTtl: 15, cacheEverything: true } }
     );
     if (r.ok) body = await r.text();
   } catch (e) { /* devolvemos {} */ }
 
-  const resp = new Response(body, {
+  return new Response(body, {
     headers: {
       "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=20",
+      "Cache-Control": "public, max-age=15",
       ...cors(),
     },
   });
-  ctx.waitUntil(cache.put(cacheKey, resp.clone()));
-  return resp;
 }
 
 // ── GET /api/live ────────────────────────────────────────────────────────────
