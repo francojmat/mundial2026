@@ -56,6 +56,14 @@ CRUCES_CSS = (
     f".cz-sel{{appearance:none;-webkit-appearance:none;width:100%;padding:11px 40px 11px 15px;font-size:.9rem;font-weight:700;color:{TXT};border:1.5px solid {T};border-radius:10px;background:{WHT};cursor:pointer}}"
     f".cz-sel:focus{{outline:none;box-shadow:0 0 0 3px rgba(194,65,12,.16)}}"
     f".cz-sel:hover{{background:{GRY}}}"
+    # en mobile achicar para que entren las 3 columnas (rival incluido)
+    f"@media (max-width:600px){{"
+    f".cz-matrix{{font-size:.6rem}}"
+    f".cz-matrix th{{padding:5px 6px;font-size:.47rem;letter-spacing:0}}"
+    f".cz-matrix td,.cz-matrix td:first-child{{padding:5px 6px;font-size:.6rem}}"
+    f".cz-matrix td.cz-riv img{{margin:0 2px 0 0}}.cz-rk{{font-size:.8em}}"
+    f".cz-head{{font-size:.74rem}}.cz-sub{{font-size:.64rem}}"
+    f"}}"
 )
 
 # Horarios aproximados R16/QF/SF/Final (UTC)
