@@ -34,6 +34,7 @@ CRUCES_CSS = (
     f".cz-matrix th{{font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:{DIM};text-align:left;padding:7px 10px;border-bottom:1px solid {BDR};white-space:nowrap}}"
     f".cz-matrix th.cz-riv-h{{color:{T}}}"
     f".cz-matrix td{{padding:6px 10px;border-bottom:1px solid {GRY};white-space:nowrap;color:{TXT}}}"
+    f".cz-matrix td:first-child{{color:{TXT}}}"
     f".cz-matrix tr:last-child td{{border-bottom:none}}"
     f".cz-matrix td.cz-riv{{color:{TXT};font-weight:700}}"
     f".cz-matrix td.cz-riv img{{height:1em;width:auto;border-radius:1px;margin:0 3px 0 0;vertical-align:-.1em}}"
@@ -1327,10 +1328,15 @@ function loadCruces() {{
     .then(function(d) {{
       _cruces = d;
       var sel = document.getElementById('cruces-sel');
-      if (sel) {{
-        Object.keys(d).sort(function(a,b){{ return a.localeCompare(b,'es'); }}).forEach(function(name) {{
-          var o = document.createElement('option');
-          o.value = name; o.textContent = name; sel.appendChild(o);
+      if (sel && d._groups) {{
+        d._groups.forEach(function(g) {{
+          var og = document.createElement('optgroup');
+          og.label = g[0];
+          g[1].forEach(function(name) {{
+            var o = document.createElement('option');
+            o.value = name; o.textContent = name; og.appendChild(o);
+          }});
+          sel.appendChild(og);
         }});
       }}
     }})

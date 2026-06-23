@@ -131,14 +131,28 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
         outputs.append(("selecciones.json", json.dumps(selecciones, ensure_ascii=False)))
         outputs.append(("seleccion.html", render_seleccion_shell()))
 
-        # cruces.json — bloques "¿Contra quién?" por equipo, para la sección del home
-        # (selector). Se carga bajo demanda. Clave = nombre en español.
+        # cruces.json — bloques "¿Contra quién?" por equipo + estructura por grupo para
+        # el selector segmentado. Se carga bajo demanda. Clave = nombre en español.
+        #   {"_groups": [["Grupo A", ["México", ...]], ...], "México": "<bloque>", ...}
         cruces_blocks = {}
-        for t in squads.keys():
-            blk = render_cruces_block(cruces_data.get(t), cruces_exact)
-            if blk:
-                cruces_blocks[nombre_es(t)] = blk
-        outputs.append(("cruces.json", json.dumps(cruces_blocks, ensure_ascii=False)))
+        cruces_groups = []
+        for gkey in sorted(group_data.keys()):  # GROUP_A .. GROUP_L
+            ranked, _gstats = group_data[gkey]
+            label = "Grupo " + gkey.replace("GROUP_", "")
+            gteams = []
+            for rt in ranked:
+                if rt not in squads:
+                    continue
+                blk = render_cruces_block(cruces_data.get(rt), cruces_exact)
+                if blk:
+                    es = nombre_es(rt)
+                    cruces_blocks[es] = blk
+                    gteams.append(es)
+            if gteams:
+                cruces_groups.append([label, gteams])
+        cruces_out = {"_groups": cruces_groups}
+        cruces_out.update(cruces_blocks)
+        outputs.append(("cruces.json", json.dumps(cruces_out, ensure_ascii=False)))
 
     # Páginas de partido — TODOS los partidos tienen su página (con detalle si está disponible,
     # header + posiciones siempre; "sin datos aún" cuando todavía no hay alineaciones/stats)
