@@ -5,7 +5,7 @@ contenedor + JS) que inyecta un fragmento pre-renderizado desde un JSON.
 """
 
 from html_renderer import T, TEL, BG, WHT, BDR, BDR2, TXT, MUT, DIM, GRY, CRUCES_CSS
-from countries import traducir, nombre_es, pais_liga_es
+from countries import traducir, nombre_es, pais_liga_es, bandera_img
 from seleccion_data import ficha_seleccion
 
 # Posición API-Football → grupo en español
@@ -218,8 +218,9 @@ def _render_matrix(mx: dict, head: str) -> str:
         return f'<td style="background:{bg}"><span class="cz-g">Gana </span>{nombre_es(team)}</td>'
 
     def riv_html(o):
+        # en la columna "Tu rival" va SOLO la bandera + el ranking (sin nombre)
         rk = _rank_of(o)
-        return traducir(o) + (f' <span class="cz-rk">#{rk}</span>' if rk != 999 else '')
+        return bandera_img(o) + (f' <span class="cz-rk">#{rk}</span>' if rk != 999 else '')
 
     cols = "".join(f'<th>{nombre_es(m["home"])} <span class="cz-vs">vs</span> '
                    f'{nombre_es(m["away"])}</th>' for m in mx["matches"])
