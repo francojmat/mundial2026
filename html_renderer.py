@@ -3,7 +3,7 @@
 import urllib.parse
 from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Set
-from countries import traducir, nombre_es, venue_maps_url, VENUE_INFO
+from countries import traducir, nombre_es, bandera_img, venue_maps_url, VENUE_INFO
 from scenarios import compute_group_scenarios, team_phrase, _opp_name
 from bracket import r32_destination
 
@@ -1366,15 +1366,20 @@ def _group_detalles_html(label: str, teams: list, stats: dict, matches: list,
         gf_total = sum(m.home_goals + m.away_goals for m in played)
         bits.append(("Ritmo", f"{gf_total} goles · {gf_total / len(played):.1f} por partido"))
 
-    # Goleador del grupo (los goleadores vienen de football-data → matchear por nombre_es)
-    group_es = {nombre_es(t) for t in teams}
-    best_sc = None
+    # Goleador del grupo (los goleadores vienen de football-data → matchear por nombre_es;
+    # la bandera sale del equipo del GRUPO que matchea, que es nombre API válido para bandera_img)
+    es_to_team = {nombre_es(t): t for t in teams}
+    best_sc, best_team = None, None
     for p in standings.get("_scorers", []):
-        if (p.get("goals") or 0) > 0 and nombre_es(p.get("team", "")) in group_es:
+        es = nombre_es(p.get("team", ""))
+        if (p.get("goals") or 0) > 0 and es in es_to_team:
             if best_sc is None or p["goals"] > best_sc["goals"]:
-                best_sc = p
+                best_sc, best_team = p, es_to_team[es]
     if best_sc:
-        bits.append(("Goleador del grupo", f'{best_sc["name"]} <span class="gd-hl">{best_sc["goals"]}</span>'))
+        flag = bandera_img(best_team)
+        flag = f'{flag} ' if flag else ''
+        bits.append(("Goleador del grupo",
+                     f'{flag}{best_sc["name"]} <span class="gd-hl">{best_sc["goals"]}</span>'))
 
     # Valla menos vencida (entre los que ya jugaron)
     played_st = [(t, stats[t]) for t in teams if t in stats and stats[t].played > 0]
