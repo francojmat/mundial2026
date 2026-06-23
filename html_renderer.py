@@ -33,8 +33,8 @@ CRUCES_CSS = (
     f".cz-matrix{{width:auto;max-width:100%;border-collapse:collapse;font-size:.72rem;background:{WHT};border:1px solid {BDR};border-radius:10px;overflow:hidden}}"
     f".cz-matrix th{{font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:{DIM};text-align:left;padding:7px 10px;border-bottom:1px solid {BDR};white-space:nowrap}}"
     f".cz-matrix th.cz-riv-h{{color:{T}}}"
-    f".cz-matrix td{{padding:6px 10px;border-bottom:1px solid {GRY};white-space:nowrap;color:{TXT}}}"
-    f".cz-matrix td:first-child{{color:{TXT}}}"
+    f".cz-matrix td{{padding:6px 10px;border-bottom:1px solid {GRY};white-space:nowrap;color:{TXT};font-size:.72rem}}"
+    f".cz-matrix td:first-child{{color:{TXT};font-size:.72rem}}"
     f".cz-matrix tr:last-child td{{border-bottom:none}}"
     f".cz-matrix td.cz-riv{{color:{TXT};font-weight:700}}"
     f".cz-matrix td.cz-riv img{{height:1em;width:auto;border-radius:1px;margin:0 3px 0 0;vertical-align:-.1em}}"
@@ -527,6 +527,22 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 <div class="divider"></div>
 
+<div class="sec" id="sec-cruces" data-nav="¿Contra quién?">
+  <div class="sec-hdr" onclick="toggleSec('cruces')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">SUPER EXCEL — ¿Contra quién?</p>
+    <button class="sec-toggle" id="st-cruces">▲ CERRAR</button>
+  </div>
+  <div class="sec-body" id="sb-cruces">
+    <div class="cz-sel-wrap">
+      <select class="cz-sel" id="cruces-sel" onchange="showCruces(this.value)" aria-label="Elegí una selección">
+        <option value="">Elegí una selección…</option>
+      </select>
+    </div>
+    <div id="cruces-out"></div>
+  </div>
+</div>
+
+<div class="divider"></div>
 <div class="sec" id="sec-bracket" data-nav="Bracket">
   <div class="sec-hdr" onclick="toggleSec('bracket')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Bracket — Hacé clic para simular el avance</p>
@@ -539,22 +555,6 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     </div>
     {_render_mobile_bracket(matchups)}
     <button class="reset-btn" onclick="resetBracket()">↺ Resetear simulación</button>
-  </div>
-</div>
-
-<div class="divider"></div>
-<div class="sec" id="sec-cruces" data-nav="¿Contra quién?">
-  <div class="sec-hdr" onclick="toggleSec('cruces')">
-    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">¿Contra quién? — Rival posible en 16avos</p>
-    <button class="sec-toggle" id="st-cruces">▲ CERRAR</button>
-  </div>
-  <div class="sec-body" id="sb-cruces">
-    <div class="cz-sel-wrap">
-      <select class="cz-sel" id="cruces-sel" onchange="showCruces(this.value)" aria-label="Elegí una selección">
-        <option value="">Elegí una selección…</option>
-      </select>
-    </div>
-    <div id="cruces-out"></div>
   </div>
 </div>
 
@@ -1164,6 +1164,19 @@ function restoreSecs() {{
     }}
   }});
 }}
+// Por defecto SOLO quedan abiertas estas; el resto arranca cerrado (salvo que el
+// usuario las haya tocado, en cuyo caso manda su preferencia guardada).
+var DEFAULT_OPEN = ['hoy','cruces','bracket'];
+function applyDefaultClosed() {{
+  document.querySelectorAll('.sec').forEach(function(sec) {{
+    var id = sec.id.replace('sec-','');
+    if (DEFAULT_OPEN.indexOf(id) >= 0 || SEC.hasOwnProperty(id)) return;
+    var body = sec.querySelector('.sec-body');
+    var btn  = sec.querySelector('.sec-toggle');
+    if (body) body.classList.add('sec-collapsed');
+    if (btn) btn.textContent = '▼ ABRIR';
+  }});
+}}
 
 // ── Sidebar de navegación ─────────────────────────────────────────────────
 function toggleNav() {{
@@ -1411,7 +1424,7 @@ function filterRank(sel) {{
 }}
 
 document.addEventListener("DOMContentLoaded", function() {{
-  load(); restore(); restoreSecs();
+  load(); restore(); restoreSecs(); applyDefaultClosed();
   buildNav();
   applyDataUtc();
   scaleBracket();
