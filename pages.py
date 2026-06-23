@@ -4,7 +4,7 @@ identidad visual de marca. Patrón: una página "shell" estática (header + Volv
 contenedor + JS) que inyecta un fragmento pre-renderizado desde un JSON.
 """
 
-from html_renderer import T, TEL, BG, WHT, BDR, BDR2, TXT, MUT, DIM, GRY
+from html_renderer import T, TEL, BG, WHT, BDR, BDR2, TXT, MUT, DIM, GRY, CRUCES_CSS
 from countries import traducir, nombre_es, pais_liga_es
 from seleccion_data import ficha_seleccion
 
@@ -403,31 +403,7 @@ def render_seleccion_shell() -> str:
     .pl-fi-v.rk{{color:{T}}}
     .sl-sec{{margin-bottom:26px}}
     .pl-gt{{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:{T};margin-bottom:11px}}
-    .cz-block{{margin-bottom:18px}}
-    .cz-block:last-child{{margin-bottom:0}}
-    .cz-head{{font-size:.8rem;font-weight:700;color:{TXT};margin-bottom:5px;line-height:1.3}}
-    .cz-sub{{font-size:.68rem;color:{MUT};margin-bottom:10px}}
-    .cz-mwrap{{overflow-x:auto;-webkit-overflow-scrolling:touch}}
-    .cz-matrix{{width:100%;border-collapse:collapse;font-size:.72rem;background:{WHT};border:1px solid {BDR};border-radius:10px;overflow:hidden}}
-    .cz-matrix th{{font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:{DIM};text-align:left;padding:7px 10px;border-bottom:1px solid {BDR};white-space:nowrap}}
-    .cz-matrix th.cz-riv-h{{color:{T}}}
-    .cz-matrix td{{padding:6px 10px;border-bottom:1px solid {GRY};white-space:nowrap;color:{TXT}}}
-    .cz-matrix tr:last-child td{{border-bottom:none}}
-    .cz-matrix td.cz-riv{{color:{TXT};font-weight:700}}
-    .cz-matrix td.cz-riv img{{height:1em;width:auto;border-radius:1px;margin:0 3px 0 0;vertical-align:-.1em}}
-    .cz-vs{{color:{DIM};font-weight:400;font-size:.85em}}
-    .cz-note{{font-weight:400;color:{MUT};font-size:.64rem}}
-    .cz-rk{{font-weight:400;color:{MUT};font-size:.88em}}
-    .cz-confirm{{font-size:.92rem;font-weight:700;color:{T};display:flex;align-items:center;gap:6px}}
-    .cz-confirm img{{height:1em;width:auto;border-radius:1px}}
-    .cz-branch{{background:{WHT};border:1px solid {BDR};border-radius:10px;padding:11px 13px;margin-bottom:9px}}
-    .cz-tag{{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:{DIM};margin:5px 0 9px}}
-    .cz-opps{{display:flex;flex-wrap:wrap;gap:6px}}
-    .cz-opp{{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;background:{GRY};border-radius:6px;padding:4px 9px}}
-    .cz-opp img{{height:1em;width:auto;border-radius:1px}}
-    .cz-bw{{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;padding-top:9px;border-top:1px solid {GRY};font-size:.72rem}}
-    .cz-bw img{{height:1em;width:auto;border-radius:1px;vertical-align:-.1em;margin:0 3px}}
-    .cz-bw-k{{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{T};margin-right:5px}}
+    {CRUCES_CSS}
     .sl-grp{{width:100%;border-collapse:collapse;background:{WHT};border:1px solid {BDR};border-radius:10px;overflow:hidden}}
     .sl-grp th{{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{DIM};text-align:center;padding:8px 4px;border-bottom:1px solid {BDR}}}
     .sl-grp th:nth-child(2){{text-align:left;padding-left:12px}}

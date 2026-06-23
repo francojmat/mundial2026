@@ -19,7 +19,8 @@ from bracket import build_round_of_32
 from data_renderer import render_data_json
 from html_renderer import render_html
 from pages import (render_plantel_shell, render_squad_fragment,
-                   render_seleccion_fragment, render_seleccion_shell)
+                   render_seleccion_fragment, render_seleccion_shell, render_cruces_block)
+from countries import nombre_es
 from match_page import render_partido_shell, render_match_fragment
 
 
@@ -129,6 +130,15 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
                 cruces=cruces_data.get(t), cruces_exact=cruces_exact)
         outputs.append(("selecciones.json", json.dumps(selecciones, ensure_ascii=False)))
         outputs.append(("seleccion.html", render_seleccion_shell()))
+
+        # cruces.json — bloques "¿Contra quién?" por equipo, para la sección del home
+        # (selector). Se carga bajo demanda. Clave = nombre en español.
+        cruces_blocks = {}
+        for t in squads.keys():
+            blk = render_cruces_block(cruces_data.get(t), cruces_exact)
+            if blk:
+                cruces_blocks[nombre_es(t)] = blk
+        outputs.append(("cruces.json", json.dumps(cruces_blocks, ensure_ascii=False)))
 
     # Páginas de partido — TODOS los partidos tienen su página (con detalle si está disponible,
     # header + posiciones siempre; "sin datos aún" cuando todavía no hay alineaciones/stats)

@@ -22,6 +22,37 @@ MUT = "#7c6a58"
 DIM = "#b09880"
 GRY = "#f0ebe4"
 
+# CSS del bloque "¿Contra quién?" (cruces) — compartido por el shell del home y el de
+# selección. Es un f-string ya interpolado (con llaves literales) → se inserta tal cual
+# en otros f-strings vía {CRUCES_CSS} sin reinterpretarse.
+CRUCES_CSS = (
+    f".cz-block{{margin-bottom:18px}}.cz-block:last-child{{margin-bottom:0}}"
+    f".cz-head{{font-size:.8rem;font-weight:700;color:{TXT};margin-bottom:5px;line-height:1.3}}"
+    f".cz-sub{{font-size:.68rem;color:{MUT};margin-bottom:10px}}"
+    f".cz-mwrap{{overflow-x:auto;-webkit-overflow-scrolling:touch}}"
+    f".cz-matrix{{width:100%;border-collapse:collapse;font-size:.72rem;background:{WHT};border:1px solid {BDR};border-radius:10px;overflow:hidden}}"
+    f".cz-matrix th{{font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:{DIM};text-align:left;padding:7px 10px;border-bottom:1px solid {BDR};white-space:nowrap}}"
+    f".cz-matrix th.cz-riv-h{{color:{T}}}"
+    f".cz-matrix td{{padding:6px 10px;border-bottom:1px solid {GRY};white-space:nowrap;color:{TXT}}}"
+    f".cz-matrix tr:last-child td{{border-bottom:none}}"
+    f".cz-matrix td.cz-riv{{color:{TXT};font-weight:700}}"
+    f".cz-matrix td.cz-riv img{{height:1em;width:auto;border-radius:1px;margin:0 3px 0 0;vertical-align:-.1em}}"
+    f".cz-vs{{color:{DIM};font-weight:400;font-size:.85em}}"
+    f".cz-note{{font-weight:400;color:{MUT};font-size:.64rem}}.cz-rk{{font-weight:400;color:{MUT};font-size:.88em}}"
+    f".cz-confirm{{font-size:.92rem;font-weight:700;color:{T};display:flex;align-items:center;gap:6px}}"
+    f".cz-confirm img{{height:1em;width:auto;border-radius:1px}}"
+    f".cz-branch{{background:{WHT};border:1px solid {BDR};border-radius:10px;padding:11px 13px;margin-bottom:9px}}"
+    f".cz-tag{{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:{DIM};margin:5px 0 9px}}"
+    f".cz-opps{{display:flex;flex-wrap:wrap;gap:6px}}"
+    f".cz-opp{{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;background:{GRY};border-radius:6px;padding:4px 9px}}"
+    f".cz-opp img{{height:1em;width:auto;border-radius:1px}}"
+    f".cz-bw{{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;padding-top:9px;border-top:1px solid {GRY};font-size:.72rem}}"
+    f".cz-bw img{{height:1em;width:auto;border-radius:1px;vertical-align:-.1em;margin:0 3px}}"
+    f".cz-bw-k{{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{T};margin-right:5px}}"
+    # propios de la sección del home
+    f".cz-sel{{width:100%;max-width:360px;padding:9px 12px;font-size:.85rem;border:1px solid {BDR2};border-radius:8px;background:{WHT};color:{TXT};margin-bottom:16px}}"
+)
+
 # Horarios aproximados R16/QF/SF/Final (UTC)
 # Calendario oficial FIFA 2026 (octavos→final) — sede + horario, verificado contra
 # Wikipedia "knockout stage". Horarios convertidos a UTC. Slots → partido:
@@ -121,6 +152,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   <script>!function(t,e){{var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){{function g(t,e){{var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){{t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){{var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e}},u.people.toString=function(){{return u.toString(1)+" (stub)"}},n="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep".split(" "),o=0;o<n.length;o++)g(u,n[o]);e._i.push([i,s,a])}},(e.__SV=1))}}(document,window.posthog||[]);posthog.init('phc_oJ2GTZXyfDHXr3dmKGnEww3n3bNSQ4SRAvbQa43eVZZ5',{{api_host:'https://us.i.posthog.com',person_profiles:'identified_only'}})</script>
   <style>
     *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
+    {CRUCES_CSS}
     body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:{BG};color:{TXT};padding:28px 24px}}
 
     .hdr{{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:18px;text-align:center}}
@@ -502,6 +534,20 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     </div>
     {_render_mobile_bracket(matchups)}
     <button class="reset-btn" onclick="resetBracket()">↺ Resetear simulación</button>
+  </div>
+</div>
+
+<div class="divider"></div>
+<div class="sec" id="sec-cruces" data-nav="¿Contra quién?">
+  <div class="sec-hdr" onclick="toggleSec('cruces')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">¿Contra quién? — Rival posible en 16avos</p>
+    <button class="sec-toggle" id="st-cruces">▲ CERRAR</button>
+  </div>
+  <div class="sec-body" id="sb-cruces">
+    <select class="cz-sel" id="cruces-sel" onchange="showCruces(this.value)" aria-label="Elegí una selección">
+      <option value="">Elegí una selección…</option>
+    </select>
+    <div id="cruces-out"></div>
   </div>
 </div>
 
@@ -1265,6 +1311,30 @@ function loadExtra() {{
     .catch(function() {{}});
 }}
 
+// ── ¿Contra quién? — sección del home con selector (carga bajo demanda) ─────
+var _cruces = null, _crucesLoading = false;
+function loadCruces() {{
+  if (_cruces || _crucesLoading) return;
+  _crucesLoading = true;
+  fetch('/api/cruces')
+    .then(function(r) {{ return r.json(); }})
+    .then(function(d) {{
+      _cruces = d;
+      var sel = document.getElementById('cruces-sel');
+      if (sel) {{
+        Object.keys(d).sort(function(a,b){{ return a.localeCompare(b,'es'); }}).forEach(function(name) {{
+          var o = document.createElement('option');
+          o.value = name; o.textContent = name; sel.appendChild(o);
+        }});
+      }}
+    }})
+    .catch(function() {{ _crucesLoading = false; }});
+}}
+function showCruces(name) {{
+  var out = document.getElementById('cruces-out');
+  if (out) out.innerHTML = (name && _cruces && _cruces[name]) ? _cruces[name] : '';
+}}
+
 // ── Bracket responsivo: escalar para caber en pantalla ────────────────────
 function scaleBracket() {{
   var wrap = document.querySelector('.llaves-wrap');
@@ -1342,6 +1412,16 @@ document.addEventListener("DOMContentLoaded", function() {{
   // Rankings: diferidos tras el primer pintado + refresco lento (no son data en vivo)
   setTimeout(loadExtra, 60);
   setInterval(loadExtra, 120000);
+  // ¿Contra quién?: cargar el selector cuando la sección se acerca al viewport
+  var secCz = document.getElementById('sec-cruces');
+  if (secCz && 'IntersectionObserver' in window) {{
+    var obs = new IntersectionObserver(function(ents) {{
+      if (ents[0].isIntersecting) {{ loadCruces(); obs.disconnect(); }}
+    }}, {{ rootMargin: '400px' }});
+    obs.observe(secCz);
+  }} else {{
+    setTimeout(loadCruces, 2000);
+  }}
 }});
 
 // ── 4.3 · Modal head-to-head ──────────────────────────────────────────────
