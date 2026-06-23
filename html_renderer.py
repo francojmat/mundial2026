@@ -162,6 +162,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .gd-row{{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:3px 0;font-size:.72rem}}
     .gd-k{{flex-shrink:0;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{MUT}}}
     .gd-v{{color:{TXT};text-align:right;line-height:1.35}}
+    .gd-v img{{height:.85em;width:auto;border-radius:1px}}
     .gd-hl{{color:{T};font-weight:700}}
     .corte-row td{{text-align:center;font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{T};background:rgba(194,65,12,.07);border-top:2px solid {T};border-bottom:2px solid {T};padding:5px}}
     .terc-prov{{font-size:.54rem;color:{DIM};font-weight:700;margin-left:5px;text-transform:uppercase;letter-spacing:.03em}}
