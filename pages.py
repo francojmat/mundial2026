@@ -218,18 +218,37 @@ def _render_matrix(mx: dict, head: str) -> str:
             txt, bg = "Empate", _DRAW_BG
         return f'<td style="background:{bg}">{txt}</td>'
 
+    def riv_html(o):
+        rk = _rank_of(o)
+        return traducir(o) + (f' <span class="cz-rk">#{rk}</span>' if rk != 999 else '')
+
     cols = "".join(f'<th>{nombre_es(m["home"])} <span class="cz-vs">vs</span> '
                    f'{nombre_es(m["away"])}</th>' for m in mx["matches"])
     body = ""
+    all_opps = set()
     for r in mx["rows"]:
         cells = "".join(cell(c, mx["matches"][i]) for i, c in enumerate(r["combo"]))
-        opps = " o ".join(traducir(o) for o in r["opponents"])
+        all_opps.update(r["opponents"])
+        opps = " o ".join(riv_html(o) for o in r["opponents"])
         note = f' <span class="cz-note">· por {r["note"]}</span>' if r.get("note") else ""
         body += f'<tr>{cells}<td class="cz-riv">{opps}{note}</td></tr>'
+
+    # mejor / peor caso entre todos los rivales posibles de la grilla
+    bw = ""
+    ranked = sorted(all_opps, key=_rank_of)
+    if len(ranked) >= 2:
+        hard, easy = ranked[0], ranked[-1]
+        rh, re = _rank_of(hard), _rank_of(easy)
+        if rh != 999 and re != 999 and hard != easy:
+            bw = (f'<div class="cz-bw">'
+                  f'<span><span class="cz-bw-k">Más difícil</span> {traducir(hard)} · #{rh}</span>'
+                  f'<span><span class="cz-bw-k">Más fácil</span> {traducir(easy)} · #{re}</span></div>')
+
     return (f'<div class="cz-block"><div class="cz-head">{head}</div>'
             f'<div class="cz-sub">Tu rival según los partidos del Grupo {mx["opp_group"]}:</div>'
             f'<div class="cz-mwrap"><table class="cz-matrix"><thead><tr>{cols}'
-            f'<th class="cz-riv-h">Tu rival</th></tr></thead><tbody>{body}</tbody></table></div></div>')
+            f'<th class="cz-riv-h">Tu rival</th></tr></thead><tbody>{body}</tbody></table></div>'
+            f'{bw}</div>')
 
 
 def _render_set_branch(b: dict, exact: bool, head: str) -> str:
@@ -398,6 +417,7 @@ def render_seleccion_shell() -> str:
     .cz-matrix td.cz-riv img{{height:1em;width:auto;border-radius:1px;margin:0 3px 0 0;vertical-align:-.1em}}
     .cz-vs{{color:{DIM};font-weight:400;font-size:.85em}}
     .cz-note{{font-weight:400;color:{MUT};font-size:.64rem}}
+    .cz-rk{{font-weight:400;color:{MUT};font-size:.88em}}
     .cz-confirm{{font-size:.92rem;font-weight:700;color:{T};display:flex;align-items:center;gap:6px}}
     .cz-confirm img{{height:1em;width:auto;border-radius:1px}}
     .cz-branch{{background:{WHT};border:1px solid {BDR};border-radius:10px;padding:11px 13px;margin-bottom:9px}}
