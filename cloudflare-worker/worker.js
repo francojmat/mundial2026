@@ -62,8 +62,8 @@ export default {
 // Cachea ~20s → el sitio se actualiza sin redeployar Pages (se acaban los 522).
 async function handleData(file, ctx) {
   const cache = caches.default;
-  // v2: se versiona la clave para invalidar entradas viejas pegadas en el edge cache.
-  const cacheKey = new Request("https://data.internal/v2/" + file);
+  // v3: se versiona la clave para invalidar entradas viejas pegadas en el edge cache.
+  const cacheKey = new Request("https://data.internal/v3/" + file);
   const hit = await cache.match(cacheKey);
   if (hit) return hit;
 
