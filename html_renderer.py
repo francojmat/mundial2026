@@ -1948,46 +1948,48 @@ def _venue_time(iso: str) -> str:
     return f'<span class="ven-time" data-utc="{iso}" data-format="time"></span>'
 
 
-# Calendario COMPLETO de eliminatorias — verificado (Wikipedia/FIFA): (fecha, estadio, ronda)
-# Nombres de estadio como en los fixtures de API-Football.
+# Calendario COMPLETO de eliminatorias — verificado contra el oficial FIFA 2026
+# (Wikipedia knockout stage): (datetime UTC, estadio, ronda). Con HORA real para que
+# el cliente la muestre bien en la zona del usuario (antes era solo fecha → se veía
+# un día antes y 21:00 fijo). Nombres de estadio como en los fixtures de API-Football.
 _VENUE_KO = [
-    # 16avos de Final (28/06 → 03/07)
-    ("2026-06-28", "SoFi Stadium",            "16avos de Final"),
-    ("2026-06-29", "NRG Stadium",             "16avos de Final"),
-    ("2026-06-29", "Gillette Stadium",        "16avos de Final"),
-    ("2026-06-29", "Estadio BBVA",            "16avos de Final"),
-    ("2026-06-30", "AT&T Stadium",            "16avos de Final"),
-    ("2026-06-30", "MetLife Stadium",         "16avos de Final"),
-    ("2026-06-30", "Estadio Azteca",          "16avos de Final"),
-    ("2026-07-01", "Mercedes-Benz Stadium",   "16avos de Final"),
-    ("2026-07-01", "Lumen Field",             "16avos de Final"),
-    ("2026-07-01", "Levi's Stadium",          "16avos de Final"),
-    ("2026-07-02", "SoFi Stadium",            "16avos de Final"),
-    ("2026-07-02", "BMO Field",               "16avos de Final"),
-    ("2026-07-02", "BC Place",                "16avos de Final"),
-    ("2026-07-03", "AT&T Stadium",            "16avos de Final"),
-    ("2026-07-03", "Hard Rock Stadium",       "16avos de Final"),
-    ("2026-07-03", "Arrowhead Stadium",       "16avos de Final"),
-    # Octavos de Final (04/07 → 07/07)
-    ("2026-07-04", "NRG Stadium",             "Octavos de Final"),
-    ("2026-07-04", "Lincoln Financial Field", "Octavos de Final"),
-    ("2026-07-05", "MetLife Stadium",         "Octavos de Final"),
-    ("2026-07-05", "Estadio Azteca",          "Octavos de Final"),
-    ("2026-07-06", "AT&T Stadium",            "Octavos de Final"),
-    ("2026-07-06", "Lumen Field",             "Octavos de Final"),
-    ("2026-07-07", "Mercedes-Benz Stadium",   "Octavos de Final"),
-    ("2026-07-07", "BC Place",                "Octavos de Final"),
-    # Cuartos de Final (09/07 → 11/07)
-    ("2026-07-09", "Gillette Stadium",        "Cuartos de Final"),
-    ("2026-07-10", "SoFi Stadium",            "Cuartos de Final"),
-    ("2026-07-11", "Hard Rock Stadium",       "Cuartos de Final"),
-    ("2026-07-11", "Arrowhead Stadium",       "Cuartos de Final"),
-    # Semifinales (14/07, 15/07)
-    ("2026-07-14", "AT&T Stadium",            "Semifinal"),
-    ("2026-07-15", "Mercedes-Benz Stadium",   "Semifinal"),
-    # 3er Puesto (18/07) y Final (19/07)
-    ("2026-07-18", "Hard Rock Stadium",       "3er Puesto"),
-    ("2026-07-19", "MetLife Stadium",         "Final"),
+    # 16avos de Final (P73-P88)
+    ("2026-06-28T19:00:00Z", "SoFi Stadium",            "16avos de Final"),  # P73
+    ("2026-06-29T17:00:00Z", "NRG Stadium",             "16avos de Final"),  # P76
+    ("2026-06-29T20:30:00Z", "Gillette Stadium",        "16avos de Final"),  # P74
+    ("2026-06-30T01:00:00Z", "Estadio BBVA",            "16avos de Final"),  # P75
+    ("2026-06-30T17:00:00Z", "AT&T Stadium",            "16avos de Final"),  # P78
+    ("2026-06-30T21:00:00Z", "MetLife Stadium",         "16avos de Final"),  # P77
+    ("2026-07-01T01:00:00Z", "Estadio Azteca",          "16avos de Final"),  # P79
+    ("2026-07-01T16:00:00Z", "Mercedes-Benz Stadium",   "16avos de Final"),  # P80
+    ("2026-07-01T20:00:00Z", "Lumen Field",             "16avos de Final"),  # P82
+    ("2026-07-02T00:00:00Z", "Levi's Stadium",          "16avos de Final"),  # P81
+    ("2026-07-02T19:00:00Z", "SoFi Stadium",            "16avos de Final"),  # P84
+    ("2026-07-02T23:00:00Z", "BMO Field",               "16avos de Final"),  # P83
+    ("2026-07-03T03:00:00Z", "BC Place",                "16avos de Final"),  # P85
+    ("2026-07-03T18:00:00Z", "AT&T Stadium",            "16avos de Final"),  # P88
+    ("2026-07-03T22:00:00Z", "Hard Rock Stadium",       "16avos de Final"),  # P86
+    ("2026-07-04T01:30:00Z", "Arrowhead Stadium",       "16avos de Final"),  # P87
+    # Octavos de Final (P89-P96)
+    ("2026-07-04T17:00:00Z", "NRG Stadium",             "Octavos de Final"), # P90
+    ("2026-07-04T21:00:00Z", "Lincoln Financial Field", "Octavos de Final"), # P89
+    ("2026-07-05T20:00:00Z", "MetLife Stadium",         "Octavos de Final"), # P91
+    ("2026-07-06T00:00:00Z", "Estadio Azteca",          "Octavos de Final"), # P92
+    ("2026-07-06T19:00:00Z", "AT&T Stadium",            "Octavos de Final"), # P93
+    ("2026-07-07T00:00:00Z", "Lumen Field",             "Octavos de Final"), # P94
+    ("2026-07-07T16:00:00Z", "Mercedes-Benz Stadium",   "Octavos de Final"), # P95
+    ("2026-07-07T20:00:00Z", "BC Place",                "Octavos de Final"), # P96
+    # Cuartos de Final (P97-P100)
+    ("2026-07-09T20:00:00Z", "Gillette Stadium",        "Cuartos de Final"), # P97
+    ("2026-07-10T19:00:00Z", "SoFi Stadium",            "Cuartos de Final"), # P98
+    ("2026-07-11T21:00:00Z", "Hard Rock Stadium",       "Cuartos de Final"), # P99
+    ("2026-07-12T01:00:00Z", "Arrowhead Stadium",       "Cuartos de Final"), # P100
+    # Semifinales (P101, P102)
+    ("2026-07-14T19:00:00Z", "AT&T Stadium",            "Semifinal"),        # P101
+    ("2026-07-15T19:00:00Z", "Mercedes-Benz Stadium",   "Semifinal"),        # P102
+    # 3er Puesto (P103) y Final (P104)
+    ("2026-07-18T21:00:00Z", "Hard Rock Stadium",       "3er Puesto"),       # P103
+    ("2026-07-19T19:00:00Z", "MetLife Stadium",         "Final"),            # P104
 ]
 
 
