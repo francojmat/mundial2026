@@ -158,7 +158,9 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .gf-cap{{display:inline-block;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{T};border:1px solid {T};border-radius:999px;padding:3px 10px;background:rgba(194,65,12,.05);margin-bottom:9px}}
     .gf-row{{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 0;font-size:.78rem;color:{TXT}}}
     .gf-tm{{display:inline-flex;align-items:center;flex-shrink:0}}
+    .gf-tm img{{height:1em;width:auto;border-radius:1px}}
     .gf-ph{{color:{T};font-weight:700;font-size:.66rem;text-align:right;white-space:normal;line-height:1.35}}
+    .gf-ph img{{height:.95em;width:auto;border-radius:1px;vertical-align:-.05em}}
     .gd-row{{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:3px 0;font-size:.72rem}}
     .gd-k{{flex-shrink:0;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{MUT}}}
     .gd-v{{color:{TXT};text-align:right;line-height:1.35}}
