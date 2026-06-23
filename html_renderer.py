@@ -564,7 +564,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     <button class="sec-toggle" id="st-estadios">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-estadios">
-    <div id="venues-inner">{_render_venues(standings)}</div>
+    <div id="venues-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div>
   </div>
 </div>
 
