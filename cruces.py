@@ -148,6 +148,78 @@ def team_cruces(team, group, finishers, slot_thirds) -> dict:
     }
 
 
+# Variantes de margen por resultado, para detectar desempates por diferencia/goles.
+_MARGINS = {"H": [(1, 0), (3, 0), (2, 1)], "D": [(0, 0), (1, 1)], "A": [(0, 1), (0, 3), (1, 2)]}
+
+
+def opponent_matrix(team, group, finishers, standings, fifa_rankings=None):
+    """Grilla tipo Excel: para un equipo cuyo rival sale de UN solo grupo (posición
+    concreta), enumera las combinaciones de los partidos pendientes de ESE grupo y
+    devuelve el rival por combinación, marcando los desempates por goles.
+
+    Devuelve None si el rival es un 3.º (no sale de un solo grupo) o el equipo no
+    tiene un puesto clasificable definido para armar la grilla."""
+    glet = group.replace("GROUP_", "")
+    fin = finishers.get(group, {})
+    positions = {p for p in (1, 2, 3, 4) if team in fin.get(p, set())}
+    qualifying = positions & {1, 2}
+    if positions > {1, 2} or len(qualifying) != 1:
+        return None  # el equipo todavía no tiene UN puesto clasificable fijo
+    my_pos = list(qualifying)[0]
+
+    # encontrar el cruce y el lado rival
+    opp = None
+    for num, s1, s2 in _BRACKET:
+        target = (str(my_pos), glet)
+        if s1 == target:
+            opp = s2; partido = num; break
+        if s2 == target:
+            opp = s1; partido = num; break
+    if opp is None or opp[0] not in ("1", "2"):
+        return None  # rival es un 3.º → no es una grilla de un solo grupo
+
+    opp_pos = int(opp[0])
+    g2 = "GROUP_" + opp[1]
+    data2 = standings.get(g2, {})
+    teams2 = data2.get("teams", [])
+    matches2 = data2.get("matches", [])
+    pending = [m for m in matches2 if not m.played and m.status == "TIMED"]
+    played = [m for m in matches2 if m.played]
+
+    def _pos_team(sim):
+        stats = compute_stats(teams2, sim)
+        ranked = rank_group(teams2, stats, sim, fifa_rankings)
+        return (ranked[opp_pos - 1], stats) if len(ranked) >= opp_pos else (None, stats)
+
+    rows = []
+    combos = list(product("HDA", repeat=len(pending))) if pending else [()]
+    for combo in combos:
+        cand, gd_set, gf_set = set(), {}, {}
+        margin_variants = list(product(*[_MARGINS[r] for r in combo])) if combo else [()]
+        for margins in margin_variants:
+            sim = list(played)
+            for m, (hg, ag) in zip(pending, margins):
+                sim.append(MatchResult(home=m.home, away=m.away, home_goals=hg,
+                                       away_goals=ag, played=True, status="FINISHED"))
+            t_at, stats = _pos_team(sim)
+            if t_at:
+                cand.add(t_at)
+                gd_set.setdefault(t_at, set()).add(stats[t_at].goal_diff)
+        # etiqueta de desempate: si dos candidatos pueden empatar en DG → goles a favor
+        note = ""
+        if len(cand) > 1:
+            gds = [next(iter(v)) if len(v) == 1 else None for v in gd_set.values()]
+            note = "goles a favor" if (None in gds or len(set(gds)) < len(gds)) else "diferencia de gol"
+        rows.append({"combo": list(combo), "opponents": sorted(cand), "note": note})
+
+    return {
+        "partido": partido, "city": _city_of_partido(partido), "my_pos": my_pos,
+        "opp_pos": opp_pos, "opp_group": opp[1],
+        "matches": [{"home": m.home, "away": m.away} for m in pending],
+        "rows": rows,
+    }
+
+
 def build_cruces(standings, fifa_rankings=None) -> Dict[str, dict]:
     """{ equipo_api: team_cruces(...) } para todos los equipos. Calcula el motor
     una sola vez. `exact` indica si el Anexo C se resolvió exacto o por superset."""
@@ -159,5 +231,7 @@ def build_cruces(standings, fifa_rankings=None) -> Dict[str, dict]:
         if not (isinstance(g, str) and g.startswith("GROUP_")):
             continue
         for team in data.get("teams", []):
-            out[team] = team_cruces(team, g, finishers, slot_thirds)
+            entry = team_cruces(team, g, finishers, slot_thirds)
+            entry["matrix"] = opponent_matrix(team, g, finishers, standings, fifa_rankings)
+            out[team] = entry
     return out

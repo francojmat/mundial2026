@@ -189,19 +189,66 @@ def _rank_of(api: str) -> int:
     return f["rank"] if f else 999
 
 
+def _wrap_cz(inner: str) -> str:
+    return (f'<div class="sl-sec cz"><h3 class="pl-gt">¿Contra quién en 16avos?</h3>'
+            + inner + '</div>')
+
+
+def _result_cell(letter: str, match: dict) -> str:
+    if letter == "H":
+        return "Gana " + nombre_es(match["home"])
+    if letter == "A":
+        return "Gana " + nombre_es(match["away"])
+    return "Empate"
+
+
+def _render_matrix(entry: dict, mx: dict) -> str:
+    """Grilla tipo Excel: combinaciones de los partidos del grupo rival → rival."""
+    head = (f'Termina {mx["my_pos"]}.º del {entry.get("group","")} → 16avos en '
+            f'{mx["city"]} · contra el {mx["opp_pos"]}.º del Grupo {mx["opp_group"]}')
+    cols = "".join(f'<th>{nombre_es(m["home"])} <span class="cz-vs">vs</span> '
+                   f'{nombre_es(m["away"])}</th>' for m in mx["matches"])
+    body = ""
+    for r in mx["rows"]:
+        cells = "".join(f'<td>{_result_cell(c, mx["matches"][i])}</td>'
+                        for i, c in enumerate(r["combo"]))
+        opps = " o ".join(traducir(o) for o in r["opponents"])
+        note = f' <span class="cz-note">· por {r["note"]}</span>' if r.get("note") else ""
+        body += f'<tr>{cells}<td class="cz-riv">{opps}{note}</td></tr>'
+    return _wrap_cz(
+        f'<div class="cz-head">{head}</div>'
+        f'<div class="cz-sub">Tu rival según los partidos del Grupo {mx["opp_group"]}:</div>'
+        f'<div class="cz-mwrap"><table class="cz-matrix"><thead><tr>{cols}'
+        f'<th class="cz-riv-h">Tu rival</th></tr></thead><tbody>{body}</tbody></table></div>')
+
+
 def render_cruces_block(entry: dict, exact: bool) -> str:
-    """Bloque '¿Contra quién?': posibles rivales de 16avos del equipo, con mejor/peor
-    caso por ranking FIFA. `entry` = salida de cruces.team_cruces; `exact` = Anexo C exacto."""
+    """Bloque '¿Contra quién?'. Si el rival sale de un solo grupo (posición concreta),
+    muestra la GRILLA de combinaciones. Si ya está definido, lo confirma. Si el rival es
+    un 3.º (depende del Anexo C de varios grupos), muestra la lista con mejor/peor caso."""
     if not entry:
         return ""
-    branches = entry.get("branches", [])
-    if not branches:
-        return ""
-    locked = entry.get("locked_pos")
+    mx = entry.get("matrix")
 
+    # Rival de posición concreta, grupo en su última fecha (1-2 partidos) → grilla
+    if mx and 1 <= len(mx.get("matches", [])) <= 2:
+        return _render_matrix(entry, mx)
+
+    # Rival ya confirmado (sin partidos pendientes en el grupo rival)
+    if mx and len(mx.get("matches", [])) == 0 and mx.get("rows"):
+        opps = " o ".join(traducir(o) for o in mx["rows"][0].get("opponents", []))
+        if opps:
+            head = (f'Termina {mx["my_pos"]}.º del {entry.get("group","")} → '
+                    f'16avos en {mx["city"]}')
+            return _wrap_cz(f'<div class="cz-head">{head}</div>'
+                            f'<div class="cz-confirm">Rival confirmado: {opps}</div>')
+
+    # Rival es un 3.º (o grupo lejos de la última fecha) → lista de candidatos
+    branches = entry.get("branches", [])
+    locked = entry.get("locked_pos")
     subs = []
     for b in branches:
-        opps = sorted(b.get("opponents", []), key=_rank_of)  # más difícil (menor rank) primero
+        opps = sorted(b.get("opponents", []), key=_rank_of)
         if not opps:
             continue
         chips = "".join(f'<span class="cz-opp">{traducir(o)}</span>' for o in opps)
@@ -224,10 +271,7 @@ def render_cruces_block(entry: dict, exact: bool) -> str:
         subs.append(f'<div class="cz-branch"><div class="cz-head">{head}</div>'
                     f'<div class="cz-tag">{tag}</div>'
                     f'<div class="cz-opps">{chips}</div>{bw}</div>')
-    if not subs:
-        return ""
-    return (f'<div class="sl-sec cz"><h3 class="pl-gt">¿Contra quién en 16avos?</h3>'
-            + "".join(subs) + '</div>')
+    return _wrap_cz("".join(subs)) if subs else ""
 
 
 def render_seleccion_fragment(team: str, group_label: str, rows: list, matches: list,
@@ -330,9 +374,22 @@ def render_seleccion_shell() -> str:
     .pl-fi-v.rk{{color:{T}}}
     .sl-sec{{margin-bottom:26px}}
     .pl-gt{{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:{T};margin-bottom:11px}}
+    .cz-head{{font-size:.8rem;font-weight:700;color:{TXT};margin-bottom:5px;line-height:1.3}}
+    .cz-sub{{font-size:.68rem;color:{MUT};margin-bottom:10px}}
+    .cz-mwrap{{overflow-x:auto;-webkit-overflow-scrolling:touch}}
+    .cz-matrix{{width:100%;border-collapse:collapse;font-size:.72rem;background:{WHT};border:1px solid {BDR};border-radius:10px;overflow:hidden}}
+    .cz-matrix th{{font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:{DIM};text-align:left;padding:7px 10px;border-bottom:1px solid {BDR};white-space:nowrap}}
+    .cz-matrix th.cz-riv-h{{color:{T}}}
+    .cz-matrix td{{padding:6px 10px;border-bottom:1px solid {GRY};white-space:nowrap;color:{TXT}}}
+    .cz-matrix tr:last-child td{{border-bottom:none}}
+    .cz-matrix td.cz-riv{{color:{T};font-weight:700}}
+    .cz-matrix td.cz-riv img{{height:1em;width:auto;border-radius:1px;margin:0 3px 0 0;vertical-align:-.1em}}
+    .cz-vs{{color:{DIM};font-weight:400;font-size:.85em}}
+    .cz-note{{font-weight:400;color:{MUT};font-size:.64rem}}
+    .cz-confirm{{font-size:.92rem;font-weight:700;color:{T};display:flex;align-items:center;gap:6px}}
+    .cz-confirm img{{height:1em;width:auto;border-radius:1px}}
     .cz-branch{{background:{WHT};border:1px solid {BDR};border-radius:10px;padding:11px 13px;margin-bottom:9px}}
-    .cz-head{{font-size:.8rem;font-weight:700;color:{TXT};margin-bottom:7px;line-height:1.3}}
-    .cz-tag{{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:{DIM};margin-bottom:9px}}
+    .cz-tag{{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:{DIM};margin:5px 0 9px}}
     .cz-opps{{display:flex;flex-wrap:wrap;gap:6px}}
     .cz-opp{{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;background:{GRY};border-radius:6px;padding:4px 9px}}
     .cz-opp img{{height:1em;width:auto;border-radius:1px}}
