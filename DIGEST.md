@@ -231,6 +231,12 @@ gitignored) y deployado. Todo verificado E2E en producción.
   **Franco lo actualiza cada día.**
 - `h2h_curado.py` → historial de los 72 cruces de grupo (últimos 5: fecha/torneo/instancia, PRE-2026),
   keyed por `frozenset` de nombres en español. Fallback cuando la API no tiene el par.
+- **`cruces.py` → "¿Contra quién?"** (posibles rivales de 16avos). `build_cruces(standings)` corre
+  1 vez/generación: enumera resultados por grupo → `possible_finishers` (quién puede terminar en
+  cada posición) → para slots de 3.º resuelve **Anexo C exacto** si las combos ≤ `_MAX_COMBOS`, si no
+  cae al superset (terceros de los grupos candidatos; correcto como superconjunto) con flag `_exact`.
+  Render: `render_cruces_block` (pages.py) en seleccion.html, con mejor/peor caso por ranking FIFA.
+  Pendiente Fase 2: sección en el home con selector (shipear `{equipo: html}` + JS).
 - `scenarios.py` → escenarios de clasificación de grupo (qué se juega cada equipo).
   `team_phrase(entry, opponent)` nombra al rival y el stake exacto, derivado del motor (una sola
   enumeración compartida → frases consistentes, no se contradicen). `_opp_name(entry)` da el rival.
