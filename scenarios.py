@@ -119,6 +119,8 @@ def compute_group_scenarios(teams: List[str], matches: List[MatchResult],
                     entry[key] = "third"       # como mucho 3º (depende de terceros)
                 else:
                     entry[key] = "alive"       # sigue dependiendo
+        # próximo rival (para frases concretas), sin importar el status
+        if nm is not None:
             entry["next"] = {"home": nm.home, "away": nm.away, "is_home": nm.home == t}
         out[t] = entry
     return out
@@ -126,37 +128,53 @@ def compute_group_scenarios(teams: List[str], matches: List[MatchResult],
 
 # ── Frases en español ────────────────────────────────────────────────────────
 
-def team_phrase(entry: Dict) -> str:
-    """Frase corta de qué se juega el equipo (para el pie del grupo / partido)."""
+def _opp_name(entry: Dict) -> str:
+    """Nombre (API, sin traducir) del próximo rival, o '' si no hay próximo partido."""
+    nx = entry.get("next")
+    if not nx:
+        return ""
+    return nx["away"] if nx.get("is_home") else nx["home"]
+
+
+def team_phrase(entry: Dict, opponent: str = None) -> str:
+    """Frase corta de qué se juega el equipo. `opponent` = nombre del próximo rival
+    ya traducido (lo pasa el caller); si es None se usa 'su rival'."""
     st = entry.get("status")
+    opp = opponent or "su rival"
+    has_next = bool(entry.get("next"))
     if st == "classified":
         f = entry.get("first")
         if f == "clinched1":
-            return "Clasificado · termina 1.º"
+            return "Clasificado, termina 1.º"
         if f == "clinched2":
-            return "Clasificado · termina 2.º"
+            return "Clasificado, termina 2.º"
         if f == "fight1":
             fw, fd = entry.get("f_win"), entry.get("f_draw")
+            if not has_next:
+                return "Clasificado, pelea el 1.º"
             if fd and fw:
-                return "Clasificado · con no perder es 1.º"
+                return f"Clasificado · no pierde con {opp} y es 1.º"
             if fd:
-                return "Clasificado · empatando es 1.º"
+                return f"Clasificado · empata con {opp} y es 1.º"
             if fw:
-                return "Clasificado · ganando es 1.º"
-            return "Clasificado · pelea el 1.º puesto"
-        return "Ya clasificado a octavos"
+                return f"Clasificado · le gana a {opp} y es 1.º"
+            return "Clasificado, pelea el 1.º"
+        return "Clasificado a octavos"
     if st == "eliminated":
         return "Sin chances de avanzar"
     win, draw, lose = entry.get("if_win"), entry.get("if_draw"), entry.get("if_lose")
-    # del mejor al peor desenlace
-    if win == "in" and draw == "in":
-        return "Con no perder, clasifica"
+    if not has_next:
+        return "Depende de la última fecha"
+    # Del mejor desenlace al peor. Distingue lo que ASEGURA de lo que solo deja con chances.
     if draw == "in":
-        return "Le alcanza con empatar"
+        return f"Le alcanza con empatar a {opp}"
     if win == "in":
-        return "Si gana, clasifica"
-    if win in ("third", "alive"):
-        return "Ganando, sigue con chances"
-    if win == "out":
-        return "Necesita ganar y esperar"
-    return "Depende de la última fecha"
+        if lose != "alive" and draw != "alive":   # ni empatar ni perder lo dejan vivo
+            return f"Le gana a {opp} o queda afuera"
+        return f"Ganándole a {opp} clasifica"
+    if win == "third":
+        return f"Si le gana a {opp}, pelea como mejor 3.º"
+    if win == "alive":
+        return f"Le gana a {opp} y sigue dependiendo"
+    # ni ganando asegura algo bueno
+    return f"Necesita ganarle a {opp} y esperar"

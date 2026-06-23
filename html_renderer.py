@@ -4,7 +4,8 @@ import urllib.parse
 from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Set
 from countries import traducir, nombre_es, venue_maps_url, VENUE_INFO
-from scenarios import compute_group_scenarios, team_phrase
+from scenarios import compute_group_scenarios, team_phrase, _opp_name
+from bracket import r32_destination
 
 _ARG_TZ = timezone(timedelta(hours=-3))
 
@@ -157,7 +158,11 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .gf-cap{{display:inline-block;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{T};border:1px solid {T};border-radius:999px;padding:3px 10px;background:rgba(194,65,12,.05);margin-bottom:9px}}
     .gf-row{{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 0;font-size:.78rem;color:{TXT}}}
     .gf-tm{{display:inline-flex;align-items:center;flex-shrink:0}}
-    .gf-ph{{color:{T};font-weight:700;font-size:.66rem;text-align:right;white-space:nowrap}}
+    .gf-ph{{color:{T};font-weight:700;font-size:.66rem;text-align:right;white-space:normal;line-height:1.35}}
+    .gd-row{{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:3px 0;font-size:.72rem}}
+    .gd-k{{flex-shrink:0;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{MUT}}}
+    .gd-v{{color:{TXT};text-align:right;line-height:1.35}}
+    .gd-hl{{color:{T};font-weight:700}}
     .corte-row td{{text-align:center;font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:{T};background:rgba(194,65,12,.07);border-top:2px solid {T};border-bottom:2px solid {T};padding:5px}}
     .terc-prov{{font-size:.54rem;color:{DIM};font-weight:700;margin-left:5px;text-transform:uppercase;letter-spacing:.03em}}
     .terc-exp{{font-size:.8rem;color:{TXT};line-height:1.55;margin:0}}
@@ -1350,6 +1355,66 @@ function closeH2H() {{ document.getElementById('h2hModal').classList.remove('ope
 
 # ── Grupos ─────────────────────────────────────────────────────────────────
 
+def _group_detalles_html(label: str, teams: list, stats: dict, matches: list,
+                         standings: Dict, sc: dict, done: bool) -> str:
+    """Filas de 'Detalles' del grupo: ritmo de gol, goleador, valla, partidazo,
+    definición y a dónde van el 1.º y el 2.º en 16avos. Todo de data ya disponible."""
+    bits = []  # (clave, valor_html)
+
+    played = [m for m in matches if m.played]
+    if played:
+        gf_total = sum(m.home_goals + m.away_goals for m in played)
+        bits.append(("Ritmo", f"{gf_total} goles · {gf_total / len(played):.1f} por partido"))
+
+    # Goleador del grupo (los goleadores vienen de football-data → matchear por nombre_es)
+    group_es = {nombre_es(t) for t in teams}
+    best_sc = None
+    for p in standings.get("_scorers", []):
+        if (p.get("goals") or 0) > 0 and nombre_es(p.get("team", "")) in group_es:
+            if best_sc is None or p["goals"] > best_sc["goals"]:
+                best_sc = p
+    if best_sc:
+        bits.append(("Goleador del grupo", f'{best_sc["name"]} <span class="gd-hl">{best_sc["goals"]}</span>'))
+
+    # Valla menos vencida (entre los que ya jugaron)
+    played_st = [(t, stats[t]) for t in teams if t in stats and stats[t].played > 0]
+    if played_st:
+        bt, bs = min(played_st, key=lambda x: (x[1].goals_against, -x[1].played))
+        bits.append(("Valla menos vencida", f'{traducir(bt)} · {bs.goals_against} GC'))
+
+    # El partidazo / goleada (partido jugado con más goles del grupo)
+    if played:
+        top = max(played, key=lambda m: (m.home_goals + m.away_goals, abs(m.home_goals - m.away_goals)))
+        margin = abs(top.home_goals - top.away_goals)
+        if (top.home_goals + top.away_goals) >= 4 or margin >= 3:
+            k = "Goleada" if margin >= 3 else "El partidazo"
+            bits.append((k, f'{traducir(top.home)} {top.home_goals}-{top.away_goals} {traducir(top.away)}'))
+
+    # Definición del grupo
+    if done:
+        bits.append(("Definición", "Grupo cerrado"))
+    elif sc:
+        clinch1 = [t for t in teams if sc.get(t, {}).get("first") == "clinched1"]
+        can_first = [t for t in teams if 1 in sc.get(t, {}).get("positions", [])]
+        if clinch1:
+            bits.append(("Definición", f'{traducir(clinch1[0])} ya es 1.º'))
+        elif len(can_first) >= 2:
+            bits.append(("Definición", f'<span class="gd-hl">{len(can_first)}</span> pelean el 1.º'))
+
+    # A dónde van el 1.º y el 2.º en 16avos (sedes fijas del fixture)
+    d1, d2 = r32_destination(label, 1), r32_destination(label, 2)
+    if d1 and d2:
+        bits.append(("En 16avos",
+                     f'1.º → <span class="gd-hl">{d1["city"]}</span> (vs {d1["rival"]}) · '
+                     f'2.º → <span class="gd-hl">{d2["city"]}</span>'))
+
+    if not bits:
+        return ""
+    rows = "".join(f'<div class="gd-row"><span class="gd-k">{k}</span>'
+                   f'<span class="gd-v">{v}</span></div>' for k, v in bits)
+    return f'<div class="gd">{rows}</div>'
+
+
 def _render_groups(standings: Dict, live_teams: Set[str], thirds_advancing_set: Set[str]) -> str:
     html = ""
     for gname, data in sorted(standings.items()):
@@ -1394,25 +1459,21 @@ def _render_groups(standings: Dict, live_teams: Set[str], thirds_advancing_set: 
           <td>{s.goals_for}</td><td>{s.goals_against}</td>
           <td>{dg}</td><td><span class="pts">{s.points}</span></td>
         </tr>"""
-        # 2.5 — stats agregadas del grupo
-        gp = sum(1 for m in matches if m.played)
-        stats_line = ""
-        if gp:
-            gf_total = sum((m.home_goals + m.away_goals) for m in matches if m.played)
-            stats_line = f'<div class="gf-stats">{gf_total} goles · {gf_total / gp:.1f} por partido</div>'
-        # 2.1 / 3.1 — qué se juega CADA equipo (incluido el ya clasificado: si pelea el 1.º)
+        # 2.5 / 2.1 / 3.1 — Detalles del grupo + qué se juega CADA equipo
+        sc = compute_group_scenarios(teams, matches) if not done else {}
+        detalles_html = _group_detalles_html(label, teams, stats, matches, standings, sc, done)
         esc_html = ""
-        if not done:
-            sc = compute_group_scenarios(teams, matches)
+        if sc:
             rows_e = "".join(
                 f'<div class="gf-row"><span class="gf-tm">{traducir(t)}</span>'
-                f'<span class="gf-ph">{team_phrase(sc[t])}</span></div>'
+                f'<span class="gf-ph">'
+                f'{team_phrase(sc[t], opponent=(traducir(_opp_name(sc[t])) or None))}</span></div>'
                 for t in teams if t in sc
             )
             if rows_e:
                 esc_html = f'<div class="gf-esc"><div class="gf-cap">Qué se juega</div>{rows_e}</div>'
-        # 2.5 — detalle del grupo plegable ("Detalles"), cerrado por defecto
-        body_inner = stats_line + esc_html
+        # detalle del grupo plegable ("Detalles"), cerrado por defecto
+        body_inner = detalles_html + esc_html
         foot = (f'<div class="grupo-foot">'
                 f'<div class="gf-toggle" onclick="toggleGroupRow(this)">'
                 f'<span class="gf-toggle-t">Detalles</span><span class="gf-chev">&#9662;</span></div>'
@@ -2098,7 +2159,8 @@ def _hoy_detail_html(m: dict, standings: dict = None, show_vermatch: bool = True
             sc = compute_group_scenarios(gd.get("teams", []), gd.get("matches", []))
             rows_q = "".join(
                 f'<div class="gf-row"><span class="gf-tm">{traducir(t)}</span>'
-                f'<span class="gf-ph">{team_phrase(sc[t])}</span></div>'
+                f'<span class="gf-ph">'
+                f'{team_phrase(sc[t], opponent=(traducir(_opp_name(sc[t])) or None))}</span></div>'
                 for t in (m.get("home"), m.get("away")) if sc.get(t)
             )
             if rows_q:

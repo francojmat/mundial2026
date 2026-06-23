@@ -658,6 +658,32 @@ def assign_thirds_to_slots(thirds_advancing: List[Dict]) -> Dict[int, str]:
     return result
 
 
+def _spec_label(spec) -> str:
+    kind, groups = spec
+    if kind == '1':
+        return f"el 1.º del {groups}"
+    if kind == '2':
+        return f"el 2.º del {groups}"
+    return "un 3.º"
+
+
+def _city_of_partido(num: int) -> str:
+    _, venue = _SCHEDULE.get(num, ("", ""))
+    return venue.split(",")[-1].strip() if venue else ""
+
+
+def r32_destination(letter: str, position: int):
+    """Para (letra de grupo, posición 1|2) devuelve {'city', 'rival', 'partido'} del
+    partido de 16avos donde cae ese puesto (sedes fijas del fixture). None si no aplica."""
+    target = (str(position), letter)
+    for num, s1, s2 in _BRACKET:
+        if s1 == target:
+            return {"partido": num, "city": _city_of_partido(num), "rival": _spec_label(s2)}
+        if s2 == target:
+            return {"partido": num, "city": _city_of_partido(num), "rival": _spec_label(s1)}
+    return None
+
+
 def _resolve(spec, group_results, partido_num, thirds_slot_map):
     kind, groups = spec
     if kind == '1':
