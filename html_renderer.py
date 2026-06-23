@@ -30,7 +30,7 @@ CRUCES_CSS = (
     f".cz-head{{font-size:.8rem;font-weight:700;color:{TXT};margin-bottom:5px;line-height:1.3}}"
     f".cz-sub{{font-size:.68rem;color:{MUT};margin-bottom:10px}}"
     f".cz-mwrap{{overflow-x:auto;-webkit-overflow-scrolling:touch}}"
-    f".cz-matrix{{width:100%;border-collapse:collapse;font-size:.72rem;background:{WHT};border:1px solid {BDR};border-radius:10px;overflow:hidden}}"
+    f".cz-matrix{{width:auto;max-width:100%;border-collapse:collapse;font-size:.72rem;background:{WHT};border:1px solid {BDR};border-radius:10px;overflow:hidden}}"
     f".cz-matrix th{{font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:{DIM};text-align:left;padding:7px 10px;border-bottom:1px solid {BDR};white-space:nowrap}}"
     f".cz-matrix th.cz-riv-h{{color:{T}}}"
     f".cz-matrix td{{padding:6px 10px;border-bottom:1px solid {GRY};white-space:nowrap;color:{TXT}}}"
@@ -49,8 +49,12 @@ CRUCES_CSS = (
     f".cz-bw{{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;padding-top:9px;border-top:1px solid {GRY};font-size:.72rem}}"
     f".cz-bw img{{height:1em;width:auto;border-radius:1px;vertical-align:-.1em;margin:0 3px}}"
     f".cz-bw-k{{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{T};margin-right:5px}}"
-    # propios de la sección del home
-    f".cz-sel{{width:100%;max-width:360px;padding:9px 12px;font-size:.85rem;border:1px solid {BDR2};border-radius:8px;background:{WHT};color:{TXT};margin-bottom:16px}}"
+    # propios de la sección del home — selector de marca
+    f".cz-sel-wrap{{position:relative;display:block;width:100%;max-width:340px;margin-bottom:18px}}"
+    f".cz-sel-wrap::after{{content:'▾';position:absolute;right:15px;top:50%;transform:translateY(-50%);color:{T};font-size:.72rem;pointer-events:none}}"
+    f".cz-sel{{appearance:none;-webkit-appearance:none;width:100%;padding:11px 40px 11px 15px;font-size:.9rem;font-weight:700;color:{TXT};border:1.5px solid {T};border-radius:10px;background:{WHT};cursor:pointer}}"
+    f".cz-sel:focus{{outline:none;box-shadow:0 0 0 3px rgba(194,65,12,.16)}}"
+    f".cz-sel:hover{{background:{GRY}}}"
 )
 
 # Horarios aproximados R16/QF/SF/Final (UTC)
@@ -544,9 +548,11 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     <button class="sec-toggle" id="st-cruces">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-cruces">
-    <select class="cz-sel" id="cruces-sel" onchange="showCruces(this.value)" aria-label="Elegí una selección">
-      <option value="">Elegí una selección…</option>
-    </select>
+    <div class="cz-sel-wrap">
+      <select class="cz-sel" id="cruces-sel" onchange="showCruces(this.value)" aria-label="Elegí una selección">
+        <option value="">Elegí una selección…</option>
+      </select>
+    </div>
     <div id="cruces-out"></div>
   </div>
 </div>
