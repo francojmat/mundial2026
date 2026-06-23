@@ -194,24 +194,38 @@ def _wrap_cz(inner: str) -> str:
             + inner + '</div>')
 
 
-def _result_cell(letter: str, match: dict) -> str:
-    if letter == "H":
-        return "Gana " + nombre_es(match["home"])
-    if letter == "A":
-        return "Gana " + nombre_es(match["away"])
-    return "Empate"
+# Rellenos por equipo (claros, legibles con texto oscuro). Empate = neutro.
+_CELL_BG = ["#e3effb", "#e6f4e6", "#fbf0d9", "#ece9fb", "#fbe3e6", "#def0ee"]
+_DRAW_BG = "#f0efe9"
 
 
 def _render_matrix(entry: dict, mx: dict) -> str:
-    """Grilla tipo Excel: combinaciones de los partidos del grupo rival → rival."""
+    """Grilla tipo Excel: combinaciones de los partidos del grupo rival → rival.
+    Cada equipo-resultado tiene su color de relleno (mismo color = mismo resultado)."""
+    # color por equipo, en orden de aparición en los partidos
+    order = []
+    for m in mx["matches"]:
+        for t in (m["home"], m["away"]):
+            if t not in order:
+                order.append(t)
+    color = {t: _CELL_BG[i % len(_CELL_BG)] for i, t in enumerate(order)}
+
+    def cell(letter, m):
+        if letter == "H":
+            txt, bg = "Gana " + nombre_es(m["home"]), color[m["home"]]
+        elif letter == "A":
+            txt, bg = "Gana " + nombre_es(m["away"]), color[m["away"]]
+        else:
+            txt, bg = "Empate", _DRAW_BG
+        return f'<td style="background:{bg}">{txt}</td>'
+
     head = (f'Termina {mx["my_pos"]}.º del {entry.get("group","")} → 16avos en '
             f'{mx["city"]} · contra el {mx["opp_pos"]}.º del Grupo {mx["opp_group"]}')
     cols = "".join(f'<th>{nombre_es(m["home"])} <span class="cz-vs">vs</span> '
                    f'{nombre_es(m["away"])}</th>' for m in mx["matches"])
     body = ""
     for r in mx["rows"]:
-        cells = "".join(f'<td>{_result_cell(c, mx["matches"][i])}</td>'
-                        for i, c in enumerate(r["combo"]))
+        cells = "".join(cell(c, mx["matches"][i]) for i, c in enumerate(r["combo"]))
         opps = " o ".join(traducir(o) for o in r["opponents"])
         note = f' <span class="cz-note">· por {r["note"]}</span>' if r.get("note") else ""
         body += f'<tr>{cells}<td class="cz-riv">{opps}{note}</td></tr>'
