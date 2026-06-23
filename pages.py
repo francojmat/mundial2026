@@ -199,10 +199,9 @@ _CELL_BG = ["#e3effb", "#e6f4e6", "#fbf0d9", "#ece9fb", "#fbe3e6", "#def0ee"]
 _DRAW_BG = "#f0efe9"
 
 
-def _render_matrix(entry: dict, mx: dict) -> str:
+def _render_matrix(mx: dict, head: str) -> str:
     """Grilla tipo Excel: combinaciones de los partidos del grupo rival → rival.
     Cada equipo-resultado tiene su color de relleno (mismo color = mismo resultado)."""
-    # color por equipo, en orden de aparición en los partidos
     order = []
     for m in mx["matches"]:
         for t in (m["home"], m["away"]):
@@ -219,8 +218,6 @@ def _render_matrix(entry: dict, mx: dict) -> str:
             txt, bg = "Empate", _DRAW_BG
         return f'<td style="background:{bg}">{txt}</td>'
 
-    head = (f'Termina {mx["my_pos"]}.º del {entry.get("group","")} → 16avos en '
-            f'{mx["city"]} · contra el {mx["opp_pos"]}.º del Grupo {mx["opp_group"]}')
     cols = "".join(f'<th>{nombre_es(m["home"])} <span class="cz-vs">vs</span> '
                    f'{nombre_es(m["away"])}</th>' for m in mx["matches"])
     body = ""
@@ -229,63 +226,62 @@ def _render_matrix(entry: dict, mx: dict) -> str:
         opps = " o ".join(traducir(o) for o in r["opponents"])
         note = f' <span class="cz-note">· por {r["note"]}</span>' if r.get("note") else ""
         body += f'<tr>{cells}<td class="cz-riv">{opps}{note}</td></tr>'
-    return _wrap_cz(
-        f'<div class="cz-head">{head}</div>'
-        f'<div class="cz-sub">Tu rival según los partidos del Grupo {mx["opp_group"]}:</div>'
-        f'<div class="cz-mwrap"><table class="cz-matrix"><thead><tr>{cols}'
-        f'<th class="cz-riv-h">Tu rival</th></tr></thead><tbody>{body}</tbody></table></div>')
+    return (f'<div class="cz-block"><div class="cz-head">{head}</div>'
+            f'<div class="cz-sub">Tu rival según los partidos del Grupo {mx["opp_group"]}:</div>'
+            f'<div class="cz-mwrap"><table class="cz-matrix"><thead><tr>{cols}'
+            f'<th class="cz-riv-h">Tu rival</th></tr></thead><tbody>{body}</tbody></table></div></div>')
+
+
+def _render_set_branch(b: dict, exact: bool, head: str) -> str:
+    opps = sorted(b.get("opponents", []), key=_rank_of)
+    if not opps:
+        return ""
+    chips = "".join(f'<span class="cz-opp">{traducir(o)}</span>' for o in opps)
+    bw = ""
+    if len(opps) >= 2:
+        hard, easy = opps[0], opps[-1]
+        rh, re = _rank_of(hard), _rank_of(easy)
+        if rh != 999 and re != 999 and hard != easy:
+            bw = (f'<div class="cz-bw">'
+                  f'<span><span class="cz-bw-k">Más difícil</span> {traducir(hard)} · #{rh}</span>'
+                  f'<span><span class="cz-bw-k">Más fácil</span> {traducir(easy)} · #{re}</span></div>')
+    n = len(opps)
+    tag = ('rival posible' if n == 1 else f'{n} rivales posibles')
+    tag += '' if exact else ' · se define al cerrar los grupos'
+    return (f'<div class="cz-block"><div class="cz-branch"><div class="cz-head">{head}</div>'
+            f'<div class="cz-tag">{tag}</div>'
+            f'<div class="cz-opps">{chips}</div>{bw}</div></div>')
 
 
 def render_cruces_block(entry: dict, exact: bool) -> str:
-    """Bloque '¿Contra quién?'. Si el rival sale de un solo grupo (posición concreta),
-    muestra la GRILLA de combinaciones. Si ya está definido, lo confirma. Si el rival es
-    un 3.º (depende del Anexo C de varios grupos), muestra la lista con mejor/peor caso."""
+    """Bloque '¿Contra quién?'. Se arma POR RAMA (cada posición clasificable): si esa
+    rama enfrenta una posición concreta → GRILLA tipo Excel; si enfrenta un 3.º → lista."""
     if not entry:
         return ""
-    mx = entry.get("matrix")
-
-    # Rival de posición concreta, grupo en su última fecha (1-2 partidos) → grilla
-    if mx and 1 <= len(mx.get("matches", [])) <= 2:
-        return _render_matrix(entry, mx)
-
-    # Rival ya confirmado (sin partidos pendientes en el grupo rival)
-    if mx and len(mx.get("matches", [])) == 0 and mx.get("rows"):
-        opps = " o ".join(traducir(o) for o in mx["rows"][0].get("opponents", []))
-        if opps:
-            head = (f'Termina {mx["my_pos"]}.º del {entry.get("group","")} → '
-                    f'16avos en {mx["city"]}')
-            return _wrap_cz(f'<div class="cz-head">{head}</div>'
-                            f'<div class="cz-confirm">Rival confirmado: {opps}</div>')
-
-    # Rival es un 3.º (o grupo lejos de la última fecha) → lista de candidatos
     branches = entry.get("branches", [])
-    locked = entry.get("locked_pos")
-    subs = []
+    if not branches:
+        return ""
+    group = entry.get("group", "")
+    locked = entry.get("locked_pos") is not None
+    parts = []
     for b in branches:
-        opps = sorted(b.get("opponents", []), key=_rank_of)
-        if not opps:
-            continue
-        chips = "".join(f'<span class="cz-opp">{traducir(o)}</span>' for o in opps)
-        bw = ""
-        if len(opps) >= 2:
-            hard, easy = opps[0], opps[-1]
-            rh, re = _rank_of(hard), _rank_of(easy)
-            if rh != 999 and re != 999 and hard != easy:
-                bw = (f'<div class="cz-bw">'
-                      f'<span><span class="cz-bw-k">Más difícil</span> {traducir(hard)} · #{rh}</span>'
-                      f'<span><span class="cz-bw-k">Más fácil</span> {traducir(easy)} · #{re}</span></div>')
-        if locked:
-            head = (f'Termina {locked}.º del {entry.get("group","")} → '
-                    f'16avos en {b["city"]} · contra {b["opp_type"]}')
+        prefix = "Termina" if locked else "Si sale"
+        mx = b.get("matrix")
+        if mx and 1 <= len(mx.get("matches", [])) <= 2:
+            head = (f'{prefix} {b["pos"]}.º del {group} → 16avos en {mx["city"]} · '
+                    f'contra el {mx["opp_pos"]}.º del Grupo {mx["opp_group"]}')
+            parts.append(_render_matrix(mx, head))
+        elif mx and len(mx.get("matches", [])) == 0 and mx.get("rows"):
+            opps = " o ".join(traducir(o) for o in mx["rows"][0].get("opponents", []))
+            head = f'{prefix} {b["pos"]}.º del {group} → 16avos en {mx["city"]}'
+            parts.append(f'<div class="cz-block"><div class="cz-head">{head}</div>'
+                         f'<div class="cz-confirm">Rival confirmado: {opps}</div></div>')
         else:
-            head = f'Si sale {b["pos"]}.º → 16avos en {b["city"]} · contra {b["opp_type"]}'
-        n = len(opps)
-        tag = ('rival posible' if n == 1 else f'{n} rivales posibles')
-        tag += '' if exact else ' · se define al cerrar los grupos'
-        subs.append(f'<div class="cz-branch"><div class="cz-head">{head}</div>'
-                    f'<div class="cz-tag">{tag}</div>'
-                    f'<div class="cz-opps">{chips}</div>{bw}</div>')
-    return _wrap_cz("".join(subs)) if subs else ""
+            head = (f'{prefix} {b["pos"]}.º del {group} → 16avos en {b["city"]} · '
+                    f'contra {b["opp_type"]}')
+            parts.append(_render_set_branch(b, exact, head))
+    parts = [p for p in parts if p]
+    return _wrap_cz("".join(parts)) if parts else ""
 
 
 def render_seleccion_fragment(team: str, group_label: str, rows: list, matches: list,
@@ -388,6 +384,8 @@ def render_seleccion_shell() -> str:
     .pl-fi-v.rk{{color:{T}}}
     .sl-sec{{margin-bottom:26px}}
     .pl-gt{{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:{T};margin-bottom:11px}}
+    .cz-block{{margin-bottom:18px}}
+    .cz-block:last-child{{margin-bottom:0}}
     .cz-head{{font-size:.8rem;font-weight:700;color:{TXT};margin-bottom:5px;line-height:1.3}}
     .cz-sub{{font-size:.68rem;color:{MUT};margin-bottom:10px}}
     .cz-mwrap{{overflow-x:auto;-webkit-overflow-scrolling:touch}}
@@ -396,7 +394,7 @@ def render_seleccion_shell() -> str:
     .cz-matrix th.cz-riv-h{{color:{T}}}
     .cz-matrix td{{padding:6px 10px;border-bottom:1px solid {GRY};white-space:nowrap;color:{TXT}}}
     .cz-matrix tr:last-child td{{border-bottom:none}}
-    .cz-matrix td.cz-riv{{color:{T};font-weight:700}}
+    .cz-matrix td.cz-riv{{color:{TXT};font-weight:700}}
     .cz-matrix td.cz-riv img{{height:1em;width:auto;border-radius:1px;margin:0 3px 0 0;vertical-align:-.1em}}
     .cz-vs{{color:{DIM};font-weight:400;font-size:.85em}}
     .cz-note{{font-weight:400;color:{MUT};font-size:.64rem}}

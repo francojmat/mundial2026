@@ -109,7 +109,7 @@ def _opp_label(spec) -> str:
     return "un 3.º"
 
 
-def team_cruces(team, group, finishers, slot_thirds) -> dict:
+def team_cruces(team, group, finishers, slot_thirds, standings, fifa_rankings=None) -> dict:
     """Para un equipo: sus ramas por posición clasificable (1.º / 2.º), con el
     partido de 16avos (sede, fecha) y la lista de rivales posibles."""
     glet = group.replace("GROUP_", "")
@@ -137,6 +137,8 @@ def team_cruces(team, group, finishers, slot_thirds) -> dict:
             branches.append({
                 "pos": pos, "partido": num, "city": _city_of_partido(num),
                 "utc": utc, "opp_type": _opp_label(opp), "opponents": opps,
+                # grilla tipo Excel SOLO si esta rama enfrenta una posición concreta
+                "matrix": opponent_matrix(team, group, pos, standings, fifa_rankings),
             })
             break
     qualifying = positions & {1, 2}
@@ -152,29 +154,23 @@ def team_cruces(team, group, finishers, slot_thirds) -> dict:
 _MARGINS = {"H": [(1, 0), (3, 0), (2, 1)], "D": [(0, 0), (1, 1)], "A": [(0, 1), (0, 3), (1, 2)]}
 
 
-def opponent_matrix(team, group, finishers, standings, fifa_rankings=None):
-    """Grilla tipo Excel: para un equipo cuyo rival sale de UN solo grupo (posición
-    concreta), enumera las combinaciones de los partidos pendientes de ESE grupo y
-    devuelve el rival por combinación, marcando los desempates por goles.
+def opponent_matrix(team, group, my_pos, standings, fifa_rankings=None):
+    """Grilla tipo Excel para la rama 'el equipo termina `my_pos`': si su rival sale
+    de UN solo grupo (posición concreta), enumera las combinaciones de los partidos
+    pendientes de ESE grupo y devuelve el rival por combinación, marcando desempates.
 
-    Devuelve None si el rival es un 3.º (no sale de un solo grupo) o el equipo no
-    tiene un puesto clasificable definido para armar la grilla."""
+    Devuelve None si el rival es un 3.º (no sale de un solo grupo) o el grupo rival
+    está lejos de su última fecha (>2 partidos pendientes → grilla impráctica)."""
     glet = group.replace("GROUP_", "")
-    fin = finishers.get(group, {})
-    positions = {p for p in (1, 2, 3, 4) if team in fin.get(p, set())}
-    qualifying = positions & {1, 2}
-    if positions > {1, 2} or len(qualifying) != 1:
-        return None  # el equipo todavía no tiene UN puesto clasificable fijo
-    my_pos = list(qualifying)[0]
 
-    # encontrar el cruce y el lado rival
-    opp = None
+    # encontrar el cruce y el lado rival para ESA posición
+    opp = partido = None
     for num, s1, s2 in _BRACKET:
         target = (str(my_pos), glet)
         if s1 == target:
-            opp = s2; partido = num; break
+            opp, partido = s2, num; break
         if s2 == target:
-            opp = s1; partido = num; break
+            opp, partido = s1, num; break
     if opp is None or opp[0] not in ("1", "2"):
         return None  # rival es un 3.º → no es una grilla de un solo grupo
 
@@ -185,6 +181,8 @@ def opponent_matrix(team, group, finishers, standings, fifa_rankings=None):
     matches2 = data2.get("matches", [])
     pending = [m for m in matches2 if not m.played and m.status == "TIMED"]
     played = [m for m in matches2 if m.played]
+    if len(pending) > 2:
+        return None  # demasiados pendientes en el grupo rival → grilla impráctica
 
     def _pos_team(sim):
         stats = compute_stats(teams2, sim)
@@ -231,7 +229,5 @@ def build_cruces(standings, fifa_rankings=None) -> Dict[str, dict]:
         if not (isinstance(g, str) and g.startswith("GROUP_")):
             continue
         for team in data.get("teams", []):
-            entry = team_cruces(team, g, finishers, slot_thirds)
-            entry["matrix"] = opponent_matrix(team, g, finishers, standings, fifa_rankings)
-            out[team] = entry
+            out[team] = team_cruces(team, g, finishers, slot_thirds, standings, fifa_rankings)
     return out
