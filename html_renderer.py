@@ -1251,6 +1251,7 @@ function loadExtra() {{
       var vEl = document.getElementById('venues-inner');
       if (vEl && d.venues_html !== undefined && !vEl.querySelector('.hoy-fila.open')) {{
         vEl.innerHTML = d.venues_html;
+        applyDataUtc(vEl);   // formatear fechas/horas (16avos, próximos) en zona del usuario
       }}
     }})
     .catch(function() {{}});
