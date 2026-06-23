@@ -16,22 +16,43 @@ Terceros: asignados por Anexo C del Reglamento FIFA 2026 (495 combinaciones posi
 
 from typing import Dict, List, Optional
 
+from scenarios import compute_group_scenarios
+
 
 def _group_key(letter: str) -> str:
     return f"GROUP_{letter}"
 
 
+# Memo de escenarios por grupo (se limpia al inicio de cada build_round_of_32).
+_SCN_MEMO: Dict[str, dict] = {}
+
+
+def _group_scenarios(group_results: Dict, letter: str) -> dict:
+    key = _group_key(letter)
+    if key not in _SCN_MEMO:
+        data = group_results.get(key, {})
+        _SCN_MEMO[key] = compute_group_scenarios(data.get("teams", []), data.get("matches", []))
+    return _SCN_MEMO[key]
+
+
 def _get_pos(group_results: Dict, letter: str, pos: int):
-    """Devuelve (equipo, es_provisional). pos: 0=1ro, 1=2do."""
+    """Devuelve (equipo, es_provisional). pos: 0=1ro, 1=2do.
+    Provisional = la posición de ESE equipo todavía NO está matemáticamente fija
+    (no depende de que el grupo haya jugado los 6 partidos)."""
     data = group_results.get(_group_key(letter), {})
     teams = data.get("teams", [])
     matches = data.get("matches", [])
-    played = sum(1 for m in matches if m.played)
-    provisional = played < 6  # 4 equipos → 6 partidos totales
     fallback = f"{'1°' if pos == 0 else '2°'} Grp {letter}"
-    if pos < len(teams):
-        return teams[pos], provisional
-    return fallback, True
+    if pos >= len(teams):
+        return fallback, True
+    team = teams[pos]
+    sc = _group_scenarios(group_results, letter)
+    if sc and team in sc:
+        provisional = set(sc[team].get("positions", [])) != {pos + 1}
+    else:
+        # sin escenarios: grupo terminado (todas las posiciones fijas) o demasiados pendientes
+        provisional = sum(1 for m in matches if m.played) < 6
+    return team, provisional
 
 
 def _is_group_complete(group_results: Dict, letter: str) -> bool:
@@ -706,6 +727,7 @@ def build_round_of_32(
     thirds_advancing: List[Dict],
     thirds_slot_map: Optional[Dict] = None,
 ) -> List[Dict]:
+    _SCN_MEMO.clear()  # escenarios frescos para este build
     if thirds_slot_map is None:
         thirds_slot_map = assign_thirds_to_slots(thirds_advancing)
 
