@@ -1929,7 +1929,8 @@ def _player_avatar(photo: str) -> str:
     """Avatar redondo chico del jugador (5.1). Vacío si no hay foto."""
     if not photo:
         return ''
-    return (f'<img class="pl-av" src="{photo}" alt="" loading="lazy" '
+    return (f'<img class="pl-av" src="{photo}" alt="" width="22" height="22" '
+            f'loading="lazy" decoding="async" fetchpriority="low" '
             f'onerror="this.style.display=\'none\'">')
 
 
@@ -2108,8 +2109,8 @@ def _render_venues(standings: Dict) -> str:
         # Foto del estadio (solo la validada como real, no placeholder)
         img = ""
         if v.get("image_url"):
-            img = (f'<img class="ven-img" loading="lazy" alt="" src="{v["image_url"]}" '
-                   f'onerror="this.style.display=\'none\'">')
+            img = (f'<img class="ven-img" loading="lazy" decoding="async" fetchpriority="low" '
+                   f'alt="" src="{v["image_url"]}" onerror="this.style.display=\'none\'">')
         # Datos: capacidad + superficie
         vinfo = VENUE_INFO.get(v.get("name", "")) or {}
         bits = []
