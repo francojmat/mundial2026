@@ -184,7 +184,54 @@ def _sl_team_link(api_name: str) -> str:
     return f'<a class="sl-tlink" href="/seleccion.html?t={urllib.parse.quote(api_name)}">{traducir(api_name)}</a>'
 
 
-def render_seleccion_fragment(team: str, group_label: str, rows: list, matches: list) -> str:
+def _rank_of(api: str) -> int:
+    f = ficha_seleccion(api)
+    return f["rank"] if f else 999
+
+
+def render_cruces_block(entry: dict, exact: bool) -> str:
+    """Bloque '¿Contra quién?': posibles rivales de 16avos del equipo, con mejor/peor
+    caso por ranking FIFA. `entry` = salida de cruces.team_cruces; `exact` = Anexo C exacto."""
+    if not entry:
+        return ""
+    branches = entry.get("branches", [])
+    if not branches:
+        return ""
+    locked = entry.get("locked_pos")
+
+    subs = []
+    for b in branches:
+        opps = sorted(b.get("opponents", []), key=_rank_of)  # más difícil (menor rank) primero
+        if not opps:
+            continue
+        chips = "".join(f'<span class="cz-opp">{traducir(o)}</span>' for o in opps)
+        bw = ""
+        if len(opps) >= 2:
+            hard, easy = opps[0], opps[-1]
+            rh, re = _rank_of(hard), _rank_of(easy)
+            if rh != 999 and re != 999 and hard != easy:
+                bw = (f'<div class="cz-bw">'
+                      f'<span><span class="cz-bw-k">Más difícil</span> {traducir(hard)} · #{rh}</span>'
+                      f'<span><span class="cz-bw-k">Más fácil</span> {traducir(easy)} · #{re}</span></div>')
+        if locked:
+            head = (f'Termina {locked}.º del {entry.get("group","")} → '
+                    f'16avos en {b["city"]} · contra {b["opp_type"]}')
+        else:
+            head = f'Si sale {b["pos"]}.º → 16avos en {b["city"]} · contra {b["opp_type"]}'
+        n = len(opps)
+        tag = ('rival posible' if n == 1 else f'{n} rivales posibles')
+        tag += '' if exact else ' · se define al cerrar los grupos'
+        subs.append(f'<div class="cz-branch"><div class="cz-head">{head}</div>'
+                    f'<div class="cz-tag">{tag}</div>'
+                    f'<div class="cz-opps">{chips}</div>{bw}</div>')
+    if not subs:
+        return ""
+    return (f'<div class="sl-sec cz"><h3 class="pl-gt">¿Contra quién en 16avos?</h3>'
+            + "".join(subs) + '</div>')
+
+
+def render_seleccion_fragment(team: str, group_label: str, rows: list, matches: list,
+                              cruces: dict = None, cruces_exact: bool = False) -> str:
     """9.1 — perfil de selección: ficha + tabla de su grupo + sus partidos + acceso al plantel.
     `matches` = lista de dicts de partido completos (con goles/cambios para el detalle)."""
     import urllib.parse
@@ -238,11 +285,13 @@ def render_seleccion_fragment(team: str, group_label: str, rows: list, matches: 
     matches_html = (f'<div class="sl-sec"><h3 class="pl-gt">Partidos</h3>'
                     f'<div class="sl-matches">{m_html}</div></div>') if matches else ""
 
+    cruces_html = render_cruces_block(cruces, cruces_exact)
+
     team_q = urllib.parse.quote(team)
     cta = (f'<a class="sl-cta" href="/plantel.html?t={team_q}">'
            f'Ver plantel completo &#8594;</a>')
 
-    return title + grp_html + matches_html + cta
+    return title + grp_html + cruces_html + matches_html + cta
 
 
 def render_seleccion_shell() -> str:
@@ -281,6 +330,15 @@ def render_seleccion_shell() -> str:
     .pl-fi-v.rk{{color:{T}}}
     .sl-sec{{margin-bottom:26px}}
     .pl-gt{{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:{T};margin-bottom:11px}}
+    .cz-branch{{background:{WHT};border:1px solid {BDR};border-radius:10px;padding:11px 13px;margin-bottom:9px}}
+    .cz-head{{font-size:.8rem;font-weight:700;color:{TXT};margin-bottom:7px;line-height:1.3}}
+    .cz-tag{{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:{DIM};margin-bottom:9px}}
+    .cz-opps{{display:flex;flex-wrap:wrap;gap:6px}}
+    .cz-opp{{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;background:{GRY};border-radius:6px;padding:4px 9px}}
+    .cz-opp img{{height:1em;width:auto;border-radius:1px}}
+    .cz-bw{{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;padding-top:9px;border-top:1px solid {GRY};font-size:.72rem}}
+    .cz-bw img{{height:1em;width:auto;border-radius:1px;vertical-align:-.1em;margin:0 3px}}
+    .cz-bw-k{{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{T};margin-right:5px}}
     .sl-grp{{width:100%;border-collapse:collapse;background:{WHT};border:1px solid {BDR};border-radius:10px;overflow:hidden}}
     .sl-grp th{{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{DIM};text-align:center;padding:8px 4px;border-bottom:1px solid {BDR}}}
     .sl-grp th:nth-child(2){{text-align:left;padding-left:12px}}

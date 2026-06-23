@@ -104,6 +104,10 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
                 for _side in (_m.get("home"), _m.get("away")):
                     if _side:
                         team_matches.setdefault(_side, []).append(_m)
+        # ¿Contra quién? — posibles rivales de 16avos (motor de cruces, una vez)
+        from cruces import build_cruces
+        cruces_data = build_cruces(standings)
+        cruces_exact = cruces_data.get("_exact", False)
         selecciones = {}
         for t in squads.keys():
             gname = team_group.get(t)
@@ -120,7 +124,9 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
                                  "dg": s.goal_diff if s else 0,
                                  "me": rt == t})
             mlist = sorted(team_matches.get(t, []), key=lambda x: x.get("utc_date") or "")
-            selecciones[t] = render_seleccion_fragment(t, label, rows, mlist)
+            selecciones[t] = render_seleccion_fragment(
+                t, label, rows, mlist,
+                cruces=cruces_data.get(t), cruces_exact=cruces_exact)
         outputs.append(("selecciones.json", json.dumps(selecciones, ensure_ascii=False)))
         outputs.append(("seleccion.html", render_seleccion_shell()))
 
