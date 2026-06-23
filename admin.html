@@ -118,6 +118,8 @@
     .ig-btn-all{background:#16a34a;color:#fff}
     .ig-btn-add{background:#211c14;color:#fff}
     .ig-btn-clear{background:none;border:1px solid #e8ddd0;color:#7c6a58}
+    .ig-hint{font-size:.72rem;color:#b09880;line-height:1.45}
+    .ig-hint b{color:#7c6a58}
     .ig-thumbs{display:flex;flex-wrap:wrap;gap:8px}
     .ig-thumb{position:relative;width:62px;height:62px;border:2px solid #e8ddd0;cursor:pointer;overflow:hidden;background:#faf8f4}
     .ig-thumb.active{border-color:#c2410c}
@@ -287,6 +289,7 @@
             <button class="ig-btn ig-btn-add" onclick="document.getElementById('ig-file').click()">+ Agregar fotos</button>
             <button class="ig-btn ig-btn-clear" onclick="igClear()">Limpiar</button>
           </div>
+          <p class="ig-hint">📱 En iPhone: tocá Descargar → <b>"Guardar imagen"</b> en el menú que aparece (va a Fotos).</p>
           <div id="ig-thumbs" class="ig-thumbs"></div>
         </div>
       </div>
@@ -869,33 +872,57 @@ function igAddFiles(files) {
   });
 }
 
-function igDownloadCanvas(canvas, filename) {
-  canvas.toBlob(blob => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-  }, 'image/png');
+function igCanvasToFile(canvas, filename) {
+  return new Promise(res =>
+    canvas.toBlob(blob => res(new File([blob], filename, { type: 'image/png' })), 'image/png'));
 }
 
-function igDownloadCurrent() {
-  if (_igActive < 0) return;
-  const it = _igItems[_igActive];
-  igDownloadCanvas(igCanvas(), `mejortercero-${_igFormat.name}-${it.name}.png`);
-}
-
-// Descarga todas con un canvas temporal, escalonando para que el navegador no junte las descargas.
-function igDownloadAll() {
-  const off = document.createElement('canvas');
-  _igItems.forEach((it, i) => {
+// Descarga por enlace — funciona en escritorio/Android, NO en iOS (Safari ignora download).
+function igDownloadFiles(files) {
+  files.forEach((file, i) => {
     setTimeout(() => {
-      igPaint(off, it.img);
-      igDownloadCanvas(off, `mejortercero-${_igFormat.name}-${String(i + 1).padStart(2, '0')}-${it.name}.png`);
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url; a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
     }, i * 600);
   });
+}
+
+// Entrega las imágenes: en iPhone usa la hoja de compartir nativa ("Guardar imagen" → Fotos);
+// en el resto cae a la descarga por enlace.
+async function igDeliver(files) {
+  if (navigator.canShare && navigator.canShare({ files })) {
+    try {
+      await navigator.share({ files, title: 'Mejor Tercero' });
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // el usuario canceló: no descargar de fondo
+      // cualquier otro error: caemos a descarga
+    }
+  }
+  igDownloadFiles(files);
+}
+
+async function igDownloadCurrent() {
+  if (_igActive < 0) return;
+  const it = _igItems[_igActive];
+  const file = await igCanvasToFile(igCanvas(), `mejortercero-${_igFormat.name}-${it.name}.png`);
+  igDeliver([file]);
+}
+
+async function igDownloadAll() {
+  const off = document.createElement('canvas');
+  const files = [];
+  for (let i = 0; i < _igItems.length; i++) {
+    igPaint(off, _igItems[i].img);
+    files.push(await igCanvasToFile(off,
+      `mejortercero-${_igFormat.name}-${String(i + 1).padStart(2, '0')}-${_igItems[i].name}.png`));
+  }
+  igDeliver(files);
 }
 
 // Wiring de controles (una sola vez)
