@@ -22,24 +22,29 @@ DIM = "#b09880"
 GRY = "#f0ebe4"
 
 # Horarios aproximados R16/QF/SF/Final (UTC)
+# Calendario oficial FIFA 2026 (octavos→final) — sede + horario, verificado contra
+# Wikipedia "knockout stage". Horarios convertidos a UTC. Slots → partido:
+# r16-L-0=P89, r16-L-1=P90, r16-L-2=P93, r16-L-3=P94, r16-R-0=P91, r16-R-1=P92,
+# r16-R-2=P95, r16-R-3=P96, qf-L-0=P97, qf-L-1=P98, qf-R-0=P99, qf-R-1=P100,
+# sf-L-0=P101, sf-R-0=P102.
 _KO_SCHEDULE = {
-    "r16-L-0": ("2026-07-08T22:00:00Z", "MetLife Stadium, New Jersey"),
-    "r16-L-1": ("2026-07-09T02:00:00Z", "AT&T Stadium, Dallas"),
-    "r16-L-2": ("2026-07-09T22:00:00Z", "Estadio Azteca, CDMX"),
-    "r16-L-3": ("2026-07-10T02:00:00Z", "SoFi Stadium, Los Ángeles"),
-    "r16-R-0": ("2026-07-10T22:00:00Z", "Hard Rock Stadium, Miami"),
-    "r16-R-1": ("2026-07-11T02:00:00Z", "Mercedes-Benz Stadium, Atlanta"),
-    "r16-R-2": ("2026-07-11T22:00:00Z", "BC Place, Vancouver"),
-    "r16-R-3": ("2026-07-12T02:00:00Z", "Lumen Field, Seattle"),
-    "qf-L-0":  ("2026-07-14T22:00:00Z", "MetLife Stadium, New Jersey"),
-    "qf-L-1":  ("2026-07-15T02:00:00Z", "AT&T Stadium, Dallas"),
-    "qf-R-0":  ("2026-07-15T22:00:00Z", "Estadio Azteca, CDMX"),
-    "qf-R-1":  ("2026-07-16T02:00:00Z", "SoFi Stadium, Los Ángeles"),
-    "sf-L-0":  ("2026-07-18T22:00:00Z", "MetLife Stadium, New Jersey"),
-    "sf-R-0":  ("2026-07-19T22:00:00Z", "AT&T Stadium, Dallas"),
+    "r16-L-0": ("2026-07-04T21:00:00Z", "Lincoln Financial Field, Filadelfia"),  # P89
+    "r16-L-1": ("2026-07-04T17:00:00Z", "NRG Stadium, Houston"),                  # P90
+    "r16-L-2": ("2026-07-06T19:00:00Z", "AT&T Stadium, Dallas"),                  # P93
+    "r16-L-3": ("2026-07-07T00:00:00Z", "Lumen Field, Seattle"),                  # P94
+    "r16-R-0": ("2026-07-05T20:00:00Z", "MetLife Stadium, New Jersey"),           # P91
+    "r16-R-1": ("2026-07-06T00:00:00Z", "Estadio Azteca, CDMX"),                  # P92
+    "r16-R-2": ("2026-07-07T16:00:00Z", "Mercedes-Benz Stadium, Atlanta"),        # P95
+    "r16-R-3": ("2026-07-07T20:00:00Z", "BC Place, Vancouver"),                   # P96
+    "qf-L-0":  ("2026-07-09T20:00:00Z", "Gillette Stadium, Boston"),              # P97
+    "qf-L-1":  ("2026-07-10T19:00:00Z", "SoFi Stadium, Los Ángeles"),             # P98
+    "qf-R-0":  ("2026-07-11T21:00:00Z", "Hard Rock Stadium, Miami"),              # P99
+    "qf-R-1":  ("2026-07-12T01:00:00Z", "Arrowhead Stadium, Kansas City"),        # P100
+    "sf-L-0":  ("2026-07-14T19:00:00Z", "AT&T Stadium, Dallas"),                  # P101
+    "sf-R-0":  ("2026-07-15T19:00:00Z", "Mercedes-Benz Stadium, Atlanta"),        # P102
 }
-_3RD_PLACE = ("2026-07-22T22:00:00Z", "MetLife Stadium, New Jersey")
-_FINAL     = ("2026-07-23T22:00:00Z", "MetLife Stadium, New Jersey")
+_3RD_PLACE = ("2026-07-18T21:00:00Z", "Hard Rock Stadium, Miami")                 # P103
+_FINAL     = ("2026-07-19T19:00:00Z", "MetLife Stadium, New Jersey")              # P104
 
 
 def _done(matches) -> bool:
