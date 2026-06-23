@@ -1234,6 +1234,11 @@ function loadExtra() {{
         var el = document.getElementById(id);
         if (el && d[map[id]] !== undefined) el.innerHTML = d[map[id]];
       }});
+      // Estadios: refrescar resultados, pero NO pisar una tarjeta que el usuario tenga abierta.
+      var vEl = document.getElementById('venues-inner');
+      if (vEl && d.venues_html !== undefined && !vEl.querySelector('.hoy-fila.open')) {{
+        vEl.innerHTML = d.venues_html;
+      }}
     }})
     .catch(function() {{}});
 }}

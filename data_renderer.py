@@ -6,7 +6,7 @@ from typing import Dict, List, Set
 
 from html_renderer import (_render_groups, _render_thirds, _render_scorers, _match_card,
                            _render_today_matches, _render_assists, _render_yellows, _render_reds,
-                           _render_rating)
+                           _render_rating, _render_venues)
 
 
 def _r32_inner(matches: List[Dict]) -> str:
@@ -54,5 +54,8 @@ def render_data_extra_json(standings: Dict, matchups: List[Dict]) -> str:
         "assists_html": _render_assists(standings),
         "yellows_html": _render_yellows(standings),
         "reds_html":    _render_reds(standings),
+        # Estadios: se publican acá para que sus resultados se actualicen vía loadExtra.
+        # Antes vivían solo en el shell estático → quedaban congelados hasta un redeploy.
+        "venues_html":  _render_venues(standings),
     }
     return json.dumps(data, ensure_ascii=False)
