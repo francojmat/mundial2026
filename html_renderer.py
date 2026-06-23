@@ -50,6 +50,10 @@ CRUCES_CSS = (
     f".cz-bw{{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:10px;padding-top:9px;border-top:1px solid {GRY};font-size:.72rem}}"
     f".cz-bw img{{height:1em;width:auto;border-radius:1px;vertical-align:-.1em;margin:0 3px}}"
     f".cz-bw-k{{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{T};margin-right:5px}}"
+    f".cz-camino{{margin-top:11px;padding-top:9px;border-top:1px solid {GRY}}}"
+    f".cz-camino-k{{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{T};display:block;margin-bottom:6px}}"
+    f".cz-path{{display:flex;flex-wrap:wrap;align-items:center;gap:4px 7px;font-size:.68rem;color:{TXT}}}"
+    f".cz-step{{white-space:nowrap}}.cz-rnd{{color:{MUT};font-size:.85em}}.cz-arrow{{color:{DIM}}}"
     # propios de la sección del home — selector de marca
     f".cz-sel-wrap{{position:relative;display:block;width:100%;max-width:340px;margin-bottom:18px}}"
     f".cz-sel-wrap::after{{content:'▾';position:absolute;right:15px;top:50%;transform:translateY(-50%);color:{T};font-size:.72rem;pointer-events:none}}"
@@ -91,6 +95,40 @@ _KO_SCHEDULE = {
 }
 _3RD_PLACE = ("2026-07-18T21:00:00Z", "Hard Rock Stadium, Miami")                 # P103
 _FINAL     = ("2026-07-19T19:00:00Z", "MetLife Stadium, New Jersey")              # P104
+
+# Camino al título: a qué slot de octavos alimenta cada partido de R32, y de slot a slot
+# hacia adelante (octavos→cuartos→semi→final). Derivado de la estructura FEED del bracket.
+_R32_TO_R16SLOT = {
+    74: "r16-L-0", 77: "r16-L-0", 73: "r16-L-1", 75: "r16-L-1",
+    83: "r16-L-2", 84: "r16-L-2", 81: "r16-L-3", 82: "r16-L-3",
+    76: "r16-R-0", 78: "r16-R-0", 79: "r16-R-1", 80: "r16-R-1",
+    86: "r16-R-2", 88: "r16-R-2", 85: "r16-R-3", 87: "r16-R-3",
+}
+_SLOT_NEXT = {
+    "r16-L-0": "qf-L-0", "r16-L-1": "qf-L-0", "r16-L-2": "qf-L-1", "r16-L-3": "qf-L-1",
+    "r16-R-0": "qf-R-0", "r16-R-1": "qf-R-0", "r16-R-2": "qf-R-1", "r16-R-3": "qf-R-1",
+    "qf-L-0": "sf-L-0", "qf-L-1": "sf-L-0", "qf-R-0": "sf-R-0", "qf-R-1": "sf-R-0",
+}
+_ROUND_NAME = {"r16": "Octavos", "qf": "Cuartos", "sf": "Semi"}
+
+
+def _city_only(venue: str) -> str:
+    return venue.split(",")[-1].strip() if venue else ""
+
+
+def title_path(partido: int) -> list:
+    """Camino al título desde un partido de 16avos (R32): [(ronda, ciudad, utc), ...]
+    de 16avos hasta la final. Asume que el equipo gana cada ronda."""
+    from bracket import _SCHEDULE as _R32
+    utc, venue = _R32.get(partido, ("", ""))
+    path = [("16avos", _city_only(venue), utc)]
+    slot = _R32_TO_R16SLOT.get(partido)
+    while slot:
+        u, v = _KO_SCHEDULE.get(slot, ("", ""))
+        path.append((_ROUND_NAME[slot.split("-")[0]], _city_only(v), u))
+        slot = _SLOT_NEXT.get(slot)
+    path.append(("Final", _city_only(_FINAL[1]), _FINAL[0]))
+    return path
 
 
 def _done(matches) -> bool:

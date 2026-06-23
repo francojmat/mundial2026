@@ -4,7 +4,7 @@ identidad visual de marca. Patrón: una página "shell" estática (header + Volv
 contenedor + JS) que inyecta un fragmento pre-renderizado desde un JSON.
 """
 
-from html_renderer import T, TEL, BG, WHT, BDR, BDR2, TXT, MUT, DIM, GRY, CRUCES_CSS
+from html_renderer import T, TEL, BG, WHT, BDR, BDR2, TXT, MUT, DIM, GRY, CRUCES_CSS, title_path
 from countries import traducir, nombre_es, pais_liga_es, bandera_img
 from seleccion_data import ficha_seleccion
 
@@ -199,6 +199,17 @@ _CELL_BG = ["#e3effb", "#e6f4e6", "#fbf0d9", "#ece9fb", "#fbe3e6", "#def0ee"]
 _DRAW_BG = "#f0efe9"
 
 
+def _render_camino(partido: int) -> str:
+    """Camino al título desde ese slot (si gana cada ronda): sedes por ronda."""
+    path = title_path(partido)
+    if not path:
+        return ""
+    steps = ' <span class="cz-arrow">→</span> '.join(
+        f'<span class="cz-step"><span class="cz-rnd">{r}</span> {c}</span>' for r, c, _u in path)
+    return (f'<div class="cz-camino"><span class="cz-camino-k">Si gana todo · camino al título</span>'
+            f'<div class="cz-path">{steps}</div></div>')
+
+
 def _render_matrix(mx: dict, head: str) -> str:
     """Grilla tipo Excel: combinaciones de los partidos del grupo rival → rival.
     Cada equipo-resultado tiene su color de relleno (mismo color = mismo resultado)."""
@@ -248,7 +259,7 @@ def _render_matrix(mx: dict, head: str) -> str:
             f'<div class="cz-sub">Tu rival según los partidos del Grupo {mx["opp_group"]}:</div>'
             f'<div class="cz-mwrap"><table class="cz-matrix"><thead><tr>{cols}'
             f'<th class="cz-riv-h">Tu rival</th></tr></thead><tbody>{body}</tbody></table></div>'
-            f'{bw}</div>')
+            f'{bw}{_render_camino(mx["partido"])}</div>')
 
 
 def _render_set_branch(b: dict, exact: bool, head: str) -> str:
@@ -269,7 +280,7 @@ def _render_set_branch(b: dict, exact: bool, head: str) -> str:
     tag += '' if exact else ' · se define al cerrar los grupos'
     return (f'<div class="cz-block"><div class="cz-branch"><div class="cz-head">{head}</div>'
             f'<div class="cz-tag">{tag}</div>'
-            f'<div class="cz-opps">{chips}</div>{bw}</div></div>')
+            f'<div class="cz-opps">{chips}</div>{bw}{_render_camino(b["partido"])}</div></div>')
 
 
 def render_cruces_block(entry: dict, exact: bool) -> str:
