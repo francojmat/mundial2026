@@ -41,23 +41,26 @@ def _is_group_complete(group_results: Dict, letter: str) -> bool:
     return sum(1 for m in matches if m.played) >= 6
 
 
+# Calendario oficial FIFA 2026 (R32, partidos 73-88) — sede + horario.
+# Verificado contra Wikipedia "2026 FIFA World Cup knockout stage" (jun 2026).
+# Horarios convertidos a UTC desde la hora local de cada sede.
 _SCHEDULE = {
-    74: ("2026-06-28T22:00:00Z", "MetLife Stadium, New Jersey"),
-    77: ("2026-06-29T02:00:00Z", "Estadio Azteca, CDMX"),
-    73: ("2026-06-29T22:00:00Z", "AT&T Stadium, Dallas"),
-    75: ("2026-06-30T02:00:00Z", "Hard Rock Stadium, Miami"),
-    83: ("2026-06-30T22:00:00Z", "Mercedes-Benz Stadium, Atlanta"),
-    84: ("2026-07-01T02:00:00Z", "BC Place, Vancouver"),
-    81: ("2026-07-01T22:00:00Z", "SoFi Stadium, Los Ángeles"),
-    82: ("2026-07-02T02:00:00Z", "Lumen Field, Seattle"),
-    76: ("2026-07-02T22:00:00Z", "Lincoln Financial Field, Filadelfia"),
-    78: ("2026-07-03T02:00:00Z", "Arrowhead Stadium, Kansas City"),
-    79: ("2026-07-03T22:00:00Z", "Levi's Stadium, San Francisco"),
-    80: ("2026-07-04T02:00:00Z", "Gillette Stadium, Boston"),
-    86: ("2026-07-04T22:00:00Z", "BMO Field, Toronto"),
-    88: ("2026-07-05T02:00:00Z", "Estadio BBVA, Monterrey"),
-    85: ("2026-07-05T22:00:00Z", "Estadio Akron, Guadalajara"),
-    87: ("2026-07-06T02:00:00Z", "MetLife Stadium, New Jersey"),
+    73: ("2026-06-28T19:00:00Z", "SoFi Stadium, Los Ángeles"),
+    74: ("2026-06-29T20:30:00Z", "Gillette Stadium, Boston"),
+    76: ("2026-06-29T17:00:00Z", "NRG Stadium, Houston"),
+    75: ("2026-06-30T01:00:00Z", "Estadio BBVA, Monterrey"),
+    78: ("2026-06-30T17:00:00Z", "AT&T Stadium, Dallas"),
+    77: ("2026-06-30T21:00:00Z", "MetLife Stadium, New Jersey"),
+    79: ("2026-07-01T01:00:00Z", "Estadio Azteca, CDMX"),
+    80: ("2026-07-01T16:00:00Z", "Mercedes-Benz Stadium, Atlanta"),
+    82: ("2026-07-01T20:00:00Z", "Lumen Field, Seattle"),
+    81: ("2026-07-02T00:00:00Z", "Levi's Stadium, San Francisco"),
+    84: ("2026-07-02T19:00:00Z", "SoFi Stadium, Los Ángeles"),
+    83: ("2026-07-02T23:00:00Z", "BMO Field, Toronto"),
+    85: ("2026-07-03T03:00:00Z", "BC Place, Vancouver"),
+    88: ("2026-07-03T18:00:00Z", "AT&T Stadium, Dallas"),
+    86: ("2026-07-03T22:00:00Z", "Hard Rock Stadium, Miami"),
+    87: ("2026-07-04T01:30:00Z", "Arrowhead Stadium, Kansas City"),
 }
 
 # Estructura oficial del bracket FIFA 2026
