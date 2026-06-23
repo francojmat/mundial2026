@@ -1241,18 +1241,26 @@ function loadExtra() {{
   fetch('/api/data2')
     .then(function(r) {{ return r.json(); }})
     .then(function(d) {{
-      var map = {{'scorers-inner':'scorers_html','rating-inner':'rating_html',
-                 'assists-inner':'assists_html','yellows-inner':'yellows_html','reds-inner':'reds_html'}};
-      Object.keys(map).forEach(function(id) {{
-        var el = document.getElementById(id);
-        if (el && d[map[id]] !== undefined) el.innerHTML = d[map[id]];
-      }});
-      // Estadios: refrescar resultados, pero NO pisar una tarjeta que el usuario tenga abierta.
-      var vEl = document.getElementById('venues-inner');
-      if (vEl && d.venues_html !== undefined && !vEl.querySelector('.hoy-fila.open')) {{
-        vEl.innerHTML = d.venues_html;
-        applyDataUtc(vEl);   // formatear fechas/horas (16avos, próximos) en zona del usuario
+      // Rellenar UNA sección por frame (cediendo el hilo entre cada una) para que
+      // aparezcan progresivas SIN bloquear la navegación con un innerHTML gigante.
+      var jobs = [['scorers-inner','scorers_html'],['rating-inner','rating_html'],
+                  ['assists-inner','assists_html'],['yellows-inner','yellows_html'],
+                  ['reds-inner','reds_html'],['venues-inner','venues_html']];
+      var i = 0;
+      function step() {{
+        if (i >= jobs.length) return;
+        var id = jobs[i][0], key = jobs[i][1], el = document.getElementById(id);
+        if (el && d[key] !== undefined) {{
+          // Estadios: no pisar una tarjeta que el usuario tenga abierta.
+          if (id !== 'venues-inner' || !el.querySelector('.hoy-fila.open')) {{
+            el.innerHTML = d[key];
+            if (id === 'venues-inner') applyDataUtc(el);
+          }}
+        }}
+        i++;
+        requestAnimationFrame(step);
       }}
+      requestAnimationFrame(step);
     }})
     .catch(function() {{}});
 }}
