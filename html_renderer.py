@@ -242,6 +242,11 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .grupo-foot.open .gf-toggle-t{{color:{T};border-color:{T};background:rgba(194,65,12,.06)}}
     .gf-chev{{font-size:.6rem;color:{MUT};transition:transform .2s}}
     .grupo-foot.open .gf-chev{{transform:rotate(180deg);color:{T}}}
+    .gf-chev-wrap{{display:inline-flex;align-items:center;gap:5px}}
+    .gf-chev-lbl{{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:{MUT}}}
+    .gf-chev-lbl::after{{content:'Abrir'}}
+    .grupo-foot.open .gf-chev-lbl{{color:{T}}}
+    .grupo-foot.open .gf-chev-lbl::after{{content:'Cerrar'}}
     .gf-body{{display:none;padding:2px 14px 11px}}
     .grupo-foot.open .gf-body{{display:block}}
     .gf-stats{{font-size:.68rem;color:{MUT};font-weight:700;letter-spacing:.02em}}
@@ -501,6 +506,12 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .nav-dot{{width:7px;height:7px;border-radius:50%;background:{BDR2};flex-shrink:0}}
     .nav-link:hover .nav-dot{{background:{T}}}
 
+    /* ── Barra de secciones (anclas horizontales bajo el logo) ── */
+    .secbar{{position:sticky;top:0;z-index:40;display:flex;flex-wrap:wrap;justify-content:center;gap:7px;background:{BG};padding:11px 24px;margin:0 -24px 18px;border-bottom:1px solid {BDR}}}
+    .secbar-link{{border:1px solid rgba(194,65,12,.25);background:rgba(194,65,12,.06);color:{T};font-size:.73rem;font-weight:700;letter-spacing:.01em;padding:6px 13px;border-radius:7px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .14s,color .14s,border-color .14s}}
+    .secbar-link:hover,.secbar-link:active{{background:{T};color:#fff;border-color:{T}}}
+    @media(max-width:640px){{.secbar{{padding:9px 10px;margin:0 -10px 16px;gap:6px}}.secbar-link{{font-size:.68rem;padding:5px 11px}}}}
+
     /* ── Mobile bracket ── */
     .mobile-bracket{{display:none}}
     @media(max-width:900px){{
@@ -538,6 +549,8 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 <div class="hdr">
   <img src="/logo.png" alt="Mejor Tercero - Mundial 2026" class="hdr-logo">
 </div>
+
+<nav class="secbar" id="secbar" aria-label="Secciones"></nav>
 
 <div id="today-container">
 <div class="sec" id="sec-hoy" data-nav="Partidos">
@@ -1274,6 +1287,19 @@ function buildNav() {{
   box.innerHTML = html;
 }}
 
+// Barra horizontal de anclas bajo el logo (mismas secciones que el menú; reusa navGo).
+function buildBar() {{
+  var bar = document.getElementById('secbar');
+  if (!bar) return;
+  var html = '';
+  document.querySelectorAll('.sec[data-nav]').forEach(function(s) {{
+    var key = s.id.replace(/^sec-/, '');
+    var label = s.getAttribute('data-nav') || key;
+    html += '<button class="secbar-link" onclick="navGo(\\'' + key + '\\')">' + label + '</button>';
+  }});
+  bar.innerHTML = html;
+}}
+
 function navGo(secId) {{
   closeNav();
   var body = document.getElementById('sb-' + secId);
@@ -1284,7 +1310,12 @@ function navGo(secId) {{
     SEC[secId] = false; saveSecs();
   }}
   var target = document.getElementById('sec-' + secId);
-  if (target) setTimeout(function() {{ target.scrollIntoView({{behavior: 'smooth', block: 'start'}}); }}, 60);
+  if (target) {{
+    // scroll-margin-top dinámico = alto de la barra sticky → el título no queda tapado
+    var bar = document.getElementById('secbar');
+    target.style.scrollMarginTop = ((bar ? bar.offsetHeight : 0) + 12) + 'px';
+    setTimeout(function() {{ target.scrollIntoView({{behavior: 'smooth', block: 'start'}}); }}, 60);
+  }}
 }}
 
 // ── Marcadores en vivo (cada 8s, vía el Worker — mucho más rápido que data.json) ──
@@ -1504,6 +1535,7 @@ function filterRank(sel) {{
 document.addEventListener("DOMContentLoaded", function() {{
   load(); restore(); restoreSecs(); applyDefaultClosed();
   buildNav();
+  buildBar();
   applyDataUtc();
   scaleBracket();
   initPath();
@@ -1677,7 +1709,9 @@ def _render_groups(standings: Dict, live_teams: Set[str], thirds_advancing_set: 
         body_inner = detalles_html + esc_html
         foot = (f'<div class="grupo-foot">'
                 f'<div class="gf-toggle" onclick="toggleGroupRow(this)">'
-                f'<span class="gf-toggle-t">Detalles</span><span class="gf-chev">&#9662;</span></div>'
+                f'<span class="gf-toggle-t">Detalles</span>'
+                f'<span class="gf-chev-wrap"><span class="gf-chev-lbl"></span>'
+                f'<span class="gf-chev">&#9662;</span></span></div>'
                 f'<div class="gf-body">{body_inner}</div></div>') if body_inner else ""
         html += f"""
   <div class="grupo">
