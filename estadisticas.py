@@ -155,8 +155,8 @@ def render_estadisticas_shell() -> str:
 
   <div class="tabs" id="tabs"></div>
 
-  <div class="panel active" id="p-resumen"></div>
-  <div class="panel" id="p-confed">
+  <div class="panel" id="p-resumen"></div>
+  <div class="panel active" id="p-confed">
     <div class="sec-h">Cómo le va a cada confederación</div>
     <div class="ctab-wrap"><table class="ctab" id="confed-table"></table></div>
     <p class="note">V-E-D y goles cuentan <b>todos</b> los partidos de sus equipos (incluidos los que juegan entre sí). «Clasifican» es la proyección actual a 16avos. El ranking es por puntos por partido.</p>
@@ -264,9 +264,10 @@ def render_estadisticas_shell() -> str:
 <script>
 // pestañas activas (se van sumando a medida que se construyen)
 var TABS = [
-  ["resumen","Resumen"], ["confed","Confederaciones"], ["comparar","Comparar"],
+  ["confed","Confederaciones"], ["comparar","Comparar"],
   ["efic","Eficiencia"], ["goles","Goles"], ["equipos","Equipos"],
   ["jugadores","Jugadores"], ["disc","Disciplina"], ["ligas","Ligas"],
+  ["resumen","Resumen"],
 ];
 var STATS = null;
 

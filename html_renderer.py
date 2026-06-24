@@ -511,6 +511,13 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .secbar-link{{border:1px solid rgba(194,65,12,.25);background:rgba(194,65,12,.06);color:{T};font-size:.73rem;font-weight:700;letter-spacing:.01em;padding:6px 13px;border-radius:7px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .14s,color .14s,border-color .14s}}
     .secbar-link:hover,.secbar-link:active{{background:{T};color:#fff;border-color:{T}}}
     @media(max-width:640px){{.secbar{{padding:9px 10px;margin:0 -10px 16px;gap:6px}}.secbar-link{{font-size:.68rem;padding:5px 11px}}}}
+    /* sub-tabs de "Estadísticas clásicas" (rectos, de marca) */
+    .cstabs{{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}}
+    .cstab{{border:1px solid {T};background:{WHT};color:{T};font-family:inherit;font-size:.78rem;font-weight:700;padding:7px 14px;border-radius:6px;cursor:pointer}}
+    .cstab:hover{{background:{T};color:#fff}}
+    .cstab.active{{background:{T};color:#fff}}
+    .cspane{{display:none}}
+    .cspane.active{{display:block}}
 
     /* ── Mobile bracket ── */
     .mobile-bracket{{display:none}}
@@ -634,23 +641,40 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
       <span style="display:block;font-size:1.06rem;font-weight:800;color:{TXT};letter-spacing:-.02em;margin-bottom:4px">Armá tu propio bracket</span>
       <span style="display:block;font-size:.8rem;color:{MUT};line-height:1.45">Cargá los resultados que faltan, de los grupos a la final — con la lógica oficial de FIFA.</span>
     </span>
-    <span style="display:inline-flex;align-items:center;gap:7px;background:{T};color:#fff;padding:10px 19px;border-radius:999px;font-size:.78rem;font-weight:700;white-space:nowrap;flex-shrink:0">Simular <span style="font-size:1.05rem;line-height:1">&#8594;</span></span>
+    <span style="display:inline-flex;align-items:center;gap:7px;background:{T};color:#fff;padding:10px 19px;border-radius:7px;font-size:.78rem;font-weight:700;white-space:nowrap;flex-shrink:0">Simular <span style="font-size:1.05rem;line-height:1">&#8594;</span></span>
   </a>
 </div>
 
-<!-- Sección "Estadísticas" oculta del inicio a propósito: la página existe en
-     /estadisticas.html (acceso por link directo). Se reactivará el acceso acá
-     cuando esté terminada. -->
+<div class="divider"></div>
+<div class="sec" id="sec-clasicas" data-nav="Estadísticas clásicas">
+  <div class="sec-hdr" onclick="toggleSec('clasicas')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Estadísticas clásicas — Mundial 2026</p>
+    <button class="sec-toggle" id="st-clasicas">▲ CERRAR</button>
+  </div>
+  <div class="sec-body" id="sb-clasicas">
+    <div class="cstabs">
+      <button class="cstab active" data-c="scorers" onclick="setClasica('scorers')">Goleadores</button>
+      <button class="cstab"        data-c="assists" onclick="setClasica('assists')">Asistencias</button>
+      <button class="cstab"        data-c="yellows" onclick="setClasica('yellows')">Amarillas</button>
+      <button class="cstab"        data-c="reds"    onclick="setClasica('reds')">Rojas</button>
+    </div>
+    <div class="cspane active" id="cs-scorers"><div id="scorers-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
+    <div class="cspane" id="cs-assists"><div id="assists-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
+    <div class="cspane" id="cs-yellows"><div id="yellows-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
+    <div class="cspane" id="cs-reds"><div id="reds-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
+  </div>
+</div>
 
 <div class="divider"></div>
-<div class="sec" id="sec-goleadores" data-nav="Goleadores">
-  <div class="sec-hdr" onclick="toggleSec('goleadores')">
-    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Goleadores — Mundial 2026</p>
-    <button class="sec-toggle" id="st-goleadores">▲ CERRAR</button>
-  </div>
-  <div class="sec-body" id="sb-goleadores">
-    <div id="scorers-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div>
-  </div>
+<div class="sec" id="sec-profundas" data-nav="Estadísticas profundas">
+  <a href="/estadisticas.html" style="display:flex;align-items:center;justify-content:space-between;gap:18px;background:{WHT};border:1px solid {BDR};border-left:3px solid {T};border-radius:12px;padding:18px 22px;text-decoration:none">
+    <span style="min-width:0">
+      <span style="display:block;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:{T};margin-bottom:6px">Estadísticas profundas</span>
+      <span style="display:block;font-size:1.06rem;font-weight:800;color:{TXT};letter-spacing:-.02em;margin-bottom:4px">El Mundial en números</span>
+      <span style="display:block;font-size:.8rem;color:{MUT};line-height:1.45">Confederaciones, eficiencia (xG), goles, comparador, disciplina y ligas — se actualiza solo.</span>
+    </span>
+    <span style="display:inline-flex;align-items:center;gap:7px;background:{T};color:#fff;padding:10px 19px;border-radius:7px;font-size:.78rem;font-weight:700;white-space:nowrap;flex-shrink:0">Ver <span style="font-size:1.05rem;line-height:1">&#8594;</span></span>
+  </a>
 </div>
 
 <div class="divider"></div>
@@ -661,39 +685,6 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   </div>
   <div class="sec-body" id="sb-valoracion">
     <div id="rating-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div>
-  </div>
-</div>
-
-<div class="divider"></div>
-<div class="sec" id="sec-asistencias" data-nav="Asistencias">
-  <div class="sec-hdr" onclick="toggleSec('asistencias')">
-    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Asistencias — Mundial 2026</p>
-    <button class="sec-toggle" id="st-asistencias">▲ CERRAR</button>
-  </div>
-  <div class="sec-body" id="sb-asistencias">
-    <div id="assists-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div>
-  </div>
-</div>
-
-<div class="divider"></div>
-<div class="sec" id="sec-amarillas" data-nav="Tarjetas amarillas">
-  <div class="sec-hdr" onclick="toggleSec('amarillas')">
-    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Tarjetas amarillas — Mundial 2026</p>
-    <button class="sec-toggle" id="st-amarillas">▲ CERRAR</button>
-  </div>
-  <div class="sec-body" id="sb-amarillas">
-    <div id="yellows-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div>
-  </div>
-</div>
-
-<div class="divider"></div>
-<div class="sec" id="sec-rojas" data-nav="Tarjetas rojas">
-  <div class="sec-hdr" onclick="toggleSec('rojas')">
-    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Tarjetas rojas — Mundial 2026</p>
-    <button class="sec-toggle" id="st-rojas">▲ CERRAR</button>
-  </div>
-  <div class="sec-body" id="sb-rojas">
-    <div id="reds-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div>
   </div>
 </div>
 
@@ -1236,6 +1227,10 @@ function toggleSec(id) {{
   if (btn) btn.textContent = collapsed ? '▼ ABRIR' : '▲ CERRAR';
   SEC[id] = collapsed;
   saveSecs();
+}}
+function setClasica(c) {{
+  document.querySelectorAll('.cstab').forEach(function(b){{ b.classList.toggle('active', b.dataset.c===c); }});
+  document.querySelectorAll('.cspane').forEach(function(p){{ p.classList.toggle('active', p.id==='cs-'+c); }});
 }}
 function restoreSecs() {{
   loadSecs();
