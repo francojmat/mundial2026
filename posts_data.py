@@ -9,7 +9,7 @@ junto con el resto de la rama `data`.
 
 from countries import nombre_es, iso_code
 from motm import motm_for
-from scenarios import compute_group_scenarios
+from scenarios import compute_group_scenarios, team_phrase
 from standings import compute_stats, rank_group
 
 
@@ -134,6 +134,48 @@ def build_team_statuses(standings):
                 "locked": locked,
                 "positions": positions,
             })
+    return out
+
+
+def build_upcoming(all_matches, standings):
+    """
+    Partidos POR VENIR (no jugados, con ambos equipos definidos) para el editor de
+    "Previa": estadio, horario (utc) y qué se juega cada equipo. El stake sale del
+    motor de escenarios (team_phrase), igual que "qué se juega" del home.
+    """
+    group_sc = {}
+    for gkey, gval in standings.items():
+        if isinstance(gkey, str) and gkey.startswith("GROUP_"):
+            group_sc[gkey] = compute_group_scenarios(gval.get("teams", []), gval.get("matches", []))
+
+    def stake(sc, team, opp):
+        e = sc.get(team)
+        return team_phrase(e, opponent=nombre_es(opp)) if e else ""
+
+    out = []
+    for m in all_matches:
+        if m.get("status") not in ("TIMED", "", None):
+            continue
+        if m.get("home_goals") is not None or m.get("away_goals") is not None:
+            continue
+        mid = str(m.get("match_id") or "")
+        home, away = m.get("home", ""), m.get("away", "")
+        if not mid or mid == "None" or not home or not away:
+            continue  # cruce aún sin definir (bracket TBD) → no se puede previsualizar
+        grp = (m.get("group") or "").replace("GROUP_", "")
+        stage = f"Grupo {grp}" if grp else (m.get("stage", "") or "").replace("_", " ").title()
+        md = m.get("matchday")
+        stage_label = f"{stage} · Fecha {md}" if (grp and md) else stage
+        sc = group_sc.get(m.get("group"), {})
+        out.append({
+            "id": mid,
+            "stage": stage_label,
+            "utc": m.get("utc_date", ""),
+            "venue": " · ".join(x for x in [m.get("venue_name", ""), m.get("venue_city", "")] if x),
+            "home": {"name": nombre_es(home), "iso": iso_code(home), "stake": stake(sc, home, away)},
+            "away": {"name": nombre_es(away), "iso": iso_code(away), "stake": stake(sc, away, home)},
+        })
+    out.sort(key=lambda x: x.get("utc", ""))
     return out
 
 

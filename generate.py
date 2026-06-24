@@ -230,9 +230,10 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
         outputs.append(("partido.html", render_partido_shell()))
 
         # Datos estructurados para el armador de posts de Instagram (panel admin)
-        from posts_data import build_posts, build_team_statuses
+        from posts_data import build_posts, build_team_statuses, build_upcoming
         _posts = build_posts(all_matches, details)
-        _posts["teams"] = build_team_statuses(standings)   # estados de clasificación
+        _posts["teams"] = build_team_statuses(standings)        # estados de clasificación
+        _posts["upcoming"] = build_upcoming(all_matches, standings)  # previa de partidos por venir
         outputs.append(("posts.json", json.dumps(_posts, ensure_ascii=False)))
 
     # SEO/GEO — sitemap.xml con todas las URLs (home + partidos + selecciones + planteles)

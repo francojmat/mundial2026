@@ -185,6 +185,7 @@
     <button class="tab"        onclick="switchTab('chat')">Asistente IA</button>
     <button class="tab"        onclick="switchTab('ig')">Instagram</button>
     <button class="tab"        onclick="switchTab('posts')">Posts de partido</button>
+    <button class="tab"        onclick="switchTab('previa')">Previa</button>
     <button class="tab"        onclick="switchTab('clasif')">Clasificación</button>
     <button class="tab"        onclick="switchTab('avisos')">Avisos</button>
   </div>
@@ -373,6 +374,40 @@
     </div>
   </div>
 
+  <!-- ── Previa (partidos por venir) ── -->
+  <div id="tab-previa" class="tab-pane">
+    <div id="pv-load" class="loading">Cargando…</div>
+    <div id="pv-empty" class="sug-empty" style="display:none">No hay partidos por venir cargados.</div>
+    <div id="pv-main" style="display:none">
+      <div class="po-pick">
+        <label class="ig-grp-lbl" for="pv-match">Partido</label>
+        <select id="pv-match"></select>
+      </div>
+
+      <div class="ig-controls" style="margin-top:16px">
+        <div class="ig-grp">
+          <span class="ig-grp-lbl">Formato</span>
+          <div class="ig-seg" id="pv-fmt">
+            <button class="ig-opt active" data-pf="story">Historia<small>1080×1920</small></button>
+            <button class="ig-opt"        data-pf="post">Publicación<small>1080×1350</small></button>
+            <button class="ig-opt"        data-pf="carousel">Carrusel<small>1080×1080</small></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ig-stage">
+        <div class="ig-preview-wrap">
+          <canvas id="pv-canvas"></canvas>
+          <p class="ig-dims" id="pv-dims"></p>
+        </div>
+        <div class="ig-side">
+          <div class="ig-actions" id="pv-actions"></div>
+          <p class="ig-hint">📱 En iPhone: tocá Descargar → <b>"Guardar imagen"</b> (va a Fotos). El horario se muestra en hora de Argentina.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Clasificación (eliminado / clasificado / posición asegurada) ── -->
   <div id="tab-clasif" class="tab-pane">
     <div id="cl-load" class="loading">Cargando…</div>
@@ -528,7 +563,7 @@ function showPanel() {
 }
 
 function switchTab(name) {
-  const names = ['sugs', 'metrics', 'chat', 'ig', 'posts', 'clasif', 'avisos'];
+  const names = ['sugs', 'metrics', 'chat', 'ig', 'posts', 'previa', 'clasif', 'avisos'];
   document.querySelectorAll('.tab').forEach((t, i) =>
     t.classList.toggle('active', names[i] === name));
   names.forEach(n => {
@@ -541,6 +576,10 @@ function switchTab(name) {
   if (name === 'posts' && !_poLoaded) {
     _poLoaded = true;
     loadPosts();
+  }
+  if (name === 'previa' && !_pvLoaded) {
+    _pvLoaded = true;
+    loadPreview();
   }
   if (name === 'clasif' && !_clLoaded) {
     _clLoaded = true;
@@ -1694,6 +1733,127 @@ async function clDownload(mode) {
   }
   if (mode === 'all3') for (const k of ['story', 'post', 'carousel']) await mk(k, `${base}-${k}`);
   else await mk(_clFmt, `${base}-${_clFmt}`);
+  igDeliver(files);
+}
+
+// ── Previa — imagen de un partido por venir (estadio · horario · qué se juega) ──
+
+let _pvLoaded = false, _pvWired = false, _pvData = [], _pvMatch = null, _pvFmt = 'story';
+
+function pvWhen(utc) {
+  if (!utc) return { d: 'Día y hora a confirmar', t: '' };
+  const dt = new Date(utc);
+  if (isNaN(dt)) return { d: '', t: '' };
+  const tz = { timeZone: 'America/Argentina/Buenos_Aires' };
+  return {
+    d: dt.toLocaleDateString('es-AR', { ...tz, weekday: 'long', day: 'numeric', month: 'long' }),
+    t: dt.toLocaleTimeString('es-AR', { ...tz, hour: '2-digit', minute: '2-digit' }),
+  };
+}
+
+async function poDrawPreview(canvas, M, fmtKey) {
+  const f = PO_FMT[fmtKey], W = f.w, H = f.h;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  poBars(ctx, W, H);
+
+  const [hf, af] = await Promise.all([poFlag(M.home.iso), poFlag(M.away.iso)]);
+  const padX = 80, top0 = Math.round(H * 0.05), footerTop = H - 150;
+
+  poText(ctx, (M.stage || '').toUpperCase(), W / 2, top0, { size: 30, weight: 800, color: PO.T, align: 'center', baseline: 'top', maxW: W - 120 });
+  poText(ctx, 'PRÓXIMO PARTIDO', W / 2, top0 + 42, { size: 22, weight: 700, color: PO.DIM, align: 'center', baseline: 'top' });
+
+  const flagW = 180, flagH = hf ? flagW * hf.naturalHeight / hf.naturalWidth : 120;
+  const matchupH = flagH + 78, horarioH = 104, estadioH = 66, queHeadH = 50, queRowH = 86, G = 36;
+  const bodyH = matchupH + G + horarioH + G + estadioH + G + (queHeadH + 2 * queRowH);
+  const regionTop = top0 + 96;
+  let y = regionTop + Math.max(0, (footerTop - regionTop - bodyH) / 2);
+
+  // matchup: bandera + nombre | VS | bandera + nombre
+  const cy = y + flagH / 2, hx = W * 0.27, ax = W * 0.73;
+  poDrawFlag(ctx, hf, hx, cy, flagW);
+  poDrawFlag(ctx, af, ax, cy, flagW);
+  poText(ctx, 'VS', W / 2, cy, { size: 84, weight: 800, color: PO.T, align: 'center', baseline: 'middle' });
+  poText(ctx, M.home.name.toUpperCase(), hx, cy + flagH / 2 + 14, { size: 36, weight: 800, color: PO.INK, align: 'center', baseline: 'top', maxW: flagW + 100 });
+  poText(ctx, M.away.name.toUpperCase(), ax, cy + flagH / 2 + 14, { size: 36, weight: 800, color: PO.INK, align: 'center', baseline: 'top', maxW: flagW + 100 });
+  y += matchupH + G;
+
+  // horario (caja bordeada)
+  const when = pvWhen(M.utc), boxW = W - padX * 2, boxH = horarioH - 8;
+  ctx.strokeStyle = PO.T; ctx.lineWidth = 3; poRoundRect(ctx, padX, y, boxW, boxH, 12); ctx.stroke();
+  poText(ctx, (when.d || '').toUpperCase(), W / 2, y + 22, { size: 28, weight: 800, color: PO.INK, align: 'center', baseline: 'top', maxW: boxW - 40 });
+  poText(ctx, when.t ? when.t + ' h · hora ARG' : '', W / 2, y + 60, { size: 26, weight: 700, color: PO.T, align: 'center', baseline: 'top' });
+  y += horarioH + G;
+
+  // estadio
+  poText(ctx, 'ESTADIO', W / 2, y, { size: 20, weight: 800, color: PO.DIM, align: 'center', baseline: 'top' });
+  poText(ctx, M.venue || 'A confirmar', W / 2, y + 26, { size: 32, weight: 700, color: PO.INK, align: 'center', baseline: 'top', maxW: W - 120 });
+  y += estadioH + G;
+
+  // qué se juega (una fila por equipo: bandera + nombre + frase)
+  poText(ctx, 'QUÉ SE JUEGA', W / 2, y, { size: 26, weight: 800, color: PO.T, align: 'center', baseline: 'top' });
+  y += queHeadH;
+  for (const side of [M.home, M.away]) {
+    const fl = side === M.home ? hf : af;
+    poDrawFlag(ctx, fl, padX + 26, y + 24, 52);
+    poText(ctx, side.name.toUpperCase(), padX + 70, y, { size: 30, weight: 800, color: PO.INK, align: 'left', baseline: 'top', maxW: W - padX * 2 - 70 });
+    poText(ctx, side.stake || 'Definición abierta', padX + 70, y + 38, { size: 26, weight: 600, color: PO.MUT, align: 'left', baseline: 'top', maxW: W - padX * 2 - 70 });
+    y += queRowH;
+  }
+
+  poFooter(ctx, W, H, { venue: '', referee: '' });
+}
+
+async function loadPreview() {
+  const load = document.getElementById('pv-load');
+  try {
+    const d = await (await fetch(`${API}/posts`)).json();
+    _pvData = (d && d.upcoming) || [];
+  } catch (e) { load.textContent = 'Error al cargar: ' + e.message; return; }
+
+  load.style.display = 'none';
+  if (!_pvData.length) { document.getElementById('pv-empty').style.display = 'block'; return; }
+
+  const sel = document.getElementById('pv-match');
+  sel.innerHTML = _pvData.map((m, i) => {
+    const w = pvWhen(m.utc);
+    const tag = w.d ? ` · ${w.d.split(',')[0]} ${w.t}` : '';
+    return `<option value="${i}">${esc(m.home.name)} vs ${esc(m.away.name)} · ${esc(m.stage)}${esc(tag)}</option>`;
+  }).join('');
+  document.getElementById('pv-main').style.display = 'block';
+  _pvMatch = _pvData[0];
+  pvWire();
+  pvRender();
+}
+
+function pvWire() {
+  if (_pvWired) return; _pvWired = true;
+  document.getElementById('pv-match').addEventListener('change', e => { _pvMatch = _pvData[+e.target.value]; pvRender(); });
+  document.querySelectorAll('#pv-fmt .ig-opt').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#pv-fmt .ig-opt').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); _pvFmt = b.dataset.pf; pvRender();
+  }));
+}
+
+async function pvRender() {
+  if (!_pvMatch) return;
+  await poDrawPreview(document.getElementById('pv-canvas'), _pvMatch, _pvFmt);
+  document.getElementById('pv-dims').textContent = `${PO_FMT[_pvFmt].w} × ${PO_FMT[_pvFmt].h} px · ${PO_FMT[_pvFmt].label}`;
+  document.getElementById('pv-actions').innerHTML =
+    `<button class="ig-btn ig-btn-dl"  onclick="pvDownload('cur')">⬇ Descargar (${PO_FMT[_pvFmt].label})</button>
+     <button class="ig-btn ig-btn-all" onclick="pvDownload('all3')">⬇ Las 3 medidas</button>`;
+}
+
+async function pvDownload(mode) {
+  const M = _pvMatch, files = [];
+  const base = `previa-${poSlug(M.home.name)}-${poSlug(M.away.name)}`;
+  async function mk(fmt, name) {
+    const c = document.createElement('canvas');
+    await poDrawPreview(c, M, fmt);
+    files.push(await igCanvasToFile(c, `mejortercero-${name}.png`));
+  }
+  if (mode === 'all3') for (const k of ['story', 'post', 'carousel']) await mk(k, `${base}-${k}`);
+  else await mk(_pvFmt, `${base}-${_pvFmt}`);
   igDeliver(files);
 }
 
