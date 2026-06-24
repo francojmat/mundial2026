@@ -140,9 +140,21 @@ def render_estadisticas_shell() -> str:
     .lg-list{{display:flex;flex-direction:column;gap:7px;margin-bottom:4px}}
     .lg-row{{display:grid;grid-template-columns:120px 1fr 26px;align-items:center;gap:10px}}
     .lg-name{{font-size:.78rem;font-weight:600;color:{TXT};white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+    /* barra de scroll VISIBLE — aparece solo si la tabla excede el ancho (ej. Confederaciones en mobile) */
+    .ctab-wrap{{scrollbar-width:thin;scrollbar-color:{T} {GRY}}}
+    .ctab-wrap::-webkit-scrollbar{{height:9px}}
+    .ctab-wrap::-webkit-scrollbar-track{{background:{GRY};border-radius:5px}}
+    .ctab-wrap::-webkit-scrollbar-thumb{{background:{T};border-radius:5px}}
+    .scrollhint{{display:none;font-size:.68rem;color:{T};font-weight:700;margin:6px 2px 0;text-align:right}}
     @media(max-width:640px){{ .duo{{grid-template-columns:1fr;gap:18px}} .lg-row{{grid-template-columns:100px 1fr 26px}} }}
     @media(max-width:560px){{ body{{padding:14px 10px}} h1{{font-size:1.2rem}} .chip .v{{font-size:1.1rem}}
-      .cmp-v{{font-size:.84rem}} .cmp-m{{font-size:.66rem}} }}
+      .cmp-v{{font-size:.84rem}} .cmp-m{{font-size:.66rem}}
+      .tabs{{flex-wrap:wrap;overflow-x:visible}}
+      .tab{{padding:7px 9px;font-size:.76rem}}
+      .ctab{{min-width:0;font-size:.73rem}}
+      .ctab th,.ctab td{{padding:7px 5px;white-space:normal}}
+      #confed-table{{min-width:540px}}
+      .scrollhint{{display:block}} }}
   </style>
 </head>
 <body>
@@ -159,6 +171,7 @@ def render_estadisticas_shell() -> str:
   <div class="panel active" id="p-confed">
     <div class="sec-h">Cómo le va a cada confederación</div>
     <div class="ctab-wrap"><table class="ctab" id="confed-table"></table></div>
+    <p class="scrollhint">Deslizá la tabla para ver todas las columnas →</p>
     <p class="note">V-E-D y goles cuentan <b>todos</b> los partidos de sus equipos (incluidos los que juegan entre sí). «Clasifican» es la proyección actual a 16avos. El ranking es por puntos por partido.</p>
     <div class="sec-h">Comparar dos confederaciones</div>
     <div class="cmp-sel">
