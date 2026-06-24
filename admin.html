@@ -1747,7 +1747,7 @@ function pvWhen(utc) {
   const tz = { timeZone: 'America/Argentina/Buenos_Aires' };
   return {
     d: dt.toLocaleDateString('es-AR', { ...tz, weekday: 'long', day: 'numeric', month: 'long' }),
-    t: dt.toLocaleTimeString('es-AR', { ...tz, hour: '2-digit', minute: '2-digit' }),
+    t: dt.toLocaleTimeString('es-AR', { ...tz, hour: '2-digit', minute: '2-digit', hour12: false }),
   };
 }
 

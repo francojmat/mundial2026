@@ -51,8 +51,9 @@ def render_estadisticas_shell() -> str:
     .ctab{{width:100%;border-collapse:collapse;font-size:.8rem;min-width:560px}}
     .ctab th{{font-size:.58rem;text-transform:uppercase;letter-spacing:.04em;color:{DIM};font-weight:700;text-align:right;padding:7px 8px;border-bottom:1px solid {BDR}}}
     .ctab th:first-child,.ctab td:first-child{{text-align:left}}
-    .ctab td{{padding:9px 8px;border-bottom:1px solid {GRY};text-align:right;white-space:nowrap}}
-    .ctab tr:hover td{{background:rgba(194,65,12,.04)}}
+    .ctab td{{padding:9px 8px;text-align:right;white-space:nowrap}}
+    .ctab tbody tr:nth-child(even){{background:{GRY}}}
+    .ctab tr:hover td{{background:rgba(194,65,12,.07)}}
     .ctab .pts{{font-weight:800;color:{T}}}
     .cf-name{{display:flex;align-items:center;gap:8px}}
     .cf-dot{{width:9px;height:9px;border-radius:50%;flex-shrink:0}}
@@ -90,6 +91,15 @@ def render_estadisticas_shell() -> str:
     .clash-mid .cel{{font-size:.6rem;text-transform:uppercase;letter-spacing:.05em}}
     .clash-sub{{text-align:center;font-size:.75rem;color:{MUT};margin-top:11px;padding-top:10px;border-top:1px solid {GRY}}}
     .clash-sub b{{color:{TXT}}}
+    .xhead{{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:{T};margin:15px 0 5px;padding-top:13px;border-top:1px solid {GRY}}}
+    .xrow{{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:8px 9px;border-radius:6px;font-size:.83rem}}
+    .xrow:nth-child(even){{background:{GRY}}}
+    .xrow .xh{{display:flex;align-items:center;justify-content:flex-end;gap:6px;text-align:right;font-weight:600;min-width:0}}
+    .xrow .xa{{display:flex;align-items:center;gap:6px;font-weight:600;min-width:0}}
+    .xrow .xsc{{font-weight:800;color:{T};text-align:center;white-space:nowrap}}
+    .xrow .xvs{{font-size:.66rem;font-weight:800;color:{DIM};text-align:center;letter-spacing:.04em}}
+    .xrow .xmeta{{grid-column:1/-1;font-size:.66rem;color:{DIM};text-align:center;margin-top:1px}}
+    .xrow img{{vertical-align:middle;border-radius:2px;flex-shrink:0}}
     /* eficiencia / xG */
     .note{{font-size:.72rem;color:{MUT};margin:-2px 0 13px;line-height:1.5;max-width:620px}}
     .duo{{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:6px}}
@@ -106,21 +116,21 @@ def render_estadisticas_shell() -> str:
     .bar-track{{background:{GRY};border-radius:5px;height:18px;overflow:hidden}}
     .bar-fill{{background:{T};height:100%;border-radius:5px;min-width:3px}}
     .bar-n{{font-size:.78rem;font-weight:700;color:{TXT}}}
-    .cbk{{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid {GRY};font-size:.82rem}}
-    .cbk:last-child{{border-bottom:none}}
+    .cbk{{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 8px;font-size:.82rem;border-radius:5px}}
+    .cbk:nth-child(even){{background:{GRY}}}
     .cbk .cf-name{{font-weight:700;gap:7px}}
     .cbk-txt{{color:{MUT};display:flex;align-items:center;gap:5px;flex-wrap:wrap}}
     .cbk-txt b{{color:{T};font-weight:800}}
     /* rankings de equipos + jugadores */
     .rankgrid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(218px,1fr));gap:16px 20px}}
-    .rk-row{{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid {GRY};font-size:.81rem}}
-    .rk-row:last-child{{border-bottom:none}}
+    .rk-row{{display:flex;align-items:center;gap:8px;padding:6px 8px;font-size:.81rem;border-radius:5px}}
+    .rk-row:nth-child(even){{background:{GRY}}}
     .rk-pos{{color:{DIM};font-size:.7rem;width:13px;flex-shrink:0;text-align:right}}
     .rk-name{{flex:1;display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap;overflow:hidden}}
     .rk-name .tn{{overflow:hidden;text-overflow:ellipsis}}
     .rk-val{{font-weight:800;color:{T};flex-shrink:0}}
-    .duo-row{{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid {GRY};font-size:.82rem}}
-    .duo-row:last-child{{border-bottom:none}}
+    .duo-row{{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 8px;font-size:.82rem;border-radius:5px}}
+    .duo-row:nth-child(even){{background:{GRY}}}
     .duo-row .ar{{color:{DIM}}}
     .duo-row .nm{{font-weight:600}}
     .duo-row .ct{{margin-left:auto;font-weight:800;color:{T}}}
@@ -247,8 +257,6 @@ def render_estadisticas_shell() -> str:
       <div><div class="mini-h">Más locales</div><div id="ligas-legion-bot"></div></div>
     </div>
   </div>
-
-  <p class="updated" id="updated"></p>
 </div>
 
 <script>
@@ -426,28 +434,55 @@ function renderComparador(){{
     + clashHtml(ca, cb);
 }}
 
-// choques directos: partidos finalizados donde un equipo de A jugó contra uno de B
+// fecha corta en hora ARG y etapa del partido
+function stShortDate(utc){{
+  if(!utc) return '';
+  var d=new Date(utc); if(isNaN(d.getTime())) return '';
+  var tz='America/Argentina/Buenos_Aires';
+  return d.toLocaleDateString('es-AR',{{timeZone:tz,day:'numeric',month:'short'}})
+    + ' · ' + d.toLocaleTimeString('es-AR',{{timeZone:tz,hour:'2-digit',minute:'2-digit',hour12:false}}) + 'h';
+}}
+function stStage(m){{ return m.group ? 'Grupo '+m.group.replace('GROUP_','') : 'Eliminación directa'; }}
+function xrowPlayed(m){{
+  return '<div class="xrow"><span class="xh">'+flag(m.home)+es(m.home)+'</span>'
+    + '<span class="xsc">'+m.hg+'-'+m.ag+'</span><span class="xa">'+flag(m.away)+es(m.away)+'</span>'
+    + '<span class="xmeta">'+stStage(m)+(m.utc?' · '+stShortDate(m.utc):'')+'</span></div>';
+}}
+function xrowUpcoming(m){{
+  return '<div class="xrow"><span class="xh">'+flag(m.home)+es(m.home)+'</span>'
+    + '<span class="xvs">VS</span><span class="xa">'+flag(m.away)+es(m.away)+'</span>'
+    + '<span class="xmeta">'+stStage(m)+(m.utc?' · '+stShortDate(m.utc):'')+(m.venue?' · '+m.venue:'')+'</span></div>';
+}}
+
+// choques directos entre dos confederaciones: jugados (con detalle) + próximos
 function clashHtml(ca, cb){{
-  var wa=0, wb=0, dr=0, ga=0, gb=0, n=0;
+  var played=[], upcoming=[], wa=0, wb=0, dr=0, ga=0, gb=0;
   STATS.matches.forEach(function(m){{
-    if(m.status!=='FINISHED' || m.hg==null || m.ag==null) return;
-    var hA=(m.hc===ca), aA=(m.ac===ca), hB=(m.hc===cb), aB=(m.ac===cb);
-    var aSide, bSide; // goles del lado A y del lado B en este partido
-    if(hA && aB){{ aSide=m.hg; bSide=m.ag; }}
-    else if(hB && aA){{ aSide=m.ag; bSide=m.hg; }}
-    else return;
-    n++; ga+=aSide; gb+=bSide;
-    if(aSide>bSide) wa++; else if(bSide>aSide) wb++; else dr++;
+    var cross=(m.hc===ca&&m.ac===cb)||(m.hc===cb&&m.ac===ca);
+    if(!cross) return;
+    if(m.status==='FINISHED' && m.hg!=null && m.ag!=null){{
+      played.push(m);
+      var aSide=(m.hc===ca)?m.hg:m.ag, bSide=(m.hc===ca)?m.ag:m.hg;
+      ga+=aSide; gb+=bSide;
+      if(aSide>bSide) wa++; else if(bSide>aSide) wb++; else dr++;
+    }} else if(m.status==='TIMED') upcoming.push(m);
   }});
-  if(!n) return '<div class="clash"><div class="clash-l">Cara a cara en el Mundial</div>'
-    + '<div class="clash-sub">Todavía no se enfrentaron equipos de '+ca+' y '+cb+'.</div></div>';
-  return '<div class="clash"><div class="clash-l">Cara a cara en el Mundial · '+n+' partido'+(n>1?'s':'')+'</div>'
-    + '<div class="clash-grid">'
-    +   '<div class="clash-side'+(wa<wb?' lose':'')+'"><div class="cw">'+wa+'</div><div class="cn">'+ca+'</div></div>'
-    +   '<div class="clash-mid"><div class="ce">'+dr+'</div><div class="cel">empates</div></div>'
-    +   '<div class="clash-side'+(wb<wa?' lose':'')+'"><div class="cw">'+wb+'</div><div class="cn">'+cb+'</div></div>'
-    + '</div>'
-    + '<div class="clash-sub">Goles en esos cruces: <b>'+ga+'</b> '+ca+' &nbsp;–&nbsp; <b>'+gb+'</b> '+cb+'</div></div>';
+  upcoming.sort(function(x,y){{return (x.utc||'').localeCompare(y.utc||'');}});
+
+  var h='<div class="clash"><div class="clash-l">Cara a cara en el Mundial'
+    + (played.length?' · '+played.length+' partido'+(played.length>1?'s':''):'')+'</div>';
+  if(played.length){{
+    h += '<div class="clash-grid">'
+      + '<div class="clash-side'+(wa<wb?' lose':'')+'"><div class="cw">'+wa+'</div><div class="cn">'+ca+'</div></div>'
+      + '<div class="clash-mid"><div class="ce">'+dr+'</div><div class="cel">empates</div></div>'
+      + '<div class="clash-side'+(wb<wa?' lose':'')+'"><div class="cw">'+wb+'</div><div class="cn">'+cb+'</div></div></div>'
+      + '<div class="clash-sub">Goles en esos cruces: <b>'+ga+'</b> '+ca+' &nbsp;–&nbsp; <b>'+gb+'</b> '+cb+'</div>'
+      + '<div class="xhead">Partidos jugados</div>'+played.map(xrowPlayed).join('');
+  }} else {{
+    h += '<div class="clash-sub" style="border:none;padding-top:2px">Todavía no se enfrentaron equipos de '+ca+' y '+cb+'.</div>';
+  }}
+  if(upcoming.length) h += '<div class="xhead">Próximos cruces · '+upcoming.length+'</div>'+upcoming.map(xrowUpcoming).join('');
+  return h + '</div>';
 }}
 
 function renderConfed(){{ renderConfedTable(); fillSelectors(); renderComparador(); }}
@@ -795,10 +830,6 @@ fetch('/api/stats').then(function(r){{return r.json();}}).then(function(d){{
   renderJugadores();
   renderDisciplina();
   renderLigas();
-  if(d.generated){{
-    var dt = new Date(d.generated);
-    document.getElementById('updated').textContent = 'Datos actualizados: ' + dt.toLocaleString('es-AR');
-  }}
 }}).catch(function(){{
   document.getElementById('p-resumen').innerHTML = '<p class="soon">No se pudieron cargar las estadísticas.</p>';
 }});

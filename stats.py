@@ -278,6 +278,7 @@ def build_stats(standings: Dict, match_details: Dict, matchups=None) -> dict:
             matches_out.append({
                 "id": mid, "home": home, "away": away, "hg": hg, "ag": ag,
                 "status": status, "group": m.get("group", ""), "utc": m.get("utc_date", ""),
+                "venue": " · ".join(x for x in [m.get("venue_name", ""), m.get("venue_city", "")] if x),
                 "hc": TEAM_CONFEDERATION.get(home, ""), "ac": TEAM_CONFEDERATION.get(away, ""),
             })
             H, A = T(home), T(away)  # asegura que TODO equipo del fixture exista
