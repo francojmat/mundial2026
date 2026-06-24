@@ -46,8 +46,9 @@
          'background:none;font-size:24px;line-height:1;color:#b09880;cursor:pointer">×</button>';
     if (a.title) h += '<h3 style="font-size:1.18rem;font-weight:800;color:#211c14;margin:0 0 8px;padding-right:22px">' + esc(a.title) + '</h3>';
     if (a.body)  h += '<p style="font-size:.92rem;line-height:1.55;color:#4a4034;margin:0 0 16px;white-space:pre-wrap">' + esc(a.body) + '</p>';
-    if (a.cta_text && a.cta_url) {
-      h += '<a href="' + escAttr(a.cta_url) + '" target="_blank" rel="noopener" style="display:inline-block;' +
+    var ctaUrl = /^https?:\/\//i.test(a.cta_url || '') ? a.cta_url : '';  // solo http(s): bloquea javascript:/data:
+    if (a.cta_text && ctaUrl) {
+      h += '<a href="' + escAttr(ctaUrl) + '" target="_blank" rel="noopener" style="display:inline-block;' +
            'background:' + ACCENT + ';color:#fff;font-size:.82rem;font-weight:700;letter-spacing:.04em;' +
            'text-transform:uppercase;padding:10px 18px;text-decoration:none;margin-bottom:14px">' + esc(a.cta_text) + '</a>';
     }

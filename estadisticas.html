@@ -797,7 +797,7 @@ function fillCmp2(){
   var M=CMP_MODES[CMP_STATE.mode], A=document.getElementById('cmp2A'), B=document.getElementById('cmp2B');
   if(M.grouped){
     var byTeam={};
-    STATS.players.all.forEach(function(p,i){ (byTeam[p.team]=byTeam[p.team]||[]).push({v:i,l:p.name}); });
+    STATS.players.all.forEach(function(p,i){ if(!STATS.teams[p.team])return; (byTeam[p.team]=byTeam[p.team]||[]).push({v:i,l:p.name}); });
     var html=Object.keys(byTeam).sort(function(x,y){return STATS.teams[x].es.localeCompare(STATS.teams[y].es);}).map(function(tm){
       return '<optgroup label="'+STATS.teams[tm].es+'">'+byTeam[tm].map(function(o){return '<option value="'+o.v+'">'+o.l+'</option>';}).join('')+'</optgroup>';
     }).join('');

@@ -805,7 +805,7 @@ function fillCmp2(){{
   var M=CMP_MODES[CMP_STATE.mode], A=document.getElementById('cmp2A'), B=document.getElementById('cmp2B');
   if(M.grouped){{
     var byTeam={{}};
-    STATS.players.all.forEach(function(p,i){{ (byTeam[p.team]=byTeam[p.team]||[]).push({{v:i,l:p.name}}); }});
+    STATS.players.all.forEach(function(p,i){{ if(!STATS.teams[p.team])return; (byTeam[p.team]=byTeam[p.team]||[]).push({{v:i,l:p.name}}); }});
     var html=Object.keys(byTeam).sort(function(x,y){{return STATS.teams[x].es.localeCompare(STATS.teams[y].es);}}).map(function(tm){{
       return '<optgroup label="'+STATS.teams[tm].es+'">'+byTeam[tm].map(function(o){{return '<option value="'+o.v+'">'+o.l+'</option>';}}).join('')+'</optgroup>';
     }}).join('');
@@ -843,6 +843,9 @@ function setCmpMode(mode){{
 
 buildTabs();
 fetch('/api/stats').then(function(r){{return r.json();}}).then(function(d){{
+  // Bajo carga, el Worker puede devolver {{}} (no pudo leer la rama data). Cortamos
+  // temprano para caer al .catch y no romper render por render.
+  if (!d || !d.players || !d.goals || !d.teams) throw new Error('empty');
   STATS = d;
   renderResumen();
   setCmpMode('sel');
@@ -854,7 +857,9 @@ fetch('/api/stats').then(function(r){{return r.json();}}).then(function(d){{
   renderDisciplina();
   renderLigas();
 }}).catch(function(){{
-  document.getElementById('p-resumen').innerHTML = '<p class="soon">No se pudieron cargar las estadísticas.</p>';
+  var msg = '<p class="soon">No se pudieron cargar las estadísticas. Probá de nuevo en un minuto.</p>';
+  ['p-resumen','p-confed','p-comparar','p-efic','p-goles','p-equipos','p-jugadores','p-disc','p-ligas']
+    .forEach(function(id){{ var el = document.getElementById(id); if (el) el.innerHTML = msg; }});
 }});
 </script>
 </body>

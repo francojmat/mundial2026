@@ -196,7 +196,9 @@ def rank_third_place_teams(
     rankings = fifa_rankings if fifa_rankings is not None else _DEFAULT_FIFA
     if rankings:
         for entry in thirds:
-            entry["stats"].fifa_ranking = rankings.get(entry["team"], 999)
+            r = rankings.get(entry["team"])
+            if r is not None:  # no pisar con 999 a un equipo ausente del dict
+                entry["stats"].fifa_ranking = r
 
     def third_key(entry: Dict) -> tuple:
         s = entry["stats"]
