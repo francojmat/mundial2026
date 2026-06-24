@@ -169,8 +169,12 @@ def team_phrase(entry: Dict, opponent: str = None) -> str:
     if draw == "in":
         return f"Le alcanza con empatar a {opp}"
     if win == "in":
-        if lose != "alive" and draw != "alive":   # ni empatar ni perder lo dejan vivo
+        # "gana o queda afuera" SOLO si no ganar lo ELIMINA (4.º). Si empatar/perder lo deja
+        # 3.º, sigue con chances como mejor tercero → NO es "afuera".
+        if draw == "out" and lose == "out":
             return f"Le gana a {opp} o queda afuera"
+        if draw == "third" or lose == "third":
+            return f"Ganándole a {opp} clasifica directo; si no, pelea como mejor 3.º"
         return f"Ganándole a {opp} clasifica"
     if win == "third":
         return f"Si le gana a {opp}, pelea como mejor 3.º"
