@@ -511,6 +511,15 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .secbar-link{{border:1px solid rgba(194,65,12,.25);background:rgba(194,65,12,.06);color:{T};font-size:.73rem;font-weight:700;letter-spacing:.01em;padding:6px 13px;border-radius:7px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .14s,color .14s,border-color .14s}}
     .secbar-link:hover,.secbar-link:active{{background:{T};color:#fff;border-color:{T}}}
     @media(max-width:640px){{.secbar{{padding:9px 10px;margin:0 -10px 16px;gap:6px}}.secbar-link{{font-size:.68rem;padding:5px 11px}}}}
+    /* tira fina de acceso a Estadísticas (suave, acento teal = diferencial) */
+    .stats-strip{{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(194,65,12,.05);border:1px solid {BDR};border-left:3px solid {T};border-radius:9px;padding:9px 16px;text-decoration:none;margin-bottom:22px;transition:background .14s}}
+    .stats-strip:hover{{background:rgba(194,65,12,.1)}}
+    .stats-strip-l{{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}}
+    .stats-strip-new{{font-size:.54rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#fff;background:{T};padding:2px 7px;border-radius:4px;flex-shrink:0}}
+    .stats-strip-t{{font-size:.85rem;font-weight:800;color:{TXT}}}
+    .stats-strip-d{{font-size:.73rem;color:{MUT}}}
+    .stats-strip-cta{{font-size:.76rem;font-weight:700;color:{T};white-space:nowrap;flex-shrink:0}}
+    @media(max-width:560px){{.stats-strip{{padding:8px 13px;margin-bottom:18px}}.stats-strip-d{{display:none}}}}
     /* sub-tabs de "Estadísticas clásicas" (rectos, de marca) */
     .cstabs{{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}}
     .cstab{{border:1px solid {T};background:{WHT};color:{T};font-family:inherit;font-size:.78rem;font-weight:700;padding:7px 14px;border-radius:6px;cursor:pointer}}
@@ -558,6 +567,15 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <nav class="secbar" id="secbar" aria-label="Secciones"></nav>
+
+<a href="/estadisticas.html" class="stats-strip">
+  <span class="stats-strip-l">
+    <span class="stats-strip-new">Nuevo</span>
+    <span class="stats-strip-t">El Mundial en números</span>
+    <span class="stats-strip-d">confederaciones · xG · comparadores · disciplina</span>
+  </span>
+  <span class="stats-strip-cta">Ver estadísticas &#8594;</span>
+</a>
 
 <div id="today-container">
 <div class="sec" id="sec-hoy" data-nav="Partidos">
@@ -642,18 +660,6 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
       <span style="display:block;font-size:.8rem;color:{MUT};line-height:1.45">Cargá los resultados que faltan, de los grupos a la final — con la lógica oficial de FIFA.</span>
     </span>
     <span style="display:inline-flex;align-items:center;gap:7px;background:{T};color:#fff;padding:10px 19px;border-radius:7px;font-size:.78rem;font-weight:700;white-space:nowrap;flex-shrink:0">Simular <span style="font-size:1.05rem;line-height:1">&#8594;</span></span>
-  </a>
-</div>
-
-<div class="divider"></div>
-<div class="sec" id="sec-profundas" data-nav="Estadísticas" data-href="/estadisticas.html">
-  <a href="/estadisticas.html" style="display:flex;align-items:center;justify-content:space-between;gap:18px;background:{WHT};border:1px solid {BDR};border-left:3px solid {T};border-radius:12px;padding:18px 22px;text-decoration:none">
-    <span style="min-width:0">
-      <span style="display:block;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:{T};margin-bottom:6px">Estadísticas</span>
-      <span style="display:block;font-size:1.06rem;font-weight:800;color:{TXT};letter-spacing:-.02em;margin-bottom:4px">El Mundial en números</span>
-      <span style="display:block;font-size:.8rem;color:{MUT};line-height:1.45">Confederaciones, eficiencia (xG), goles, comparador, disciplina y ligas — se actualiza solo.</span>
-    </span>
-    <span style="display:inline-flex;align-items:center;gap:7px;background:{T};color:#fff;padding:10px 19px;border-radius:7px;font-size:.78rem;font-weight:700;white-space:nowrap;flex-shrink:0">Ver <span style="font-size:1.05rem;line-height:1">&#8594;</span></span>
   </a>
 </div>
 
