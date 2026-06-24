@@ -595,7 +595,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 <div class="divider"></div>
 
-<div class="sec" id="sec-cruces" data-nav="¿Contra quién?">
+<div class="sec" id="sec-cruces" data-nav="SUPER EXCEL">
   <div class="sec-hdr" onclick="toggleSec('cruces')">
     <p class="sec-t" style="margin:0;border:none;padding-bottom:0">SUPER EXCEL — ¿Contra quién?</p>
     <button class="sec-toggle" id="st-cruces">▲ CERRAR</button>
