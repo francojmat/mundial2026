@@ -70,3 +70,10 @@ def ficha_seleccion(team: str):
     if not row:
         return None
     return {"rank": row[0], "titulos": row[1], "mejor": row[2]}
+
+
+def fifa_rankings() -> dict:
+    """{nombre_API: posición_ranking_FIFA} para el desempate oficial #7
+    (último criterio: puntos→dif gol→goles→fair play→ranking FIFA). Keys = nombres
+    de API-Football, mismos que usa standings, así que se enchufa directo."""
+    return {team: row[0] for team, row in _SEL.items()}

@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Set
 from countries import traducir, nombre_es, bandera_img, venue_maps_url, VENUE_INFO
 from scenarios import compute_group_scenarios, team_phrase, _opp_name
+from standings import is_decided
 from bracket import r32_destination
 
 _ARG_TZ = timezone(timedelta(hours=-3))
@@ -139,7 +140,9 @@ def title_path(partido: int) -> list:
 
 
 def _done(matches) -> bool:
-    return sum(1 for m in matches if m.played) >= 6
+    # Grupo terminado = 6 partidos DEFINITIVOS. Un partido en vivo no cuenta:
+    # el grupo no está cerrado (ni sus posiciones fijas) hasta que termina.
+    return sum(1 for m in matches if is_decided(m)) >= 6
 
 def _live(matches) -> bool:
     return any(m.status in ("IN_PLAY", "PAUSED") for m in matches)

@@ -11,7 +11,7 @@ terceros que pueden clasificar. El cálculo pesado corre una vez por generación
 from itertools import product
 from typing import Dict, List, Optional
 
-from standings import MatchResult, compute_stats, rank_group, rank_third_place_teams
+from standings import MatchResult, compute_stats, rank_group, rank_third_place_teams, is_decided
 from bracket import _BRACKET, _SCHEDULE, _city_of_partido, assign_thirds_to_slots
 
 # Tope de combinaciones para el Anexo C exacto. Si se supera (torneo temprano, muchos
@@ -22,13 +22,15 @@ _SCORE = {"H": (1, 0), "D": (0, 0), "A": (0, 1)}
 
 
 def _pending(matches: List[MatchResult]) -> List[MatchResult]:
-    return [m for m in matches if not m.played and m.status == "TIMED"]
+    # Pendiente = todo lo que NO terminó (programado o EN VIVO). Un partido en vivo
+    # no tiene resultado definitivo: se enumera, no se asume el marcador en curso.
+    return [m for m in matches if not is_decided(m)]
 
 
 def _enumerate_group(teams, matches, fifa_rankings=None):
     """Lista de (ranking, stats) para cada resultado posible del grupo."""
     pending = _pending(matches)
-    played = [m for m in matches if m.played]
+    played = [m for m in matches if is_decided(m)]
     if not pending:
         stats = compute_stats(teams, played)
         return [(rank_group(teams, stats, played, fifa_rankings), stats)]
@@ -181,8 +183,8 @@ def opponent_matrix(team, group, my_pos, standings, fifa_rankings=None):
     data2 = standings.get(g2, {})
     teams2 = data2.get("teams", [])
     matches2 = data2.get("matches", [])
-    pending = [m for m in matches2 if not m.played and m.status == "TIMED"]
-    played = [m for m in matches2 if m.played]
+    pending = [m for m in matches2 if not is_decided(m)]
+    played = [m for m in matches2 if is_decided(m)]
     if len(pending) > 2:
         return None  # demasiados pendientes en el grupo rival → grilla impráctica
 

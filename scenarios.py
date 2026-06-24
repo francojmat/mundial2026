@@ -13,7 +13,7 @@ Conservador a propósito: si algo depende de desempates finos (goles), preferimo
 from itertools import product
 from typing import Dict, List
 
-from standings import MatchResult, compute_stats, rank_group
+from standings import MatchResult, compute_stats, rank_group, is_decided
 
 # Tope de partidos pendientes para enumerar (3^7 = 2187; por encima no aporta:
 # son grupos casi sin jugar, donde no hay escenario útil que mostrar).
@@ -24,7 +24,10 @@ _SCORE = {"H": (1, 0), "D": (0, 0), "A": (0, 1)}
 
 
 def _pending(matches: List[MatchResult]) -> List[MatchResult]:
-    return [m for m in matches if not m.played and m.status == "TIMED"]
+    # Pendiente = todo lo que NO terminó: programado (TIMED) o EN VIVO. Un partido
+    # en vivo tiene resultado desconocido → se enumera (H/D/A) como cualquier otro,
+    # no se asume el marcador parcial actual.
+    return [m for m in matches if not is_decided(m)]
 
 
 def _next_match_for(team: str, pending: List[MatchResult]):
@@ -50,7 +53,7 @@ def compute_group_scenarios(teams: List[str], matches: List[MatchResult],
     if not pending or len(pending) > _MAX_PENDING:
         return {}
 
-    played = [m for m in matches if m.played]
+    played = [m for m in matches if is_decided(m)]
 
     # posiciones posibles por equipo (global), y condicionadas al resultado del
     # próximo partido de cada equipo.
@@ -175,6 +178,9 @@ def team_phrase(entry: Dict, opponent: str = None) -> str:
             return f"Le gana a {opp} o queda afuera"
         if draw == "third" or lose == "third":
             return f"Ganándole a {opp} clasifica directo; si no, pelea como mejor 3.º"
+        # Ganar lo mete; si además perder lo elimina, avisarlo (es lo que se juega).
+        if lose == "out":
+            return f"Ganándole a {opp} clasifica; si pierde, queda afuera"
         return f"Ganándole a {opp} clasifica"
     if win == "third":
         return f"Si le gana a {opp}, pelea como mejor 3.º"

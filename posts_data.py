@@ -10,7 +10,7 @@ junto con el resto de la rama `data`.
 from countries import nombre_es, iso_code
 from motm import motm_for
 from scenarios import compute_group_scenarios, team_phrase
-from standings import compute_stats, rank_group
+from standings import compute_stats, rank_group, is_decided
 
 
 def _num(v):
@@ -103,7 +103,7 @@ def build_team_statuses(standings):
     for _gk, _gv in standings.items():
         if isinstance(_gk, str) and _gk.startswith("GROUP_"):
             _ms = _gv.get("matches", [])
-            if not (_ms and all(getattr(_m, "played", False) for _m in _ms)):
+            if not (_ms and all(is_decided(_m) for _m in _ms)):
                 all_groups_done = False
                 break
     out = []
@@ -113,7 +113,7 @@ def build_team_statuses(standings):
         glabel = gkey.replace("GROUP_", "")
         teams = gval.get("teams", [])
         matches = gval.get("matches", [])
-        done = bool(matches) and all(getattr(m, "played", False) for m in matches)
+        done = bool(matches) and all(is_decided(m) for m in matches)
         sc = compute_group_scenarios(teams, matches)
         # rankear acá (no depender del orden de entrada) para la posición actual
         ranked = rank_group(teams, compute_stats(teams, matches), matches)

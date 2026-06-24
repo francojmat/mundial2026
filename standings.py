@@ -14,6 +14,16 @@ Tiebreaker order (Article 13, FIFA 2026 regulations):
 from dataclasses import dataclass, field
 from typing import Dict, List
 
+# Ranking FIFA curado (criterio de desempate #7). Se carga una vez como DEFAULT,
+# así el desempate aplica en TODA la lógica (tabla, escenarios, cruces, bracket)
+# sin tener que enhebrar el dict por cada call-site. seleccion_data no importa
+# nada de acá → sin ciclo. Si falla, queda {} y el comportamiento es el viejo.
+try:
+    from seleccion_data import fifa_rankings as _curated_fifa_rankings
+    _DEFAULT_FIFA: Dict[str, int] = _curated_fifa_rankings()
+except Exception:
+    _DEFAULT_FIFA = {}
+
 
 @dataclass
 class TeamStanding:
@@ -50,6 +60,17 @@ class MatchResult:
     away_red: int = 0
     played: bool = True
     status: str = "TIMED"  # TIMED | IN_PLAY | PAUSED | FINISHED
+
+
+def is_decided(m: "MatchResult") -> bool:
+    """True solo si el partido YA terminó (resultado DEFINITIVO).
+
+    Ojo: un partido EN VIVO viaja con `played=True` (para que su marcador
+    parcial aparezca en la tabla), pero su resultado NO es final. Para
+    escenarios de clasificación y candados de posición hay que tratarlo como
+    indefinido — si no, el motor congela el resultado en curso como si fuera el
+    final y bloquea posiciones que todavía dependen del partido en juego."""
+    return m.status == "FINISHED"
 
 
 def compute_stats(teams: List[str], matches: List[MatchResult]) -> Dict[str, TeamStanding]:
@@ -98,8 +119,9 @@ def rank_group(
     fifa_rankings: Dict[str, int] = None,
 ) -> List[str]:
     """Return teams sorted 1st→4th using FIFA 2026 tiebreaker rules."""
-    if fifa_rankings:
-        for team, rank in fifa_rankings.items():
+    rankings = fifa_rankings if fifa_rankings is not None else _DEFAULT_FIFA
+    if rankings:
+        for team, rank in rankings.items():
             if team in all_stats:
                 all_stats[team].fifa_ranking = rank
 
@@ -171,9 +193,10 @@ def rank_third_place_teams(
     Rank the 12 third-place teams to find the 8 best that advance.
     No H2H (they're from different groups) — use overall stats only.
     """
-    if fifa_rankings:
+    rankings = fifa_rankings if fifa_rankings is not None else _DEFAULT_FIFA
+    if rankings:
         for entry in thirds:
-            entry["stats"].fifa_ranking = fifa_rankings.get(entry["team"], 999)
+            entry["stats"].fifa_ranking = rankings.get(entry["team"], 999)
 
     def third_key(entry: Dict) -> tuple:
         s = entry["stats"]

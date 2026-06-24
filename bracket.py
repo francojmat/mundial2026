@@ -17,6 +17,7 @@ Terceros: asignados por Anexo C del Reglamento FIFA 2026 (495 combinaciones posi
 from typing import Dict, List, Optional
 
 from scenarios import compute_group_scenarios
+from standings import is_decided
 
 
 def _group_key(letter: str) -> str:
@@ -50,16 +51,18 @@ def _get_pos(group_results: Dict, letter: str, pos: int):
     if sc and team in sc:
         provisional = set(sc[team].get("positions", [])) != {pos + 1}
     else:
-        # sin escenarios: grupo terminado (todas las posiciones fijas) o demasiados pendientes
-        provisional = sum(1 for m in matches if m.played) < 6
+        # sin escenarios: grupo terminado (todas las posiciones fijas) o demasiados pendientes.
+        # Cuenta solo partidos DEFINITIVOS: un partido en vivo no "completa" el grupo.
+        provisional = sum(1 for m in matches if is_decided(m)) < 6
     return team, provisional
 
 
 def _is_group_complete(group_results: Dict, letter: str) -> bool:
-    """True si el grupo terminó todos sus partidos (6/6 jugados)."""
+    """True si el grupo terminó todos sus partidos (6/6 DEFINITIVOS).
+    Un partido en vivo NO cuenta: el grupo no está cerrado hasta que termina."""
     data = group_results.get(_group_key(letter), {})
     matches = data.get("matches", [])
-    return sum(1 for m in matches if m.played) >= 6
+    return sum(1 for m in matches if is_decided(m)) >= 6
 
 
 def _all_groups_complete(group_results: Dict) -> bool:
