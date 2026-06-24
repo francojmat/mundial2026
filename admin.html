@@ -120,6 +120,35 @@
     .ig-btn-clear{background:none;border:1px solid #e8ddd0;color:#7c6a58}
     .ig-hint{font-size:.72rem;color:#b09880;line-height:1.45}
     .ig-hint b{color:#7c6a58}
+
+    /* ── Posts de partido ── */
+    .po-pick{display:flex;flex-direction:column;gap:6px}
+    #po-match{border:1px solid #e8ddd0;background:#fff;padding:10px 12px;font-size:.9rem;font-family:inherit;color:#211c14;max-width:520px;width:100%}
+    #po-match:focus{outline:1px solid #c2410c}
+    .po-canvases{display:flex;flex-direction:column;gap:14px}
+    #po-canvas,#po-canvas2{max-width:300px;max-height:62vh;width:auto;height:auto;display:block;border:1px solid #e8ddd0;background:#fff}
+    @media(max-width:600px){
+      #po-canvas,#po-canvas2{max-width:100%;max-height:none}
+    }
+
+    /* ── Avisos ── */
+    .av-wrap{display:flex;gap:28px;align-items:flex-start}
+    .av-form{flex:1;min-width:0;max-width:480px}
+    .av-status{font-size:.78rem;font-weight:700;padding:8px 12px;margin-bottom:16px;border:1px solid #e8ddd0;background:#fff}
+    .av-status.on{border-left:3px solid #16a34a;color:#16a34a}
+    .av-status.off{border-left:3px solid #b09880;color:#7c6a58}
+    .av-lbl{display:block;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#b09880;margin:14px 0 5px}
+    .av-in{width:100%;border:1px solid #e8ddd0;background:#fff;padding:9px 11px;font-size:.88rem;font-family:inherit;color:#211c14}
+    .av-in:focus{outline:1px solid #c2410c}
+    textarea.av-in{resize:vertical;line-height:1.45}
+    .av-row{display:flex;gap:14px;align-items:flex-end}
+    .av-check{display:flex;align-items:center;gap:8px;font-size:.82rem;color:#211c14;margin:18px 0 4px;cursor:pointer}
+    .av-check input{accent-color:#c2410c}
+    .av-actions{display:flex;gap:10px;margin-top:20px}
+    .av-note{font-size:.72rem;color:#b09880;line-height:1.5;margin-top:12px}
+    .av-preview-col{flex:1;min-width:0;position:sticky;top:20px}
+    .av-preview{background:rgba(33,28,20,.55);padding:30px 22px;display:flex;align-items:center;justify-content:center;min-height:260px;margin-top:7px}
+    @media(max-width:680px){ .av-wrap{flex-direction:column} .av-preview-col{width:100%} }
     .ig-thumbs{display:flex;flex-wrap:wrap;gap:8px}
     .ig-thumb{position:relative;width:62px;height:62px;border:2px solid #e8ddd0;cursor:pointer;overflow:hidden;background:#faf8f4}
     .ig-thumb.active{border-color:#c2410c}
@@ -155,6 +184,8 @@
     <button class="tab"        onclick="switchTab('metrics')">Métricas</button>
     <button class="tab"        onclick="switchTab('chat')">Asistente IA</button>
     <button class="tab"        onclick="switchTab('ig')">Instagram</button>
+    <button class="tab"        onclick="switchTab('posts')">Posts de partido</button>
+    <button class="tab"        onclick="switchTab('avisos')">Avisos</button>
   </div>
 
   <!-- ── Sugerencias ── -->
@@ -295,10 +326,107 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Posts de partido ── -->
+  <div id="tab-posts" class="tab-pane">
+    <div id="po-load" class="loading">Cargando partidos…</div>
+    <div id="po-empty" class="sug-empty" style="display:none">Todavía no hay partidos jugados para generar posts.</div>
+    <div id="po-main" style="display:none">
+      <div class="po-pick">
+        <label class="ig-grp-lbl" for="po-match">Partido</label>
+        <select id="po-match"></select>
+      </div>
+
+      <div class="ig-controls" style="margin-top:16px">
+        <div class="ig-grp">
+          <span class="ig-grp-lbl">Tipo</span>
+          <div class="ig-seg" id="po-kind">
+            <button class="ig-opt active" data-kind="resumen">Resumen</button>
+            <button class="ig-opt"        data-kind="estadisticas">Estadísticas</button>
+            <button class="ig-opt"        data-kind="ratings">Puntajes por equipo</button>
+          </div>
+        </div>
+        <div class="ig-grp">
+          <span class="ig-grp-lbl">Formato</span>
+          <div class="ig-seg" id="po-fmt">
+            <button class="ig-opt active" data-pf="story">Historia<small>1080×1920</small></button>
+            <button class="ig-opt"        data-pf="post">Publicación<small>1080×1350</small></button>
+            <button class="ig-opt"        data-pf="carousel">Carrusel<small>1080×1080</small></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ig-stage">
+        <div class="ig-preview-wrap">
+          <div class="po-canvases">
+            <canvas id="po-canvas"></canvas>
+            <canvas id="po-canvas2" style="display:none"></canvas>
+          </div>
+          <p class="ig-dims" id="po-dims"></p>
+        </div>
+        <div class="ig-side">
+          <div class="ig-actions" id="po-actions"></div>
+          <p class="ig-hint">📱 En iPhone: tocá Descargar → <b>"Guardar imagen"</b> (va a Fotos). Para el carrusel, "Guardar X imágenes".</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Avisos (mensajes emergentes) ── -->
+  <div id="tab-avisos" class="tab-pane">
+    <div class="av-wrap">
+      <div class="av-form">
+        <div class="av-status" id="av-status">Cargando…</div>
+
+        <label class="av-lbl">Título</label>
+        <input id="av-title" class="av-in" type="text" maxlength="200" placeholder="Ej. ¡Arrancan los octavos!" oninput="avPreview()">
+
+        <label class="av-lbl">Mensaje</label>
+        <textarea id="av-body" class="av-in" rows="4" maxlength="1500" placeholder="Texto del aviso para los visitantes…" oninput="avPreview()"></textarea>
+
+        <div class="av-row">
+          <div style="flex:1">
+            <label class="av-lbl">Botón — texto (opcional)</label>
+            <input id="av-cta-text" class="av-in" type="text" maxlength="60" placeholder="Ej. Ver el bracket" oninput="avPreview()">
+          </div>
+          <div style="flex:1.4">
+            <label class="av-lbl">Botón — link (opcional)</label>
+            <input id="av-cta-url" class="av-in" type="text" maxlength="600" placeholder="https://…" oninput="avPreview()">
+          </div>
+        </div>
+
+        <div class="av-row">
+          <div>
+            <label class="av-lbl">Color</label>
+            <div class="ig-seg" id="av-style">
+              <button class="ig-opt active" data-style="info">Marca</button>
+              <button class="ig-opt"        data-style="success">Verde</button>
+              <button class="ig-opt"        data-style="warning">Aviso</button>
+            </div>
+          </div>
+        </div>
+
+        <label class="av-check"><input id="av-dismissible" type="checkbox" checked> Mostrar el check <b>"No volver a mostrar"</b> al visitante</label>
+
+        <div class="av-actions">
+          <button class="ig-btn ig-btn-dl"  onclick="avPublish(true)">Publicar aviso</button>
+          <button class="ig-btn ig-btn-clear" onclick="avPublish(false)">Desactivar</button>
+        </div>
+        <p class="av-note">Al publicar, el aviso aparece a todos los visitantes. Si tocaron "No volver a mostrar", solo reaparece cuando publicás uno nuevo (cambia el contenido).</p>
+      </div>
+
+      <div class="av-preview-col">
+        <p class="ig-grp-lbl">Vista previa</p>
+        <div class="av-preview" id="av-preview"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-const API = 'https://mejortercero.online/api';
+const API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || /^192\.168\./.test(location.hostname))
+  ? '/api'                                   // dev local: lo sirve _dev_server.py
+  : 'https://mejortercero.online/api';
 const SESSION_TIMEOUT = 3 * 60 * 1000;
 let _token = '';
 let _timeoutId = null;
@@ -361,7 +489,7 @@ function showPanel() {
 }
 
 function switchTab(name) {
-  const names = ['sugs', 'metrics', 'chat', 'ig'];
+  const names = ['sugs', 'metrics', 'chat', 'ig', 'posts', 'avisos'];
   document.querySelectorAll('.tab').forEach((t, i) =>
     t.classList.toggle('active', names[i] === name));
   names.forEach(n => {
@@ -370,6 +498,14 @@ function switchTab(name) {
   });
   if (name === 'metrics' && document.getElementById('metrics-content').style.display === 'none') {
     loadMetrics();
+  }
+  if (name === 'posts' && !_poLoaded) {
+    _poLoaded = true;
+    loadPosts();
+  }
+  if (name === 'avisos' && !_avLoaded) {
+    _avLoaded = true;
+    loadAviso();
   }
 }
 
@@ -990,6 +1126,494 @@ async function igDownloadAll() {
     igRenderPreview();
   });
 })();
+
+// ── Posts de partido — arma imágenes desde los datos del partido ────────────────
+
+let _poLoaded = false;
+let _poWired  = false;
+let _poData   = null;        // {matches:[...]}
+let _poMatch  = null;        // partido elegido
+let _poKind   = 'resumen';   // 'resumen' | 'ratings'
+let _poFmt    = 'story';     // 'story' | 'post' | 'carousel'
+
+const PO_FMT = {
+  story:    { w: 1080, h: 1920, label: 'Historia' },
+  post:     { w: 1080, h: 1350, label: 'Publicación' },
+  carousel: { w: 1080, h: 1080, label: 'Carrusel' },
+};
+const PO = { CREMA:'#faf8f4', INK:'#211c14', T:'#c2410c', MUT:'#7c6a58', DIM:'#b09880',
+             BDR:'#e8ddd0', WHT:'#fff', SOFT:'#fbeee7' };
+const PO_SANS = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+
+const _poFlagCache = {};
+function poFlag(iso) {
+  if (!iso) return Promise.resolve(null);
+  if (_poFlagCache[iso]) return _poFlagCache[iso];
+  const p = new Promise(res => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';                  // necesario para exportar el canvas
+    img.onload  = () => res(img);
+    img.onerror = () => res(null);
+    img.src = `https://flagcdn.com/w320/${iso}.png`;
+  });
+  _poFlagCache[iso] = p;
+  return p;
+}
+
+function poFont(ctx, size, weight) { ctx.font = `${weight || 600} ${size}px ${PO_SANS}`; }
+
+// Texto con auto-encogido si excede maxW
+function poText(ctx, txt, x, y, o) {
+  o = o || {};
+  let s = o.size || 36;
+  const w = o.weight || 600;
+  poFont(ctx, s, w);
+  if (o.maxW) while (ctx.measureText(txt).width > o.maxW && s > 13) { s -= 2; poFont(ctx, s, w); }
+  ctx.fillStyle    = o.color || PO.INK;
+  ctx.textAlign    = o.align || 'left';
+  ctx.textBaseline = o.baseline || 'alphabetic';
+  ctx.fillText(txt, x, y);
+  return s;
+}
+
+function poRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+function poDrawFlag(ctx, img, cx, cy, w) {
+  if (!img) return;
+  const h = w * img.naturalHeight / img.naturalWidth;
+  const x = cx - w / 2, y = cy - h / 2;
+  ctx.drawImage(img, x, y, w, h);
+  ctx.strokeStyle = 'rgba(0,0,0,.14)'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+}
+
+function poPill(ctx, x, y, w, h, txt) {
+  ctx.fillStyle = PO.T;
+  poRoundRect(ctx, x, y, w, h, Math.min(10, h / 3)); ctx.fill();
+  ctx.fillStyle = PO.WHT; poFont(ctx, h * 0.5, 800);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(txt, x + w / 2, y + h / 2 + 1);
+}
+
+function poNorm(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z ]/g, '').trim();
+}
+function poNameMatch(a, b) {
+  a = poNorm(a); b = poNorm(b);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const la = a.split(' ').pop(), lb = b.split(' ').pop();
+  return la === lb && la.length > 2;
+}
+function poSlug(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function poBars(ctx, W, H) {
+  ctx.fillStyle = PO.CREMA; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = PO.T; ctx.fillRect(0, 0, W, 16); ctx.fillRect(0, H - 16, W, 16);
+}
+
+function poFooter(ctx, W, H, M) {
+  const parts = [M.venue, M.referee ? 'Árbitro: ' + M.referee : ''].filter(Boolean);
+  if (parts.length)
+    poText(ctx, parts.join('   ·   '), W / 2, H - 96, { size: 26, weight: 600, color: PO.MUT, align: 'center', baseline: 'middle', maxW: W - 120 });
+  poText(ctx, 'MEJORTERCERO.ONLINE', W / 2, H - 54, { size: 30, weight: 800, color: PO.T, align: 'center', baseline: 'middle' });
+}
+
+// ── Imagen: RESUMEN del partido ──
+async function poDrawSummary(canvas, M, fmtKey) {
+  const f = PO_FMT[fmtKey], W = f.w, H = f.h;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  poBars(ctx, W, H);
+
+  const [hf, af] = await Promise.all([poFlag(M.home.iso), poFlag(M.away.iso)]);
+  const padX = 90, goals = M.goals || [];
+
+  // Layout: la etiqueta queda fija arriba y el CUERPO (marcador + goles) se centra
+  // en el espacio entre la etiqueta y el footer → un 0-0 sin goles no deja un hueco.
+  const stageH = 60, scoreH = 320, goalLineH = 64;
+  const goalsH = goals.length ? 70 + goals.length * goalLineH : 0;
+  const gap2 = goals.length ? 56 : 0;
+  const top0 = Math.round(H * 0.06), footerTop = H - 170;
+
+  // etapa (fija, cerca del tope)
+  poText(ctx, (M.stage || '').toUpperCase() + (M.finished ? '  ·  FIN' : ''), W / 2, top0,
+    { size: 34, weight: 800, color: PO.T, align: 'center', baseline: 'top', maxW: W - 120 });
+
+  // cuerpo centrado en la región bajo la etiqueta
+  const bodyH = scoreH + gap2 + goalsH;
+  const regionTop = top0 + stageH + 30;
+  let y = regionTop + Math.max(0, (footerTop - regionTop - bodyH) / 2);
+
+  // scoreline
+  const cy = y + 110, flagW = 230;
+  const homeX = W * 0.24, awayX = W * 0.76;
+  poDrawFlag(ctx, hf, homeX, cy, flagW);
+  poDrawFlag(ctx, af, awayX, cy, flagW);
+  poText(ctx, `${M.home.goals ?? '-'} - ${M.away.goals ?? '-'}`, W / 2, cy,
+    { size: 150, weight: 800, color: PO.INK, align: 'center', baseline: 'middle' });
+  poText(ctx, M.home.name.toUpperCase(), homeX, cy + 95, { size: 40, weight: 700, color: PO.INK, align: 'center', baseline: 'top', maxW: flagW + 80 });
+  poText(ctx, M.away.name.toUpperCase(), awayX, cy + 95, { size: 40, weight: 700, color: PO.INK, align: 'center', baseline: 'top', maxW: flagW + 80 });
+  y += scoreH + gap2;
+
+  // goles
+  if (goals.length) {
+    poText(ctx, 'GOLES', W / 2, y, { size: 30, weight: 800, color: PO.T, align: 'center', baseline: 'top' });
+    y += 70;
+    for (const g of goals) {
+      const ly = y + goalLineH / 2;
+      poText(ctx, `${g.min}'`, padX, ly, { size: 34, weight: 800, color: PO.T, baseline: 'middle' });
+      poFont(ctx, 36, 600); ctx.fillStyle = PO.INK; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(g.scorer, padX + 110, ly);
+      if (g.assist) {
+        const nameW = ctx.measureText(g.scorer).width;
+        poText(ctx, '  ·  asist. ' + g.assist, padX + 110 + nameW, ly + 1, { size: 28, weight: 600, color: PO.DIM, baseline: 'middle' });
+      }
+      poText(ctx, g.team, W - padX, ly, { size: 30, weight: 700, color: PO.MUT, align: 'right', baseline: 'middle' });
+      y += goalLineH;
+    }
+  }
+
+  poFooter(ctx, W, H, M);
+}
+
+// ── Imagen: PUNTAJES de un equipo ──
+async function poDrawRatings(canvas, M, side, fmtKey) {
+  const f = PO_FMT[fmtKey], W = f.w, H = f.h;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  poBars(ctx, W, H);
+
+  const team = side === 'home' ? M.home : M.away;
+  const opp  = side === 'home' ? M.away : M.home;
+  const players = (M.players && M.players[team.name]) || [];
+  const flag = await poFlag(team.iso);
+  const padX = 80;
+  const isFig = p => M.motm && poNameMatch(M.motm, p.name);
+
+  // header
+  let y = 60;
+  poDrawFlag(ctx, flag, padX + 85, y + 58, 170);
+  const hx = padX + 195;
+  poText(ctx, 'PUNTAJES DEL PARTIDO', hx, y + 8, { size: 28, weight: 800, color: PO.T, baseline: 'top' });
+  poText(ctx, team.name.toUpperCase(), hx, y + 44, { size: 58, weight: 800, color: PO.INK, baseline: 'top', maxW: W - hx - padX });
+  poText(ctx, `vs ${opp.name}  ·  ${M.home.goals}-${M.away.goals}  ·  ${M.stage}`, hx, y + 116,
+    { size: 26, weight: 600, color: PO.MUT, baseline: 'top', maxW: W - hx - padX });
+  y += 188;
+
+  // destacado (mejor puntaje / figura)
+  if (players.length) {
+    const star = players[0], cardH = 196, cardW = W - padX * 2;
+    ctx.fillStyle = PO.SOFT; poRoundRect(ctx, padX, y, cardW, cardH, 16); ctx.fill();
+    ctx.strokeStyle = PO.T; ctx.lineWidth = 3; poRoundRect(ctx, padX, y, cardW, cardH, 16); ctx.stroke();
+    const pillW = 150, pillH = 108;
+    poPill(ctx, padX + 28, y + (cardH - pillH) / 2, pillW, pillH, star.rating.toFixed(1));
+    const tx = padX + 28 + pillW + 28;
+    poText(ctx, isFig(star) ? '★ FIGURA DEL PARTIDO' : '★ MEJOR PUNTAJE', tx, y + 56, { size: 28, weight: 800, color: PO.T });
+    poText(ctx, star.name, tx, y + 116, { size: 50, weight: 800, color: PO.INK, maxW: cardW - pillW - 90 });
+    const sub = [];
+    if (star.g) sub.push(`⚽ ${star.g} gol${star.g > 1 ? 'es' : ''}`);
+    if (star.a) sub.push(`${star.a} asist.`);
+    if (star.cap) sub.push('(C)');
+    if (sub.length) poText(ctx, sub.join('   ·   '), tx, y + 158, { size: 27, weight: 600, color: PO.MUT });
+    y += cardH + 36;
+  }
+
+  // Resto de los jugadores: SIEMPRE entran TODOS (no se recorta). Se ajusta el alto
+  // de fila y, si hay muchos, se pasa a 2 columnas para que sigan legibles.
+  const rest = players.slice(1);
+  const footerTop = H - 140;
+  const avail = footerTop - y;
+  if (rest.length) {
+    // 2 columnas solo si en 1 sola las filas quedarían demasiado chicas para leerse.
+    const cols = (avail / rest.length < 42) ? 2 : 1;
+    const rowsPerCol = Math.ceil(rest.length / cols);
+    const rowH = Math.min(60, avail / rowsPerCol);
+    const fs = Math.max(22, Math.min(34, Math.round(rowH * 0.5)));
+    const pillH = Math.max(28, Math.min(44, Math.round(rowH * 0.62)));
+    const pillW = Math.round(pillH * 1.85);
+    const colGap = 44;
+    const colW = (W - padX * 2 - (cols - 1) * colGap) / cols;
+    rest.forEach((p, i) => {
+      const col = Math.floor(i / rowsPerCol);
+      const rowInCol = i % rowsPerCol;
+      const cx0 = padX + col * (colW + colGap);
+      const ly = y + rowInCol * rowH + rowH / 2;
+      ctx.strokeStyle = PO.BDR; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx0, y + (rowInCol + 1) * rowH); ctx.lineTo(cx0 + colW, y + (rowInCol + 1) * rowH); ctx.stroke();
+      const nameMax = colW - pillW - 64;
+      poText(ctx, p.name, cx0, ly, { size: fs, weight: 600, color: PO.INK, baseline: 'middle', maxW: nameMax });
+      const nameW = Math.min(ctx.measureText(p.name).width, nameMax);
+      const tags = [];
+      if (isFig(p)) tags.push('★');
+      if (p.g) tags.push('⚽' + (p.g > 1 ? '×' + p.g : ''));
+      if (p.cap) tags.push('(C)');
+      if (tags.length) poText(ctx, tags.join(' '), cx0 + nameW + 12, ly, { size: Math.round(fs * 0.78), weight: 700, color: PO.T, baseline: 'middle' });
+      poPill(ctx, cx0 + colW - pillW, ly - pillH / 2, pillW, pillH, p.rating.toFixed(1));
+    });
+  }
+
+  poFooter(ctx, W, H, M);
+}
+
+// ── Imagen: ESTADÍSTICAS del partido (imita la sección de Ver Partido) ──
+async function poDrawStats(canvas, M, fmtKey) {
+  const f = PO_FMT[fmtKey], W = f.w, H = f.h;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  poBars(ctx, W, H);
+
+  const [hf, af] = await Promise.all([poFlag(M.home.iso), poFlag(M.away.iso)]);
+  const padX = 80, top0 = Math.round(H * 0.05);
+
+  poText(ctx, (M.stage || '').toUpperCase(), W / 2, top0,
+    { size: 30, weight: 800, color: PO.T, align: 'center', baseline: 'top', maxW: W - 120 });
+
+  // scoreline compacto
+  const cy = top0 + 150, flagW = 150;
+  poDrawFlag(ctx, hf, padX + flagW / 2, cy, flagW);
+  poDrawFlag(ctx, af, W - padX - flagW / 2, cy, flagW);
+  poText(ctx, `${M.home.goals ?? '-'} - ${M.away.goals ?? '-'}`, W / 2, cy,
+    { size: 96, weight: 800, color: PO.INK, align: 'center', baseline: 'middle' });
+  poText(ctx, M.home.name.toUpperCase(), padX + flagW / 2, cy + 72, { size: 30, weight: 700, color: PO.INK, align: 'center', baseline: 'top', maxW: flagW + 100 });
+  poText(ctx, M.away.name.toUpperCase(), W - padX - flagW / 2, cy + 72, { size: 30, weight: 700, color: PO.INK, align: 'center', baseline: 'top', maxW: flagW + 100 });
+
+  let y = cy + 132;
+  poText(ctx, 'ESTADÍSTICAS DEL PARTIDO', W / 2, y, { size: 28, weight: 800, color: PO.T, align: 'center', baseline: 'top' });
+  y += 58;
+
+  const stats = M.stats || [];
+  if (!stats.length) {
+    poText(ctx, 'Sin estadísticas disponibles para este partido.', W / 2, y + 40,
+      { size: 28, weight: 600, color: PO.DIM, align: 'center', baseline: 'top', maxW: W - 160 });
+    poFooter(ctx, W, H, M);
+    return;
+  }
+
+  const footerTop = H - 140;
+  const avail = footerTop - y;
+  const rowH = Math.min(112, avail / stats.length);
+  const valFs = Math.max(26, Math.min(40, Math.round(rowH * 0.36)));
+  const lblFs = Math.max(19, Math.min(27, Math.round(rowH * 0.25)));
+  const barW = W - padX * 2;
+  const barH = Math.max(8, Math.min(14, Math.round(rowH * 0.13)));
+  const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? 0 : n; };
+  let ry = y + Math.max(0, (avail - rowH * stats.length) / 2);  // centra el bloque
+
+  for (const s of stats) {
+    const mid = ry + rowH / 2;
+    poText(ctx, String(s.home), padX, mid - rowH * 0.17, { size: valFs, weight: 800, color: PO.INK, align: 'left', baseline: 'middle' });
+    poText(ctx, String(s.away), W - padX, mid - rowH * 0.17, { size: valFs, weight: 800, color: PO.INK, align: 'right', baseline: 'middle' });
+    poText(ctx, s.label.toUpperCase(), W / 2, mid - rowH * 0.17, { size: lblFs, weight: 700, color: PO.MUT, align: 'center', baseline: 'middle' });
+    const total = num(s.home) + num(s.away);
+    const hp = total ? num(s.home) / total : 0.5;
+    const by = mid + rowH * 0.16;
+    ctx.fillStyle = PO.BDR; ctx.fillRect(padX, by, barW, barH);
+    ctx.fillStyle = PO.T;   ctx.fillRect(padX, by, barW * hp, barH);
+    ctx.fillStyle = PO.INK; ctx.fillRect(padX + barW * hp + 3, by, Math.max(0, barW * (1 - hp) - 3), barH);
+    ry += rowH;
+  }
+
+  poFooter(ctx, W, H, M);
+}
+
+async function loadPosts() {
+  const load = document.getElementById('po-load');
+  try {
+    const res = await fetch(`${API}/posts`);
+    _poData = await res.json();
+  } catch (e) { load.textContent = 'Error al cargar partidos: ' + e.message; return; }
+
+  const matches = (_poData && _poData.matches) || [];
+  load.style.display = 'none';
+  if (!matches.length) { document.getElementById('po-empty').style.display = 'block'; return; }
+
+  const sel = document.getElementById('po-match');
+  sel.innerHTML = matches.map((m, i) => {
+    const lbl = `${m.home.name} ${m.home.goals ?? ''}-${m.away.goals ?? ''} ${m.away.name} · ${m.stage}`;
+    return `<option value="${i}">${esc(lbl)}</option>`;
+  }).join('');
+  document.getElementById('po-main').style.display = 'block';
+  _poMatch = matches[0];
+  poWire();
+  poRender();
+}
+
+function poWire() {
+  if (_poWired) return; _poWired = true;
+  document.getElementById('po-match').addEventListener('change', e => {
+    _poMatch = _poData.matches[+e.target.value]; poRender();
+  });
+  document.querySelectorAll('#po-kind .ig-opt').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#po-kind .ig-opt').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); _poKind = b.dataset.kind; poRender();
+  }));
+  document.querySelectorAll('#po-fmt .ig-opt').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#po-fmt .ig-opt').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); _poFmt = b.dataset.pf; poRender();
+  }));
+}
+
+async function poRender() {
+  if (!_poMatch) return;
+  const M = _poMatch, f = PO_FMT[_poFmt];
+  const c1 = document.getElementById('po-canvas'), c2 = document.getElementById('po-canvas2');
+  if (_poKind === 'ratings') {
+    c2.style.display = 'block';
+    await poDrawRatings(c1, M, 'home', _poFmt);
+    await poDrawRatings(c2, M, 'away', _poFmt);
+  } else {
+    c2.style.display = 'none';
+    if (_poKind === 'estadisticas') await poDrawStats(c1, M, _poFmt);
+    else await poDrawSummary(c1, M, _poFmt);
+  }
+  document.getElementById('po-dims').textContent = `${f.w} × ${f.h} px · ${f.label}`;
+  poActions();
+}
+
+function poActions() {
+  const M = _poMatch, wrap = document.getElementById('po-actions');
+  if (_poKind === 'ratings') {
+    wrap.innerHTML =
+      `<button class="ig-btn ig-btn-dl"  onclick="poDownload('both')">⬇ Descargar ambos equipos</button>
+       <button class="ig-btn ig-btn-add" onclick="poDownload('home')">Solo ${esc(M.home.name)}</button>
+       <button class="ig-btn ig-btn-add" onclick="poDownload('away')">Solo ${esc(M.away.name)}</button>`;
+  } else {
+    wrap.innerHTML =
+      `<button class="ig-btn ig-btn-dl"  onclick="poDownload('cur')">⬇ Descargar (${PO_FMT[_poFmt].label})</button>
+       <button class="ig-btn ig-btn-all" onclick="poDownload('all3')">⬇ Las 3 medidas</button>`;
+  }
+}
+
+async function poDownload(mode) {
+  const M = _poMatch, files = [];
+  const base = `${poSlug(M.home.name)}-${M.home.goals}${M.away.goals}-${poSlug(M.away.name)}`;
+  async function mk(kind, side, fmt, name) {
+    const c = document.createElement('canvas');
+    if (kind === 'resumen') await poDrawSummary(c, M, fmt);
+    else if (kind === 'estadisticas') await poDrawStats(c, M, fmt);
+    else await poDrawRatings(c, M, side, fmt);
+    files.push(await igCanvasToFile(c, `mejortercero-${name}.png`));
+  }
+  if (_poKind === 'ratings') {
+    const sides = mode === 'both' ? ['home', 'away'] : [mode];
+    for (const s of sides) {
+      const t = s === 'home' ? M.home : M.away;
+      await mk('ratings', s, _poFmt, `puntajes-${poSlug(t.name)}-${_poFmt}`);
+    }
+  } else {
+    const kind = _poKind;  // 'resumen' | 'estadisticas'
+    if (mode === 'all3') for (const k of ['story', 'post', 'carousel']) await mk(kind, null, k, `${base}-${kind}-${k}`);
+    else await mk(kind, null, _poFmt, `${base}-${kind}-${_poFmt}`);
+  }
+  igDeliver(files);
+}
+
+// ── Avisos — editor de mensajes emergentes ──────────────────────────────────────
+
+let _avLoaded = false;
+let _avWired  = false;
+let _avStyle  = 'info';
+
+const AV_ACCENT = { info: '#c2410c', success: '#16a34a', warning: '#d97706' };
+
+function avWire() {
+  if (_avWired) return; _avWired = true;
+  document.querySelectorAll('#av-style .ig-opt').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#av-style .ig-opt').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); _avStyle = b.dataset.style; avPreview();
+  }));
+  document.getElementById('av-dismissible').addEventListener('change', avPreview);
+}
+
+async function loadAviso() {
+  avWire();
+  try {
+    const res = await fetch(`${API}/announcement`);
+    const a = await res.json();
+    document.getElementById('av-title').value    = a.title || '';
+    document.getElementById('av-body').value      = a.body || '';
+    document.getElementById('av-cta-text').value  = a.cta_text || '';
+    document.getElementById('av-cta-url').value   = a.cta_url || '';
+    document.getElementById('av-dismissible').checked = a.dismissible !== false;
+    _avStyle = AV_ACCENT[a.style] ? a.style : 'info';
+    document.querySelectorAll('#av-style .ig-opt').forEach(x =>
+      x.classList.toggle('active', x.dataset.style === _avStyle));
+    avSetStatus(a.active && (a.title || a.body));
+  } catch (e) {
+    document.getElementById('av-status').textContent = 'Error al cargar: ' + e.message;
+  }
+  avPreview();
+}
+
+function avSetStatus(active) {
+  const el = document.getElementById('av-status');
+  el.className = 'av-status ' + (active ? 'on' : 'off');
+  el.textContent = active ? '● Hay un aviso ACTIVO en la web' : '○ No hay aviso activo';
+}
+
+function avData() {
+  return {
+    title:    document.getElementById('av-title').value.trim(),
+    body:     document.getElementById('av-body').value.trim(),
+    cta_text: document.getElementById('av-cta-text').value.trim(),
+    cta_url:  document.getElementById('av-cta-url').value.trim(),
+    style:    _avStyle,
+    dismissible: document.getElementById('av-dismissible').checked,
+  };
+}
+
+function avPreview() {
+  const a = avData();
+  const accent = AV_ACCENT[a.style] || '#c2410c';
+  const wrap = document.getElementById('av-preview');
+  if (!a.title && !a.body) { wrap.innerHTML = '<span style="color:#d8c9b6;font-size:.85rem">Escribí un título o mensaje…</span>'; return; }
+  let h = `<div style="background:#faf8f4;max-width:380px;width:100%;border-top:6px solid ${accent};box-shadow:0 12px 32px rgba(0,0,0,.25);padding:22px 20px 16px;font-family:inherit">`;
+  if (a.title) h += `<h3 style="font-size:1.1rem;font-weight:800;color:#211c14;margin:0 0 8px">${esc(a.title)}</h3>`;
+  if (a.body)  h += `<p style="font-size:.88rem;line-height:1.5;color:#4a4034;margin:0 0 14px;white-space:pre-wrap">${esc(a.body)}</p>`;
+  if (a.cta_text && a.cta_url) h += `<span style="display:inline-block;background:${accent};color:#fff;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:9px 16px;margin-bottom:12px">${esc(a.cta_text)}</span>`;
+  h += `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #e8ddd0;padding-top:11px;margin-top:4px">`;
+  h += a.dismissible
+    ? `<label style="display:flex;align-items:center;gap:6px;font-size:.74rem;color:#7c6a58"><input type="checkbox" disabled style="accent-color:${accent}">No volver a mostrar</label>`
+    : '<span></span>';
+  h += `<span style="background:${accent};color:#fff;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:8px 16px">Entendido</span>`;
+  h += `</div></div>`;
+  wrap.innerHTML = h;
+}
+
+async function avPublish(active) {
+  const a = avData();
+  if (active && !a.title && !a.body) { alert('Escribí al menos un título o un mensaje.'); return; }
+  const payload = { token: _token, active, id: String(Date.now()), ...a };
+  const btns = document.querySelectorAll('#tab-avisos .ig-btn');
+  btns.forEach(b => b.disabled = true);
+  try {
+    const res = await fetch(`${API}/announcement`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      avSetStatus(active && (a.title || a.body));
+      const st = document.getElementById('av-status');
+      st.textContent = active ? '✅ Aviso publicado — ya se ve en la web' : '✅ Aviso desactivado';
+    } else {
+      alert('No se pudo guardar: ' + (data.error || 'error'));
+    }
+  } catch (e) {
+    alert('Error de red: ' + e.message);
+  } finally {
+    btns.forEach(b => b.disabled = false);
+  }
+}
 </script>
 </body>
 </html>
