@@ -62,6 +62,14 @@ def _is_group_complete(group_results: Dict, letter: str) -> bool:
     return sum(1 for m in matches if m.played) >= 6
 
 
+def _all_groups_complete(group_results: Dict) -> bool:
+    """True si TODOS los grupos terminaron. El slot de cada 3.º depende del Anexo C
+    (qué combinación de terceros clasifica), que recién queda fija cuando cerraron
+    todos los grupos → hasta entonces el cruce de un 3.º es provisional."""
+    letters = [k.replace("GROUP_", "") for k in group_results if str(k).startswith("GROUP_")]
+    return bool(letters) and all(_is_group_complete(group_results, l) for l in letters)
+
+
 # Calendario oficial FIFA 2026 (R32, partidos 73-88) — sede + horario.
 # Verificado contra Wikipedia "2026 FIFA World Cup knockout stage" (jun 2026).
 # Horarios convertidos a UTC desde la hora local de cada sede.
@@ -713,10 +721,12 @@ def _resolve(spec, group_results, partido_num, thirds_slot_map):
     if kind == '2':
         team, prov = _get_pos(group_results, groups, 1)
         return team, prov, f"2° Grp {groups}"
-    # kind == '3': proyección por Anexo C (provisional hasta que el grupo cierre)
+    # kind == '3': proyección por Anexo C. El cruce de un 3.º NO está fijo aunque su grupo
+    # haya cerrado: depende de QUÉ terceros clasifican (Anexo C) → provisional hasta que
+    # cierren TODOS los grupos (ej: Bosnia 3.º del B podía cruzar a USA o a Alemania).
     if thirds_slot_map and partido_num in thirds_slot_map:
         team, group_letter = thirds_slot_map[partido_num]
-        prov = not _is_group_complete(group_results, group_letter)
+        prov = not _all_groups_complete(group_results)
         return team, prov, team
     placeholder = f"3° ({groups})"
     return placeholder, True, placeholder

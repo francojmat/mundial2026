@@ -650,7 +650,7 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     <button class="sec-toggle" id="st-bracket">▲ CERRAR</button>
   </div>
   <div class="sec-body" id="sb-bracket">
-    <p class="bracket-leyenda"><span class="bl-dot"></span> <b>Proyección en vivo.</b> Los cruces se recalculan a cada gol con la tabla oficial de FIFA (Anexo C). Los equipos <i>en gris</i> son provisionales: se confirman cuando termina su grupo.</p>
+    <p class="bracket-leyenda"><span class="bl-dot"></span> <b>Proyección en vivo.</b> Los cruces se recalculan a cada gol con la tabla oficial de FIFA (Anexo C). Los equipos <i>en gris</i> son provisionales: los 1.º y 2.º se confirman al cerrar su grupo, y los 3.º recién cuando terminan TODOS los grupos (su rival depende del Anexo C).</p>
     <div class="llaves-wrap">
       {_render_llaves(matchups)}
     </div>
