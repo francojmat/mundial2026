@@ -517,9 +517,9 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
     .secbar-link:hover,.secbar-link:active{{background:{T};color:#fff;border-color:{T}}}
     @media(max-width:640px){{.secbar{{padding:9px 10px;margin:0 -10px 16px;gap:6px}}.secbar-link{{font-size:.68rem;padding:5px 11px}}}}
     /* tira fina de acceso a Estadísticas (suave, acento teal = diferencial) */
-    .stats-strip{{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(194,65,12,.05);border:1px solid {BDR};border-left:3px solid {T};border-radius:9px;padding:9px 16px;text-decoration:none;margin-bottom:22px;transition:background .14s}}
+    .stats-strip{{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px 14px;max-width:600px;margin:0 auto 22px;background:rgba(194,65,12,.05);border:1px solid {BDR};border-left:3px solid {T};border-radius:9px;padding:10px 16px;text-decoration:none;transition:background .14s;text-align:center}}
     .stats-strip:hover{{background:rgba(194,65,12,.1)}}
-    .stats-strip-l{{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}}
+    .stats-strip-l{{display:flex;align-items:center;justify-content:center;gap:9px;min-width:0;flex-wrap:wrap}}
     .stats-strip-new{{font-size:.54rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:#fff;background:{T};padding:2px 7px;border-radius:4px;flex-shrink:0}}
     .stats-strip-t{{font-size:.85rem;font-weight:800;color:{TXT}}}
     .stats-strip-d{{font-size:.73rem;color:{MUT}}}
