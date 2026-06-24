@@ -134,6 +134,20 @@
     /* ── Avisos ── */
     .av-wrap{display:flex;gap:28px;align-items:flex-start}
     .av-form{flex:1;min-width:0;max-width:480px}
+    .cr32-box{background:#fff;border:1px solid #e8ddd0;border-left:3px solid #16a34a;border-radius:8px;padding:13px 16px;margin-bottom:20px}
+    .cr32-head{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+    .cr32-title{font-size:.85rem;font-weight:800;color:#211c14}
+    .cr32-sub{font-size:.72rem;color:#7c6a58}
+    .cr32-list{display:flex;flex-direction:column;gap:0}
+    .cr32-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:9px 0;border-top:1px solid #f0ebe4}
+    .cr32-row:first-child{border-top:none}
+    .cr32-match{display:flex;align-items:center;gap:7px;font-size:.85rem;font-weight:600;color:#211c14;flex-wrap:wrap}
+    .cr32-match img{width:20px;height:15px;border-radius:2px}
+    .cr32-match b{color:#7c6a58;font-weight:700}
+    .cr32-meta{font-size:.72rem;color:#b09880;font-weight:500}
+    .cr32-use{background:#16a34a;color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:.74rem;font-weight:700;padding:7px 14px;cursor:pointer;white-space:nowrap}
+    .cr32-use:hover{opacity:.9}
+    .cr32-empty{font-size:.8rem;color:#b09880;padding:2px 0}
     .av-status{font-size:.78rem;font-weight:700;padding:8px 12px;margin-bottom:16px;border:1px solid #e8ddd0;background:#fff}
     .av-status.on{border-left:3px solid #16a34a;color:#16a34a}
     .av-status.off{border-left:3px solid #b09880;color:#7c6a58}
@@ -448,6 +462,13 @@
 
   <!-- ── Avisos (mensajes emergentes) ── -->
   <div id="tab-avisos" class="tab-pane">
+    <div class="cr32-box" id="cr32-box">
+      <div class="cr32-head">
+        <span class="cr32-title">16avos confirmados</span>
+        <span class="cr32-sub">Cruces con los 2 equipos asegurados (candado) — tocá "Usar" para armar el aviso.</span>
+      </div>
+      <div class="cr32-list" id="cr32-list"><span class="cr32-empty">Cargando…</span></div>
+    </div>
     <div class="av-wrap">
       <div class="av-form">
         <div class="av-status" id="av-status">Cargando…</div>
@@ -1892,6 +1913,52 @@ async function loadAviso() {
     document.getElementById('av-status').textContent = 'Error al cargar: ' + e.message;
   }
   avPreview();
+  renderConfirmedR32();
+}
+
+// ── 16avos confirmados (los 2 equipos con candado) → arma el aviso ──────────────
+let _cr32 = [];
+async function renderConfirmedR32() {
+  const box = document.getElementById('cr32-list');
+  try {
+    const res = await fetch(`${API}/data`);
+    const d = await res.json();
+    _cr32 = d.confirmed_r32 || [];
+    if (!_cr32.length) {
+      box.innerHTML = '<span class="cr32-empty">Todavía no hay cruces con los 2 equipos asegurados. Aparecen acá solos cuando se confirman las posiciones.</span>';
+      return;
+    }
+    const fl = iso => iso ? `<img src="/flags/20x15/${iso}.png" alt="">` : '';
+    box.innerHTML = _cr32.map((m, i) =>
+      `<div class="cr32-row">
+        <span class="cr32-match">${fl(m.e1_iso)}${esc(m.e1)} <b>vs</b> ${fl(m.e2_iso)}${esc(m.e2)}` +
+        (m.venue ? ` <span class="cr32-meta">· ${esc(m.venue)}</span>` : '') + `</span>
+        <button class="cr32-use" onclick="avFromMatchup(${i})">Usar de aviso</button>
+      </div>`).join('');
+  } catch (e) {
+    box.innerHTML = '<span class="cr32-empty">No se pudo cargar.</span>';
+  }
+}
+
+function avFromMatchup(i) {
+  const m = _cr32[i];
+  if (!m) return;
+  document.getElementById('av-title').value = '¡Cruce confirmado en 16avos!';
+  let body = `${m.e1} se enfrentará a ${m.e2} en los 16avos de final del Mundial`;
+  if (m.venue) body += `, en ${m.venue}`;
+  if (m.utc) {
+    try {
+      body += ` (${new Date(m.utc).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })})`;
+    } catch (e) {}
+  }
+  body += '.';
+  document.getElementById('av-body').value = body;
+  document.getElementById('av-cta-text').value = 'Ver el bracket';
+  document.getElementById('av-cta-url').value = 'https://mejortercero.online/';
+  _avStyle = 'success';
+  document.querySelectorAll('#av-style .ig-opt').forEach(x => x.classList.toggle('active', x.dataset.style === 'success'));
+  avPreview();
+  document.getElementById('av-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function avSetStatus(active) {

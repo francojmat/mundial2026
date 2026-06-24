@@ -18,6 +18,26 @@ def _r32_inner(matches: List[Dict]) -> str:
     return html
 
 
+def _confirmed_r32(matchups: List[Dict]) -> list:
+    """16avos con AMBOS equipos confirmados (candado, no provisionales) → ya se
+    enfrentan. Lo consume la herramienta del admin para generar el aviso."""
+    from countries import nombre_es, _PAISES
+    out = []
+    for m in matchups:
+        if m.get("prov1") or m.get("prov2"):
+            continue
+        e1, e2 = m.get("equipo1"), m.get("equipo2")
+        if e1 not in _PAISES or e2 not in _PAISES:   # descarta placeholders ("3ro X")
+            continue
+        out.append({
+            "partido": m.get("partido"),
+            "e1": nombre_es(e1), "e1_iso": _PAISES[e1][1],
+            "e2": nombre_es(e2), "e2_iso": _PAISES[e2][1],
+            "venue": m.get("venue", ""), "utc": m.get("utc_date", ""),
+        })
+    return out
+
+
 def render_data_json(standings: Dict, matchups: List[Dict]) -> str:
     live_teams: Set[str] = standings.get("_live_teams", set())
     thirds_advancing_set = {e["team"] for e in standings.get("_thirds_advancing", [])}
@@ -40,6 +60,7 @@ def render_data_json(standings: Dict, matchups: List[Dict]) -> str:
         "thirds_html": _render_thirds(standings),
         "r32_left_html": _r32_inner(matchups[:8]),
         "r32_right_html": _r32_inner(matchups[8:]),
+        "confirmed_r32": _confirmed_r32(matchups),
     }
     return json.dumps(data, ensure_ascii=False)
 
