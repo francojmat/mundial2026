@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Estadísticas · Mundial 2026</title>
+  <meta name="description" content="Estadísticas del Mundial 2026: goles, eficiencia (xG), disciplina, y comparador por confederación. Se actualiza solo a medida que se juegan los partidos.">
+  <meta name="theme-color" content="#c2410c">
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#faf8f4;color:#211c14;padding:20px 16px 60px}
+    .wrap{max-width:1120px;margin:0 auto}
+    .topbar{display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+    .back{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;color:#c2410c;text-decoration:none;border:1px solid #e8ddd0;border-radius:8px;padding:7px 13px;background:#ffffff}
+    h1{font-size:1.45rem;font-weight:800;letter-spacing:-.02em}
+    .sub{font-size:.78rem;color:#7c6a58;margin:2px 0 16px;line-height:1.5}
+    .sub b{color:#c2410c}
+    /* tabs */
+    .tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;margin-bottom:18px;border-bottom:1px solid #e8ddd0}
+    .tab{flex-shrink:0;border:none;background:none;color:#7c6a58;font-size:.82rem;font-weight:700;padding:9px 14px;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+    .tab:hover{color:#c2410c}
+    .tab.active{color:#c2410c;border-bottom-color:#c2410c}
+    .panel{display:none;animation:fade .2s ease}
+    .panel.active{display:block}
+    @keyframes fade{from{opacity:0;transform:translateY(3px)}to{opacity:1}}
+    .soon{text-align:center;color:#b09880;font-size:.9rem;padding:46px 0;font-style:italic}
+    /* chips de resumen — patrón pl-ficha del sitio (label micro mayúscula + valor sobrio oscuro) */
+    .chips{display:flex;flex-wrap:wrap;gap:9px}
+    .chip{background:#ffffff;border:1px solid #e8ddd0;border-radius:10px;padding:11px 14px;flex:1;min-width:118px;display:flex;flex-direction:column;gap:4px}
+    .chip .v{font-size:1.25rem;font-weight:800;color:#211c14;letter-spacing:-.01em;line-height:1}
+    .chip .k{font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#b09880}
+    .sec-h{font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#c2410c;margin:26px 0 12px;padding-bottom:7px;border-bottom:1px solid #e8ddd0}
+    .hl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:9px}
+    .hl{background:#ffffff;border:1px solid #e8ddd0;border-radius:10px;padding:12px 14px}
+    .hl .hl-l{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#c2410c;margin-bottom:8px}
+    .hl .hl-v{font-size:.9rem;font-weight:700;color:#211c14;display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.35}
+    .hl .hl-s{font-size:.68rem;color:#7c6a58;margin-top:5px;display:flex;align-items:center;gap:5px}
+    .hl img,.hl-v img{vertical-align:middle;border-radius:2px}
+    .updated{font-size:.68rem;color:#b09880;margin-top:26px;text-align:center}
+    /* confederaciones */
+    .ctab-wrap{overflow-x:auto}
+    .ctab{width:100%;border-collapse:collapse;font-size:.8rem;min-width:560px}
+    .ctab th{font-size:.58rem;text-transform:uppercase;letter-spacing:.04em;color:#b09880;font-weight:700;text-align:right;padding:7px 8px;border-bottom:1px solid #e8ddd0}
+    .ctab th:first-child,.ctab td:first-child{text-align:left}
+    .ctab td{padding:9px 8px;border-bottom:1px solid #f0ebe4;text-align:right;white-space:nowrap}
+    .ctab tr:hover td{background:rgba(194,65,12,.04)}
+    .ctab .pts{font-weight:800;color:#c2410c}
+    .cf-name{display:flex;align-items:center;gap:8px}
+    .cf-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+    .cf-cod{font-weight:800}
+    .cf-sub{color:#b09880;font-size:.7rem;font-weight:500}
+    .cf-pos{color:#b09880;width:15px;display:inline-block;text-align:right;margin-right:3px}
+    .cmp-sel{display:flex;align-items:center;gap:10px;margin:2px 0 16px;flex-wrap:wrap}
+    .cmp-sel select{font-family:inherit;font-size:.85rem;font-weight:700;color:#211c14;background:#ffffff;border:1px solid #c8b8a8;border-radius:8px;padding:8px 12px;cursor:pointer}
+    .cmp-vs{color:#b09880;font-weight:700;font-size:.8rem}
+    .cmp{border:1px solid #e8ddd0;border-radius:12px;overflow:hidden;background:#ffffff}
+    .cmp-row{display:grid;grid-template-columns:1fr 1.25fr 1fr;align-items:center;border-bottom:1px solid #f0ebe4}
+    .cmp-row:last-child{border-bottom:none}
+    .cmp-row.head{background:#f0ebe4;border-bottom:1px solid #e8ddd0}
+    .cmp-hn{text-align:center;font-weight:800;font-size:.82rem;padding:11px 4px;display:flex;flex-direction:column;align-items:center;gap:3px}
+    .cmp-sub{font-size:.6rem;font-weight:600;color:#b09880;text-transform:uppercase;letter-spacing:.04em}
+    .cmp-m{text-align:center;color:#7c6a58;font-size:.71rem;padding:10px 4px}
+    .cmp-v{text-align:center;font-weight:700;font-size:.92rem;padding:10px 4px;color:#211c14}
+    .cmp-v.win{color:#c2410c}
+    .cmp-v .wdot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#c2410c;vertical-align:middle;margin-left:5px}
+    .cmp-mode{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+    .cmode{border:1px solid #e8ddd0;background:#ffffff;color:#7c6a58;font-family:inherit;font-size:.78rem;font-weight:700;padding:7px 15px;border-radius:999px;cursor:pointer}
+    .cmode:hover{border-color:#c2410c;color:#c2410c}
+    .cmode.active{background:#c2410c;color:#fff;border-color:#c2410c}
+    .cmp-verdict{margin-top:13px;padding:12px 15px;background:#f0ebe4;border-radius:10px;font-size:.85rem;text-align:center;color:#211c14;line-height:1.5}
+    .cmp-verdict b{color:#c2410c}
+    .clash{margin-top:16px;background:#ffffff;border:1px solid #e8ddd0;border-left:3px solid #0d9488;border-radius:10px;padding:15px 16px}
+    .clash-l{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#b09880;margin-bottom:11px;text-align:center}
+    .clash-grid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+    .clash-side{text-align:center}
+    .clash-side .cn{font-weight:800;font-size:.82rem;color:#211c14}
+    .clash-side .cw{font-size:1.9rem;font-weight:800;color:#c2410c;line-height:1.1}
+    .clash-side.lose .cw{color:#b09880}
+    .clash-mid{text-align:center;color:#b09880}
+    .clash-mid .ce{font-size:1.1rem;font-weight:800;color:#7c6a58}
+    .clash-mid .cel{font-size:.6rem;text-transform:uppercase;letter-spacing:.05em}
+    .clash-sub{text-align:center;font-size:.75rem;color:#7c6a58;margin-top:11px;padding-top:10px;border-top:1px solid #f0ebe4}
+    .clash-sub b{color:#211c14}
+    /* eficiencia / xG */
+    .note{font-size:.72rem;color:#7c6a58;margin:-2px 0 13px;line-height:1.5;max-width:620px}
+    .duo{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:6px}
+    .mini-h{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#c2410c;margin-bottom:8px}
+    .ctab.mini{min-width:0}
+    .ctab .pos{color:#c2410c;font-weight:800}
+    .ctab .neg{color:#7c6a58}
+    .ctab .tn{font-weight:600}
+    /* goles: barras + remontadas */
+    .bars{display:flex;flex-direction:column;gap:7px;margin-bottom:4px}
+    .bar-row{display:grid;grid-template-columns:58px 1fr 30px;align-items:center;gap:10px}
+    .bars.lbl-wide .bar-row{grid-template-columns:94px 1fr 30px}
+    .bar-lbl{font-size:.62rem;font-weight:700;color:#b09880;text-align:right;letter-spacing:.02em}
+    .bar-track{background:#f0ebe4;border-radius:5px;height:18px;overflow:hidden}
+    .bar-fill{background:#c2410c;height:100%;border-radius:5px;min-width:3px}
+    .bar-n{font-size:.78rem;font-weight:700;color:#211c14}
+    .cbk{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #f0ebe4;font-size:.82rem}
+    .cbk:last-child{border-bottom:none}
+    .cbk .cf-name{font-weight:700;gap:7px}
+    .cbk-txt{color:#7c6a58;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+    .cbk-txt b{color:#c2410c;font-weight:800}
+    /* rankings de equipos + jugadores */
+    .rankgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(218px,1fr));gap:16px 20px}
+    .rk-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0ebe4;font-size:.81rem}
+    .rk-row:last-child{border-bottom:none}
+    .rk-pos{color:#b09880;font-size:.7rem;width:13px;flex-shrink:0;text-align:right}
+    .rk-name{flex:1;display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap;overflow:hidden}
+    .rk-name .tn{overflow:hidden;text-overflow:ellipsis}
+    .rk-val{font-weight:800;color:#c2410c;flex-shrink:0}
+    .duo-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid #f0ebe4;font-size:.82rem}
+    .duo-row:last-child{border-bottom:none}
+    .duo-row .ar{color:#b09880}
+    .duo-row .nm{font-weight:600}
+    .duo-row .ct{margin-left:auto;font-weight:800;color:#c2410c}
+    /* ligas */
+    .lg-list{display:flex;flex-direction:column;gap:7px;margin-bottom:4px}
+    .lg-row{display:grid;grid-template-columns:120px 1fr 26px;align-items:center;gap:10px}
+    .lg-name{font-size:.78rem;font-weight:600;color:#211c14;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    @media(max-width:640px){ .duo{grid-template-columns:1fr;gap:18px} .lg-row{grid-template-columns:100px 1fr 26px} }
+    @media(max-width:560px){ body{padding:14px 10px} h1{font-size:1.2rem} .chip .v{font-size:1.1rem}
+      .cmp-v{font-size:.84rem} .cmp-m{font-size:.66rem} }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="back" href="/">&#8592; Volver</a>
+    <h1>Estadísticas</h1>
+  </div>
+  <p class="sub">Todo el Mundial en números — y <b>se actualiza solo</b> a medida que se juegan los partidos.</p>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="panel active" id="p-resumen"></div>
+  <div class="panel" id="p-confed">
+    <div class="sec-h">Cómo le va a cada confederación</div>
+    <div class="ctab-wrap"><table class="ctab" id="confed-table"></table></div>
+    <p class="note">V-E-D y goles cuentan <b>todos</b> los partidos de sus equipos (incluidos los que juegan entre sí). «Clasifican» es la proyección actual a 16avos. El ranking es por puntos por partido.</p>
+    <div class="sec-h">Comparar dos confederaciones</div>
+    <div class="cmp-sel">
+      <select id="cmpA" onchange="renderComparador()" aria-label="Primera confederación"></select>
+      <span class="cmp-vs">vs</span>
+      <select id="cmpB" onchange="renderComparador()" aria-label="Segunda confederación"></select>
+    </div>
+    <div id="confed-cmp"></div>
+  </div>
+  <div class="panel" id="p-comparar">
+    <div class="sec-h">Comparar cara a cara</div>
+    <div class="cmp-mode" id="cmp-mode">
+      <button class="cmode active" data-m="sel" onclick="setCmpMode('sel')">Selecciones</button>
+      <button class="cmode" data-m="grp" onclick="setCmpMode('grp')">Grupos</button>
+      <button class="cmode" data-m="jug" onclick="setCmpMode('jug')">Jugadores</button>
+      <button class="cmode" data-m="lig" onclick="setCmpMode('lig')">Ligas</button>
+    </div>
+    <div class="cmp-sel">
+      <select id="cmp2A" onchange="renderCompare()" aria-label="Primero a comparar"></select>
+      <span class="cmp-vs">vs</span>
+      <select id="cmp2B" onchange="renderCompare()" aria-label="Segundo a comparar"></select>
+    </div>
+    <div id="cmp2-out"></div>
+  </div>
+  <div class="panel" id="p-efic">
+    <div class="chips" id="efic-chips"></div>
+    <div class="sec-h">Definición: goles vs lo esperado (xG)</div>
+    <p class="note">El <b>xG</b> mide la calidad de las situaciones de gol. Si un equipo convirtió más que su xG, definió mejor que el promedio; si convirtió menos, desperdició chances.</p>
+    <div class="duo">
+      <div><div class="mini-h">Más letales (definen de más)</div><div class="ctab-wrap"><table class="ctab mini" id="efic-over"></table></div></div>
+      <div><div class="mini-h">Desperdician más</div><div class="ctab-wrap"><table class="ctab mini" id="efic-under"></table></div></div>
+    </div>
+    <div class="sec-h">Las mejores arquerías</div>
+    <p class="note"><b>Goles evitados</b> = atajadas por encima de lo esperado según la dificultad de cada remate (goals prevented). Cuanto más alto, mejor el arco.</p>
+    <div class="ctab-wrap"><table class="ctab" id="efic-gk"></table></div>
+  </div>
+  <div class="panel" id="p-goles">
+    <div class="chips" id="goles-chips"></div>
+    <div class="sec-h">¿Cuándo se hacen los goles?</div>
+    <p class="note">Distribución de los goles del torneo por tramo de 15 minutos. El descuento de cada tiempo se suma al último tramo.</p>
+    <div class="bars" id="goles-bands"></div>
+    <div class="duo" style="margin-top:18px">
+      <div><div class="mini-h">Por tiempo</div><div class="bars lbl-wide" id="goles-half"></div></div>
+      <div><div class="mini-h">Tipo de gol</div><div class="bars lbl-wide" id="goles-type"></div></div>
+    </div>
+    <div class="sec-h">Remontadas</div>
+    <p class="note">Equipos que estuvieron en desventaja y lo dieron vuelta — o al menos rescataron el empate.</p>
+    <div id="goles-comebacks"></div>
+  </div>
+  <div class="panel" id="p-equipos">
+    <div class="sec-h">Rankings de equipos</div>
+    <p class="note"><b>Promedios por partido</b>, para comparar justo entre equipos que jugaron distinta cantidad. (Vallas invictas es el total de partidos sin recibir goles.)</p>
+    <div class="rankgrid" id="equipos-grid"></div>
+  </div>
+  <div class="panel" id="p-jugadores">
+    <div class="sec-h">Goles + asistencias</div>
+    <div class="ctab-wrap"><table class="ctab" id="jug-ga"></table></div>
+    <div class="sec-h">Mejor rating por posición</div>
+    <p class="note">Promedio de calificación por partido (mínimo 2 partidos jugados).</p>
+    <div class="rankgrid" id="jug-pos"></div>
+    <div class="duo" style="margin-top:6px">
+      <div><div class="mini-h">Más minutos en cancha</div><div id="jug-min"></div></div>
+      <div><div class="mini-h">Sociedades (asistente → goleador)</div><div id="jug-duos"></div></div>
+    </div>
+  </div>
+  <div class="panel" id="p-disc">
+    <div class="chips" id="disc-chips"></div>
+    <div class="sec-h">Fair play</div>
+    <p class="note">Tarjetas por partido de cada selección (amarillas + rojas). Cuanto menos, más limpio el juego.</p>
+    <div class="duo">
+      <div><div class="mini-h">Más limpios</div><div class="ctab-wrap"><table class="ctab mini" id="disc-clean"></table></div></div>
+      <div><div class="mini-h">Más amonestados</div><div class="ctab-wrap"><table class="ctab mini" id="disc-dirty"></table></div></div>
+    </div>
+    <div id="disc-refs-sec">
+      <div class="sec-h">Árbitros más estrictos</div>
+      <p class="note">Tarjetas por partido de cada árbitro (mínimo 2 partidos dirigidos).</p>
+      <div class="ctab-wrap"><table class="ctab mini" id="disc-refs"></table></div>
+    </div>
+  </div>
+  <div class="panel" id="p-ligas">
+    <div class="chips" id="ligas-chips"></div>
+    <div class="sec-h">¿De qué ligas vienen los jugadores?</div>
+    <p class="note">Cantidad de jugadores del Mundial que militan en cada liga (por país de la liga).</p>
+    <div class="lg-list" id="ligas-bars"></div>
+    <div class="duo" style="margin-top:18px">
+      <div><div class="mini-h">Clubes más representados</div><div id="ligas-clubs"></div></div>
+      <div><div class="mini-h">Edad promedio por confederación</div><div id="ligas-confedage"></div></div>
+    </div>
+    <div class="sec-h">Planteles por edad</div>
+    <div class="duo">
+      <div><div class="mini-h">Más jóvenes</div><div id="ligas-young"></div></div>
+      <div><div class="mini-h">Más veteranos</div><div id="ligas-old"></div></div>
+    </div>
+    <div class="sec-h">Legionarios</div>
+    <p class="note">Porcentaje del plantel que juega en una liga de otro país.</p>
+    <div class="duo">
+      <div><div class="mini-h">Más legionarios</div><div id="ligas-legion-top"></div></div>
+      <div><div class="mini-h">Más locales</div><div id="ligas-legion-bot"></div></div>
+    </div>
+  </div>
+
+  <p class="updated" id="updated"></p>
+</div>
+
+<script>
+// pestañas activas (se van sumando a medida que se construyen)
+var TABS = [
+  ["resumen","Resumen"], ["confed","Confederaciones"], ["comparar","Comparar"],
+  ["efic","Eficiencia"], ["goles","Goles"], ["equipos","Equipos"],
+  ["jugadores","Jugadores"], ["disc","Disciplina"], ["ligas","Ligas"],
+];
+var STATS = null;
+
+function flag(name){
+  var t = STATS.teams[name]; if(!t || !t.iso) return '';
+  return '<img src="/flags/20x15/'+t.iso+'.png" alt="" width="20" height="15" loading="lazy">';
+}
+function es(name){ var t = STATS.teams[name]; return t ? t.es : name; }
+
+function buildTabs(){
+  var bar = document.getElementById('tabs');
+  bar.innerHTML = TABS.map(function(t,i){
+    return '<button class="tab'+(i===0?' active':'')+'" data-t="'+t[0]+'" onclick="setTab(\''+t[0]+'\')">'+t[1]+'</button>';
+  }).join('');
+}
+function setTab(id){
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('active', b.dataset.t===id); });
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  var p = document.getElementById('p-'+id); if(p) p.classList.add('active');
+}
+
+// ── Resumen (Fase 0) ────────────────────────────────────────────────────────
+function card(num, lbl){ return '<div class="chip"><div class="v">'+num+'</div><div class="k">'+lbl+'</div></div>'; }
+function renderResumen(){
+  var t = STATS.tournament, h = '';
+  h += '<div class="chips">';
+  h += card(t.goals_total, 'Goles en total');
+  h += card(t.goals_per_match, 'Goles por partido');
+  h += card(t.matches_played, 'Partidos jugados');
+  h += card(t.yellow_total, 'Tarjetas amarillas');
+  h += card(t.red_total, 'Tarjetas rojas');
+  h += card(t.penalties, 'Goles de penal');
+  h += card(t.own_goals, 'Goles en contra');
+  h += card(t.clean_sheets, 'Vallas invictas');
+  h += '</div>';
+
+  h += '<div class="sec-h">Lo más destacado</div><div class="hl-grid">';
+  var mKey=function(m){ return m ? m.home+'|'+m.away : ''; };
+  var mHtml=function(m){ return flag(m.home)+es(m.home)+' '+m.hg+'-'+m.ag+' '+flag(m.away)+es(m.away); };
+  if(t.biggest_win){
+    var b = t.biggest_win;
+    h += hl('Goleada más grande', mHtml(b), '+'+b.margin+' de diferencia');
+  }
+  // solo si es OTRO partido (a veces la goleada ES el partido con más goles)
+  if(t.most_goals_match && mKey(t.most_goals_match)!==mKey(t.biggest_win)){
+    var mg = t.most_goals_match;
+    h += hl('Partido con más goles', mHtml(mg), (mg.hg+mg.ag)+' goles');
+  }
+  if(t.fastest_goal){
+    var f = t.fastest_goal;
+    h += hl('Gol más rápido', "'"+f.minute+' · '+(f.scorer||''), flag(f.team)+es(f.team));
+  }
+  if(t.latest_goal){
+    var l = t.latest_goal;
+    h += hl('Gol más tardío', "'"+l.minute+' · '+(l.scorer||''), flag(l.team)+es(l.team));
+  }
+  // destacados de equipo (siempre distintos, suman contexto)
+  var pl=Object.keys(STATS.teams).map(function(k){return STATS.teams[k];}).filter(function(x){return x.played>0;});
+  if(pl.length){
+    var atk=pl.slice().sort(function(a,b){return b.gf-a.gf;})[0];
+    var def=pl.slice().sort(function(a,b){return a.ga-b.ga;})[0];
+    h += hl('Equipo más goleador', flag(atk.name)+es(atk.name), atk.gf+' goles a favor');
+    h += hl('Valla menos vencida', flag(def.name)+es(def.name), def.ga+' goles en contra');
+  }
+  h += '</div>';
+  document.getElementById('p-resumen').innerHTML = h;
+}
+function hl(l,v,s){ return '<div class="hl"><div class="hl-l">'+l+'</div><div class="hl-v">'+v+'</div>'+(s?'<div class="hl-s">'+s+'</div>':'')+'</div>'; }
+
+// ── Confederaciones (Fase 1) ────────────────────────────────────────────────
+var CONFED_ORDER = ["CONMEBOL","UEFA","CONCACAF","CAF","AFC","OFC"];
+var CONFED_COLOR = {CONMEBOL:"#16a34a",UEFA:"#2563eb",CONCACAF:"#dc2626",CAF:"#d97706",AFC:"#7c3aed",OFC:"#0d9488"};
+
+function confedAgg(conf){
+  var ts = Object.keys(STATS.teams).map(function(k){return STATS.teams[k];}).filter(function(t){return t.confed===conf;});
+  var a = {conf:conf, teams:ts.length, played:0,won:0,drawn:0,lost:0,gf:0,ga:0,yc:0,rc:0,
+           shots_on:0,xg:0,stat_n:0,posW:0,r16:0};
+  ts.forEach(function(t){
+    a.played+=t.played; a.won+=t.won; a.drawn+=t.drawn; a.lost+=t.lost;
+    a.gf+=t.gf; a.ga+=t.ga; a.yc+=t.yc; a.rc+=t.rc;
+    a.shots_on+=t.shots_on; a.xg+=t.xg; a.stat_n+=t.stat_n;
+    a.posW+=t.possession_avg*t.stat_n; if(t.r16) a.r16++;
+  });
+  var p=a.played||1, sn=a.stat_n||1;
+  a.points=a.won*3+a.drawn;
+  a.ppm=a.points/p; a.gfpm=a.gf/p; a.gapm=a.ga/p; a.xgpm=a.xg/sn;
+  a.possession=a.posW/sn; a.shotsonpm=a.shots_on/sn;
+  a.winpct=a.won/p*100; a.cardspm=(a.yc+a.rc)/p;
+  a.r16pct=a.teams?a.r16/a.teams*100:0;
+  return a;
+}
+
+function cfDot(conf){ return '<span class="cf-dot" style="background:'+CONFED_COLOR[conf]+'"></span>'; }
+
+function renderConfedTable(){
+  var rows = CONFED_ORDER.map(confedAgg).filter(function(a){return a.teams>0;});
+  rows.sort(function(x,y){ return y.ppm-x.ppm; });  // ranking por puntos por partido
+  var h = '<thead><tr><th>Confederación</th><th>Eq.</th><th>V-E-D</th><th>Goles</th>'
+        + '<th>Prom</th><th>xG/P</th><th>Tarj/P</th><th>Clasifican</th><th>Pts/P</th></tr></thead><tbody>';
+  rows.forEach(function(a,i){
+    h += '<tr>'
+      + '<td><span class="cf-name"><span class="cf-pos">'+(i+1)+'</span>'+cfDot(a.conf)
+      +   '<span><span class="cf-cod">'+a.conf+'</span> <span class="cf-sub">'+STATS.confedNames[a.conf]+'</span></span></span></td>'
+      + '<td>'+a.teams+'</td>'
+      + '<td>'+a.won+'-'+a.drawn+'-'+a.lost+'</td>'
+      + '<td>'+a.gf+':'+a.ga+'</td>'
+      + '<td>'+a.gfpm.toFixed(2)+'</td>'
+      + '<td>'+a.xgpm.toFixed(2)+'</td>'
+      + '<td>'+a.cardspm.toFixed(1)+'</td>'
+      + '<td>'+a.r16+'/'+a.teams+'</td>'
+      + '<td class="pts">'+a.ppm.toFixed(2)+'</td>'
+      + '</tr>';
+  });
+  document.getElementById('confed-table').innerHTML = h + '</tbody>';
+}
+
+// métricas del comparador: dir=+1 (más es mejor) o -1 (menos es mejor)
+var CMP_METRICS = [
+  {k:'ppm',     l:'Puntos por partido',     dir:1,  d:2},
+  {k:'winpct',  l:'% de victorias',         dir:1,  d:0, s:'%'},
+  {k:'gfpm',    l:'Goles por partido',      dir:1,  d:2},
+  {k:'gapm',    l:'Goles recibidos / part.',dir:-1, d:2},
+  {k:'xgpm',    l:'xG por partido',         dir:1,  d:2},
+  {k:'possession', l:'Posesión promedio',   dir:1,  d:1, s:'%'},
+  {k:'shotsonpm',  l:'Tiros al arco / part.',dir:1, d:1},
+  {k:'cardspm', l:'Tarjetas por partido',   dir:-1, d:1},
+  {k:'r16pct',  l:'% que clasifica (proyectado)',dir:1, d:0, s:'%'},
+];
+
+function fmt(v,m){ return v.toFixed(m.d) + (m.s||''); }
+
+function fillSelectors(){
+  var opts = CONFED_ORDER.filter(function(c){return confedAgg(c).teams>0;})
+    .map(function(c){ return '<option value="'+c+'">'+c+' · '+STATS.confedNames[c]+'</option>'; }).join('');
+  var A=document.getElementById('cmpA'), B=document.getElementById('cmpB');
+  A.innerHTML=opts; B.innerHTML=opts;
+  A.value='CONMEBOL'; B.value='UEFA';
+}
+
+function renderComparador(){
+  var ca=document.getElementById('cmpA').value, cb=document.getElementById('cmpB').value;
+  var A=confedAgg(ca), B=confedAgg(cb);
+  var winA=0, winB=0;
+  var rows = '<div class="cmp-row head">'
+    + '<div class="cmp-hn">'+cfDot(ca)+ca+'</div>'
+    + '<div class="cmp-m"></div>'
+    + '<div class="cmp-hn">'+cfDot(cb)+cb+'</div></div>';
+  CMP_METRICS.forEach(function(m){
+    var va=A[m.k], vb=B[m.k];
+    var aw=false, bw=false;
+    // empate técnico si los valores REDONDEADOS (los que se muestran) son iguales →
+    // no se declara ganador por diferencias que el usuario no ve
+    if(fmt(va,m)!==fmt(vb,m)){ if((va>vb)===(m.dir>0)){aw=true;winA++;} else {bw=true;winB++;} }
+    rows += '<div class="cmp-row">'
+      + '<div class="cmp-v'+(aw?' win':'')+'">'+fmt(va,m)+(aw?'<span class="wdot"></span>':'')+'</div>'
+      + '<div class="cmp-m">'+m.l+'</div>'
+      + '<div class="cmp-v'+(bw?' win':'')+'">'+(bw?'<span class="wdot"></span>':'')+fmt(vb,m)+'</div></div>';
+  });
+  var verdict;
+  if(winA>winB) verdict='<b>'+ca+'</b> va mejor: gana en '+winA+' de '+CMP_METRICS.length+' métricas.';
+  else if(winB>winA) verdict='<b>'+cb+'</b> va mejor: gana en '+winB+' de '+CMP_METRICS.length+' métricas.';
+  else verdict='Empate técnico: '+winA+' métricas cada uno.';
+
+  document.getElementById('confed-cmp').innerHTML =
+    '<div class="cmp">'+rows+'</div>'
+    + '<div class="cmp-verdict">'+verdict+'</div>'
+    + clashHtml(ca, cb);
+}
+
+// choques directos: partidos finalizados donde un equipo de A jugó contra uno de B
+function clashHtml(ca, cb){
+  var wa=0, wb=0, dr=0, ga=0, gb=0, n=0;
+  STATS.matches.forEach(function(m){
+    if(m.status!=='FINISHED' || m.hg==null || m.ag==null) return;
+    var hA=(m.hc===ca), aA=(m.ac===ca), hB=(m.hc===cb), aB=(m.ac===cb);
+    var aSide, bSide; // goles del lado A y del lado B en este partido
+    if(hA && aB){ aSide=m.hg; bSide=m.ag; }
+    else if(hB && aA){ aSide=m.ag; bSide=m.hg; }
+    else return;
+    n++; ga+=aSide; gb+=bSide;
+    if(aSide>bSide) wa++; else if(bSide>aSide) wb++; else dr++;
+  });
+  if(!n) return '<div class="clash"><div class="clash-l">Cara a cara en el Mundial</div>'
+    + '<div class="clash-sub">Todavía no se enfrentaron equipos de '+ca+' y '+cb+'.</div></div>';
+  return '<div class="clash"><div class="clash-l">Cara a cara en el Mundial · '+n+' partido'+(n>1?'s':'')+'</div>'
+    + '<div class="clash-grid">'
+    +   '<div class="clash-side'+(wa<wb?' lose':'')+'"><div class="cw">'+wa+'</div><div class="cn">'+ca+'</div></div>'
+    +   '<div class="clash-mid"><div class="ce">'+dr+'</div><div class="cel">empates</div></div>'
+    +   '<div class="clash-side'+(wb<wa?' lose':'')+'"><div class="cw">'+wb+'</div><div class="cn">'+cb+'</div></div>'
+    + '</div>'
+    + '<div class="clash-sub">Goles en esos cruces: <b>'+ga+'</b> '+ca+' &nbsp;–&nbsp; <b>'+gb+'</b> '+cb+'</div></div>';
+}
+
+function renderConfed(){ renderConfedTable(); fillSelectors(); renderComparador(); }
+
+// ── Eficiencia / xG (Fase 2) ────────────────────────────────────────────────
+function efTeams(){
+  return Object.keys(STATS.teams).map(function(k){return STATS.teams[k];})
+    .filter(function(t){return t.played>0 && t.stat_n>0;});
+}
+function efRow(t){
+  var d=t.gf-t.xg, cls=d>=0?'pos':'neg';
+  return '<tr><td><span class="cf-name">'+flag(t.name)+'<span class="tn">'+t.es+'</span></span></td>'
+    + '<td>'+t.gf+'</td><td>'+t.xg.toFixed(2)+'</td>'
+    + '<td class="'+cls+'">'+(d>=0?'+':'')+d.toFixed(2)+'</td></tr>';
+}
+function renderEficiencia(){
+  var ts=efTeams();
+  if(!ts.length){ document.getElementById('p-efic').innerHTML='<p class="soon">Todavía no hay datos de tiros / xG.</p>'; return; }
+  var totalXg=ts.reduce(function(s,t){return s+t.xg;},0);
+  var totalG=STATS.tournament.goals_total;
+  var shots=ts.reduce(function(s,t){return s+t.shots;},0);
+  var shotsOn=ts.reduce(function(s,t){return s+t.shots_on;},0);
+  var diff=totalG-totalXg;
+  document.getElementById('efic-chips').innerHTML =
+      card(totalG+' / '+totalXg.toFixed(1), 'Goles vs xG esperado')
+    + card((diff>=0?'+':'')+diff.toFixed(1), 'Definición del torneo')
+    + card(shots?(totalG/shots*100).toFixed(1)+'%':'—', 'Conversión (gol por tiro)')
+    + card(shots?Math.round(shotsOn/shots*100)+'%':'—', 'Tiros que van al arco');
+
+  var head='<thead><tr><th>Equipo</th><th>G</th><th>xG</th><th>Dif.</th></tr></thead><tbody>';
+  var byDiff=ts.slice().sort(function(a,b){return (b.gf-b.xg)-(a.gf-a.xg);});
+  document.getElementById('efic-over').innerHTML = head + byDiff.slice(0,8).map(efRow).join('') + '</tbody>';
+  document.getElementById('efic-under').innerHTML = head + byDiff.slice().reverse().slice(0,8).map(efRow).join('') + '</tbody>';
+
+  var byGk=ts.slice().sort(function(a,b){return b.goals_prevented-a.goals_prevented;}).slice(0,12);
+  var g='<thead><tr><th>Equipo</th><th>Goles evitados</th><th>Atajadas</th><th>Vallas inv.</th></tr></thead><tbody>';
+  byGk.forEach(function(t){
+    g+='<tr><td><span class="cf-name">'+flag(t.name)+'<span class="tn">'+t.es+'</span></span></td>'
+      + '<td class="pts">'+(t.goals_prevented>=0?'+':'')+t.goals_prevented.toFixed(2)+'</td>'
+      + '<td>'+t.saves+'</td><td>'+t.clean_sheets+'</td></tr>';
+  });
+  document.getElementById('efic-gk').innerHTML=g+'</tbody>';
+}
+
+// ── Goles (Fase 3) ──────────────────────────────────────────────────────────
+function barList(rows){
+  var max=Math.max.apply(null, rows.map(function(r){return r.n;}))||1;
+  return rows.map(function(r){
+    var w=Math.round(r.n/max*100);
+    return '<div class="bar-row"><span class="bar-lbl">'+r.label+'</span>'
+      + '<div class="bar-track"><div class="bar-fill" style="width:'+Math.max(w,2)+'%"></div></div>'
+      + '<span class="bar-n">'+r.n+'</span></div>';
+  }).join('');
+}
+function renderComebacks(){
+  var cb=STATS.comebacks;
+  if(!cb.length){ document.getElementById('goles-comebacks').innerHTML='<p class="note">Todavía no hubo remontadas.</p>'; return; }
+  document.getElementById('goles-comebacks').innerHTML = cb.map(function(c){
+    var how = c.deficit>=2 ? ('remontó '+c.deficit+' goles abajo') : 'vino de atrás';
+    var end = c.win ? ('y ganó <b>'+c.gf+'-'+c.ga+'</b>') : ('y empató <b>'+c.gf+'-'+c.ga+'</b>');
+    return '<div class="cbk"><span class="cf-name">'+flag(c.team)+'<span class="tn">'+es(c.team)+'</span></span>'
+      + '<span class="cbk-txt">'+how+' '+end+' a '+flag(c.opp)+'<span class="tn">'+es(c.opp)+'</span></span></div>';
+  }).join('');
+}
+function renderGoles(){
+  var g=STATS.goals, t=STATS.tournament, tot=(g.first_half+g.second_half)||1;
+  document.getElementById('goles-chips').innerHTML =
+      card(t.goals_per_match, 'Goles por partido')
+    + card(Math.round(g.second_half/tot*100)+'%', 'En el complemento')
+    + card(g.stoppage, 'En tiempo de descuento')
+    + card(STATS.comebacks.length, 'Remontadas');
+  document.getElementById('goles-bands').innerHTML = barList(
+    g.band_order.map(function(b){return {label:b+"'", n:g.bands[b]};}));
+  document.getElementById('goles-half').innerHTML = barList([
+    {label:'1er tiempo', n:g.first_half}, {label:'2do tiempo', n:g.second_half}]);
+  document.getElementById('goles-type').innerHTML = barList([
+    {label:'De jugada', n:g.normal}, {label:'De penal', n:g.penalty}, {label:'En contra', n:g.own}]);
+  renderComebacks();
+}
+
+// ── Equipos (Fase 4) ────────────────────────────────────────────────────────
+function playedTeams(){
+  return Object.keys(STATS.teams).map(function(k){return STATS.teams[k];}).filter(function(t){return t.played>0;});
+}
+function rkRows(arr, val){
+  return arr.map(function(t,i){
+    return '<div class="rk-row"><span class="rk-pos">'+(i+1)+'</span>'
+      + '<span class="rk-name">'+flag(t.name)+'<span class="tn">'+t.es+'</span></span>'
+      + '<span class="rk-val">'+val(t)+'</span></div>';
+  }).join('');
+}
+function rankCard(title, arr, val){ return '<div><div class="mini-h">'+title+'</div>'+rkRows(arr,val)+'</div>'; }
+function renderEquipos(){
+  var ts=playedTeams(), hasStat=function(t){return t.stat_n>0;};
+  // todo por partido (denominador 'played' para resultados, 'stat_n' para stats) → justo
+  // entre equipos que jugaron distinta cantidad de partidos
+  function pm(t, metric, denom){ return t[metric]/(t[denom]||1); }
+  function topPM(metric, denom, asc, filt){
+    var pool = filt?ts.filter(filt):ts;
+    return pool.slice().sort(function(a,b){
+      var va=pm(a,metric,denom), vb=pm(b,metric,denom); return asc?(va-vb):(vb-va);
+    }).slice(0,5);
+  }
+  function top(metric, asc, filt){   // métricas que YA son promedio (posesión, pases) o conteos
+    var pool = filt?ts.filter(filt):ts;
+    return pool.slice().sort(function(a,b){return asc?(a[metric]-b[metric]):(b[metric]-a[metric]);}).slice(0,5);
+  }
+  var f1=function(metric,denom){ return function(t){ return pm(t,metric,denom).toFixed(1); }; };
+  document.getElementById('equipos-grid').innerHTML =
+      rankCard('Más goleador', topPM('gf','played'), f1('gf','played'))
+    + rankCard('Valla menos vencida', topPM('ga','played',true), f1('ga','played'))
+    + rankCard('Más posesión', top('possession_avg',false,hasStat), function(t){return t.possession_avg+'%';})
+    + rankCard('Más tiros al arco', topPM('shots_on','stat_n',false,hasStat), f1('shots_on','stat_n'))
+    + rankCard('Pases más precisos', top('passes_pct_avg',false,hasStat), function(t){return t.passes_pct_avg+'%';})
+    + rankCard('Más córners', topPM('corners','stat_n',false,hasStat), f1('corners','stat_n'))
+    + rankCard('Vallas invictas', top('clean_sheets'), function(t){return t.clean_sheets;})
+    + rankCard('Más infracciones', topPM('fouls','stat_n',false,hasStat), f1('fouls','stat_n'));
+}
+
+// ── Jugadores (Fase 4) ──────────────────────────────────────────────────────
+function pflag(p){ return flag(p.team); }
+function plRows(arr, val){
+  return arr.map(function(p,i){
+    return '<div class="rk-row"><span class="rk-pos">'+(i+1)+'</span>'
+      + '<span class="rk-name">'+pflag(p)+'<span class="tn">'+p.name+'</span></span>'
+      + '<span class="rk-val">'+val(p)+'</span></div>';
+  }).join('');
+}
+function renderJugadores(){
+  var P=STATS.players;
+  var h='<thead><tr><th>Jugador</th><th>G</th><th>A</th><th>G+A</th><th>Rating</th></tr></thead><tbody>';
+  P.ga.forEach(function(p,i){
+    h+='<tr><td><span class="cf-name"><span class="cf-pos">'+(i+1)+'</span>'+pflag(p)+'<span class="tn">'+p.name+'</span></span></td>'
+      + '<td>'+p.goals+'</td><td>'+p.assists+'</td><td class="pts">'+p.ga+'</td><td>'+(p.rating||'—')+'</td></tr>';
+  });
+  document.getElementById('jug-ga').innerHTML=h+'</tbody>';
+
+  var posNames={G:'Arqueros',D:'Defensores',M:'Mediocampistas',F:'Delanteros'}, pos='';
+  ['G','D','M','F'].forEach(function(k){
+    var arr=P.byPos[k]||[];
+    if(arr.length) pos+='<div><div class="mini-h">'+posNames[k]+'</div>'+plRows(arr,function(p){return p.rating;})+'</div>';
+  });
+  document.getElementById('jug-pos').innerHTML=pos;
+
+  document.getElementById('jug-min').innerHTML = plRows(P.minutes, function(p){return p.minutes+"'";});
+
+  var duos=STATS.duos;
+  document.getElementById('jug-duos').innerHTML = duos.length
+    ? duos.map(function(d){
+        return '<div class="duo-row">'+flag(d.team)+'<span class="nm">'+d.assist+'</span>'
+          + '<span class="ar">→</span><span class="nm">'+d.scorer+'</span><span class="ct">&times;'+d.count+'</span></div>';
+      }).join('')
+    : '<p class="note">Todavía sin sociedades repetidas.</p>';
+}
+
+// ── Disciplina (Fase 5) ─────────────────────────────────────────────────────
+function discTable(arr){
+  var h='<thead><tr><th>Equipo</th><th>Amar.</th><th>Rojas</th><th>x/PJ</th></tr></thead><tbody>';
+  arr.forEach(function(t){
+    h+='<tr><td><span class="cf-name">'+flag(t.name)+'<span class="tn">'+t.es+'</span></span></td>'
+      + '<td>'+t.yc+'</td><td>'+t.rc+'</td><td class="pts">'+((t.yc+t.rc)/t.played).toFixed(1)+'</td></tr>';
+  });
+  return h+'</tbody>';
+}
+function renderDisciplina(){
+  var t=STATS.tournament, ts=playedTeams(), mp=t.matches_played||1;
+  document.getElementById('disc-chips').innerHTML =
+      card(t.yellow_total,'Amarillas')
+    + card(t.red_total,'Rojas')
+    + card(((t.yellow_total+t.red_total)/mp).toFixed(1),'Tarjetas por partido')
+    + card((t.red_total/mp).toFixed(2),'Rojas por partido');
+  function cpm(x){ return (x.yc+x.rc)/x.played; }
+  document.getElementById('disc-clean').innerHTML = discTable(ts.slice().sort(function(a,b){return cpm(a)-cpm(b);}).slice(0,8));
+  document.getElementById('disc-dirty').innerHTML = discTable(ts.slice().sort(function(a,b){return cpm(b)-cpm(a);}).slice(0,8));
+  var refs=STATS.referees||[];
+  document.getElementById('disc-refs-sec').style.display = refs.length ? '' : 'none';
+  if(refs.length){
+    var h='<thead><tr><th>Árbitro</th><th>PJ</th><th>Amar.</th><th>Rojas</th><th>x/PJ</th></tr></thead><tbody>';
+    refs.forEach(function(r){
+      h+='<tr><td class="tn">'+r.name+'</td><td>'+r.matches+'</td><td>'+r.yc+'</td><td>'+r.rc+'</td><td class="pts">'+r.cpm+'</td></tr>';
+    });
+    document.getElementById('disc-refs').innerHTML=h+'</tbody>';
+  }
+}
+
+// ── Ligas y planteles (Fase 5) ──────────────────────────────────────────────
+function renderLigas(){
+  var s=STATS.squads;
+  document.getElementById('ligas-chips').innerHTML =
+      card(s.total_players, 'Jugadores')
+    + card(s.avg_age, 'Edad promedio')
+    + card(s.foreign_pct+'%', 'Juega en el exterior')
+    + card(s.league_count, 'Ligas distintas');
+  var max=s.leagues.length?s.leagues[0].count:1;
+  document.getElementById('ligas-bars').innerHTML = s.leagues.map(function(l){
+    var w=Math.round(l.count/max*100);
+    return '<div class="lg-row"><span class="lg-name">'+l.country+'</span>'
+      + '<div class="bar-track"><div class="bar-fill" style="width:'+Math.max(w,3)+'%"></div></div>'
+      + '<span class="bar-n">'+l.count+'</span></div>';
+  }).join('');
+  document.getElementById('ligas-clubs').innerHTML = s.clubs.map(function(c,i){
+    return '<div class="rk-row"><span class="rk-pos">'+(i+1)+'</span>'
+      + '<span class="rk-name"><span class="tn">'+c.club+'</span></span>'
+      + '<span class="rk-val">'+c.count+'</span></div>';
+  }).join('');
+  document.getElementById('ligas-confedage').innerHTML = s.confed_age.map(function(c){
+    return '<div class="rk-row"><span class="rk-name">'+cfDot(c.confed)+'<span class="tn">'+c.confed+'</span></span>'
+      + '<span class="rk-val">'+c.age+' años</span></div>';
+  }).join('');
+  function ageTeams(arr){
+    return arr.map(function(t,i){
+      var img=t.iso?'<img src="/flags/20x15/'+t.iso+'.png" alt="" width="20" height="15" loading="lazy">':'';
+      return '<div class="rk-row"><span class="rk-pos">'+(i+1)+'</span>'
+        + '<span class="rk-name">'+img+'<span class="tn">'+t.es+'</span></span>'
+        + '<span class="rk-val">'+t.age+'</span></div>';
+    }).join('');
+  }
+  document.getElementById('ligas-young').innerHTML = ageTeams(s.youngest);
+  document.getElementById('ligas-old').innerHTML = ageTeams(s.oldest);
+  function legionRows(arr){
+    return arr.map(function(t,i){
+      var img=t.iso?'<img src="/flags/20x15/'+t.iso+'.png" alt="" width="20" height="15" loading="lazy">':'';
+      return '<div class="rk-row"><span class="rk-pos">'+(i+1)+'</span>'
+        + '<span class="rk-name">'+img+'<span class="tn">'+t.es+'</span></span>'
+        + '<span class="rk-val">'+t.pct+'%</span></div>';
+    }).join('');
+  }
+  var leg=s.legionarios||[];
+  document.getElementById('ligas-legion-top').innerHTML = legionRows(leg.slice(0,6));
+  document.getElementById('ligas-legion-bot').innerHTML = legionRows(leg.slice().reverse().slice(0,6));
+}
+
+// ── Comparar cara a cara (Fase 5 / P2) ──────────────────────────────────────
+var CMP_STATE = {mode:'sel'};
+var POS_ES = {G:'Arquero', D:'Defensa', M:'Medio', F:'Delantero'};
+function teamMetrics(t){
+  var p=t.played||1, sn=t.stat_n||1;
+  return {ppm:t.points/p, winpct:t.won/p*100, gfpm:t.gf/p, gapm:t.ga/p,
+           xgpm:t.xg/sn, possession:t.possession_avg, shotsonpm:t.shots_on/sn,
+           cardspm:(t.yc+t.rc)/p};
+}
+function groupAgg(letter){
+  var ts=playedTeams().filter(function(t){return t.group==='GROUP_'+letter;});
+  var played=0,gf=0,yc=0,rc=0,r16=0,posSum=0,sn=0,xg=0;
+  ts.forEach(function(t){ played+=t.played; gf+=t.gf; yc+=t.yc; rc+=t.rc; if(t.r16)r16++;
+    posSum+=t.possession_avg*t.stat_n; sn+=t.stat_n; xg+=t.xg; });
+  var matches=(played/2)||1, snn=sn||1;
+  return {goals:gf, gpm:gf/matches, xgpm:xg/snn, possession:posSum/snn,
+           cardspm:(yc+rc)/matches, r16:r16};
+}
+var SEL_METRICS=[
+  {k:'ppm',l:'Puntos por partido',dir:1,d:2}, {k:'winpct',l:'% de victorias',dir:1,d:0,s:'%'},
+  {k:'gfpm',l:'Goles por partido',dir:1,d:2}, {k:'gapm',l:'Goles recibidos / part.',dir:-1,d:2},
+  {k:'xgpm',l:'xG por partido',dir:1,d:2}, {k:'possession',l:'Posesión promedio',dir:1,d:1,s:'%'},
+  {k:'shotsonpm',l:'Tiros al arco / part.',dir:1,d:1}, {k:'cardspm',l:'Tarjetas por partido',dir:-1,d:1},
+];
+var GRP_METRICS=[
+  {k:'goals',l:'Goles totales',dir:1,d:0}, {k:'gpm',l:'Goles por partido',dir:1,d:2},
+  {k:'xgpm',l:'xG por partido',dir:1,d:2}, {k:'possession',l:'Posesión promedio',dir:1,d:1,s:'%'},
+  {k:'cardspm',l:'Tarjetas por partido',dir:-1,d:1}, {k:'r16',l:'Clasifican a 16avos',dir:1,d:0},
+];
+var JUG_METRICS=[
+  {k:'goals',l:'Goles',dir:1,d:0}, {k:'assists',l:'Asistencias',dir:1,d:0},
+  {k:'ga',l:'Goles + asistencias',dir:1,d:0}, {k:'rating',l:'Rating promedio',dir:1,d:2},
+  {k:'minutes',l:'Minutos',dir:1,d:0}, {k:'matches',l:'Partidos',dir:1,d:0},
+];
+var LIG_METRICS=[
+  {k:'players',l:'Jugadores en el Mundial',dir:1,d:0}, {k:'goals',l:'Goles',dir:1,d:0},
+  {k:'ga',l:'Goles + asistencias',dir:1,d:0}, {k:'rating',l:'Rating promedio',dir:1,d:2},
+];
+function selClash(a,b){
+  var m=STATS.matches.filter(function(x){return x.status==='FINISHED' && ((x.home===a&&x.away===b)||(x.home===b&&x.away===a));});
+  if(!m.length) return '';
+  return m.map(function(x){
+    return '<div class="clash"><div class="clash-l">Se enfrentaron en el Mundial</div>'
+      + '<div class="clash-sub" style="border:none;padding-top:2px;font-size:.95rem">'+flag(x.home)+'<b>'+es(x.home)+' '+x.hg+'-'+x.ag+' '+es(x.away)+'</b>'+flag(x.away)+'</div></div>';
+  }).join('');
+}
+var CMP_MODES={
+  sel:{metrics:SEL_METRICS, defA:'Argentina', defB:'Brazil', extra:selClash,
+    get:function(v){var t=STATS.teams[v];return t&&t.played>0?teamMetrics(t):null;},
+    name:function(v){return es(v);}, head:function(v){return flag(v)+es(v);},
+    opts:function(){return playedTeams().sort(function(a,b){return a.es.localeCompare(b.es);}).map(function(t){return {v:t.name,l:t.es};});}},
+  grp:{metrics:GRP_METRICS, defA:'A', defB:'B',
+    get:function(v){return groupAgg(v);}, name:function(v){return 'Grupo '+v;}, head:function(v){return 'Grupo '+v;},
+    opts:function(){var gs={};STATS.matches.forEach(function(m){if(m.group)gs[m.group.replace('GROUP_','')]=1;});
+      return Object.keys(gs).sort().map(function(g){return {v:g,l:'Grupo '+g};});}},
+  jug:{metrics:JUG_METRICS, defA:'0', defB:'1', grouped:true,
+    get:function(v){return STATS.players.all[v];},
+    name:function(v){return STATS.players.all[v].name;}, head:function(v){var p=STATS.players.all[v];return flag(p.team)+p.name+(p.pos?'<span class="cmp-sub">'+(POS_ES[p.pos]||'')+'</span>':'');}},
+  lig:{metrics:LIG_METRICS, defA:'Inglaterra', defB:'España',
+    get:function(v){return STATS.leaguePerf.filter(function(l){return l.league===v;})[0];},
+    name:function(v){return v;}, head:function(v){return v;},
+    opts:function(){return STATS.leaguePerf.map(function(l){return {v:l.league,l:l.league+' ('+l.players+')'};});}},
+};
+function fillCmp2(){
+  var M=CMP_MODES[CMP_STATE.mode], A=document.getElementById('cmp2A'), B=document.getElementById('cmp2B');
+  if(M.grouped){
+    var byTeam={};
+    STATS.players.all.forEach(function(p,i){ (byTeam[p.team]=byTeam[p.team]||[]).push({v:i,l:p.name}); });
+    var html=Object.keys(byTeam).sort(function(x,y){return STATS.teams[x].es.localeCompare(STATS.teams[y].es);}).map(function(tm){
+      return '<optgroup label="'+STATS.teams[tm].es+'">'+byTeam[tm].map(function(o){return '<option value="'+o.v+'">'+o.l+'</option>';}).join('')+'</optgroup>';
+    }).join('');
+    A.innerHTML=html; B.innerHTML=html;
+  } else {
+    var opts=M.opts().map(function(o){return '<option value="'+o.v+'">'+o.l+'</option>';}).join('');
+    A.innerHTML=opts; B.innerHTML=opts;
+  }
+  A.value=M.defA; B.value=M.defB;
+}
+function renderCompare(){
+  var M=CMP_MODES[CMP_STATE.mode];
+  var a=document.getElementById('cmp2A').value, b=document.getElementById('cmp2B').value;
+  var A=M.get(a), B=M.get(b);
+  if(!A||!B){ document.getElementById('cmp2-out').innerHTML='<p class="note">Elegí dos para comparar.</p>'; return; }
+  var winA=0,winB=0;
+  var rows='<div class="cmp-row head"><div class="cmp-hn">'+M.head(a)+'</div><div class="cmp-m"></div><div class="cmp-hn">'+M.head(b)+'</div></div>';
+  M.metrics.forEach(function(m){
+    var va=A[m.k]||0, vb=B[m.k]||0, aw=false,bw=false;
+    if(fmt(va,m)!==fmt(vb,m)){ if((va>vb)===(m.dir>0)){aw=true;winA++;}else{bw=true;winB++;} }
+    rows+='<div class="cmp-row"><div class="cmp-v'+(aw?' win':'')+'">'+fmt(va,m)+(aw?'<span class="wdot"></span>':'')
+      + '</div><div class="cmp-m">'+m.l+'</div><div class="cmp-v'+(bw?' win':'')+'">'+(bw?'<span class="wdot"></span>':'')+fmt(vb,m)+'</div></div>';
+  });
+  var verdict = winA>winB ? ('<b>'+M.name(a)+'</b> va mejor: gana en '+winA+' de '+M.metrics.length+' métricas.')
+              : winB>winA ? ('<b>'+M.name(b)+'</b> va mejor: gana en '+winB+' de '+M.metrics.length+' métricas.')
+              : 'Empate técnico: '+winA+' métricas cada uno.';
+  document.getElementById('cmp2-out').innerHTML =
+    '<div class="cmp">'+rows+'</div><div class="cmp-verdict">'+verdict+'</div>'+(M.extra?M.extra(a,b):'');
+}
+function setCmpMode(mode){
+  CMP_STATE.mode=mode;
+  document.querySelectorAll('.cmode').forEach(function(b){b.classList.toggle('active',b.dataset.m===mode);});
+  fillCmp2(); renderCompare();
+}
+
+buildTabs();
+fetch('/api/stats').then(function(r){return r.json();}).then(function(d){
+  STATS = d;
+  renderResumen();
+  setCmpMode('sel');
+  renderConfed();
+  renderEficiencia();
+  renderGoles();
+  renderEquipos();
+  renderJugadores();
+  renderDisciplina();
+  renderLigas();
+  if(d.generated){
+    var dt = new Date(d.generated);
+    document.getElementById('updated').textContent = 'Datos actualizados: ' + dt.toLocaleString('es-AR');
+  }
+}).catch(function(){
+  document.getElementById('p-resumen').innerHTML = '<p class="soon">No se pudieron cargar las estadísticas.</p>';
+});
+</script>
+</body>
+</html>

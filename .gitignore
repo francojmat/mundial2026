@@ -25,9 +25,11 @@ events_cache.json
 apifootball_cache.json
 live_windows.json
 cruces.json
+posts.json
 
 # Server de desarrollo local (no corre en Actions)
 _dev_server.py
+_announcement.json
 
 .wrangler/
 _logo_b64.txt
@@ -35,3 +37,4 @@ sim.json
 _sim_driver.js
 _extract_bracket.py
 .claude/
+estadisticas.json

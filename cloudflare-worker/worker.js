@@ -46,6 +46,8 @@ export default {
     if (path === "/api/selecciones" && request.method === "GET")  return handleData("selecciones.json", ctx);
     if (path === "/api/cruces"      && request.method === "GET")  return handleData("cruces.json", ctx);
     if (path === "/api/sim"         && request.method === "GET")  return handleData("sim.json", ctx);
+    if (path === "/api/stats"       && request.method === "GET")  return handleData("estadisticas.json", ctx);
+    if (path === "/api/posts"       && request.method === "GET")  return handleData("posts.json", ctx);
     if (path === "/api/metrics"     && request.method === "GET")  return handleMetrics(request, env);
     if (path === "/api/suggest"     && request.method === "POST") return handleSuggest(request, env);
     if (path === "/api/suggestions" && request.method === "GET")  return handleList(request, env);
@@ -54,6 +56,8 @@ export default {
     if (path === "/api/chat-poll"   && request.method === "GET")  return handleChatPoll(request, env);
     if (path === "/api/apply"       && request.method === "POST") return handleApply(request, env);
     if (path === "/api/discard"     && request.method === "POST") return handleDiscard(request, env);
+    if (path === "/api/announcement" && request.method === "GET")  return handleGetAnnouncement(env);
+    if (path === "/api/announcement" && request.method === "POST") return handleSetAnnouncement(request, env);
 
     return new Response("Not found", { status: 404 });
   },
@@ -329,6 +333,36 @@ async function handleMarkRead(request, env) {
   }));
 
   return json({ ok: true });
+}
+
+// ── GET/POST /api/announcement ───────────────────────────────────────────────
+// Aviso emergente para los visitantes. Se guarda en KV bajo una clave fija.
+const ANNOUNCEMENT_KEY = "announcement";
+
+async function handleGetAnnouncement(env) {
+  const raw = await env.SUGGESTIONS.get(ANNOUNCEMENT_KEY);
+  return json(raw ? JSON.parse(raw) : { active: false });
+}
+
+async function handleSetAnnouncement(request, env) {
+  let body;
+  try { body = await request.json(); }
+  catch { return json({ error: "JSON inválido" }, 400); }
+
+  if (!validToken(body.token || "", env)) return json({ error: "No autorizado" }, 401);
+
+  const ann = {
+    active:      !!body.active,
+    id:          String(body.id || Date.now()),
+    title:       String(body.title || "").slice(0, 200),
+    body:        String(body.body || "").slice(0, 1500),
+    cta_text:    String(body.cta_text || "").slice(0, 60),
+    cta_url:     String(body.cta_url || "").slice(0, 600),
+    style:       ["info", "success", "warning"].includes(body.style) ? body.style : "info",
+    dismissible: body.dismissible !== false,
+  };
+  await env.SUGGESTIONS.put(ANNOUNCEMENT_KEY, JSON.stringify(ann));
+  return json({ ok: true, announcement: ann });
 }
 
 // ── POST /api/chat ─────────────────────────────────────────────────────────────

@@ -129,6 +129,11 @@ def nombre_es(nombre_api: str) -> str:
     return nombre_api
 
 
+def iso_code(nombre_api: str) -> str:
+    """Código ISO de la bandera (ej. 'gb-eng', 'gh') o '' si no está mapeado."""
+    return _PAISES.get(nombre_api, (nombre_api, ""))[1]
+
+
 # Capacidades oficiales de configuración Mundial 2026 (Wikipedia/FIFA).
 # Clave = nombre del estadio como viene en los fixtures de API-Football.
 VENUE_CAPACITY = {
@@ -222,3 +227,46 @@ VENUE_INFO = {
     "BC Place":                {"country": "Canadá",          "year": 1983, "home": "Vancouver Whitecaps (MLS)"},
     "BMO Field":               {"country": "Canadá",          "year": 2007, "home": "Toronto FC (MLS)"},
 }
+
+
+# ── Confederaciones (dato estático: la membresía no cambia con el torneo) ──────
+# Mapea cada selección (nombre API) a su confederación. Habilita la sección de
+# estadísticas comparadas por confederación.
+TEAM_CONFEDERATION = {
+    # CONMEBOL (Sudamérica)
+    "Argentina": "CONMEBOL", "Brazil": "CONMEBOL", "Colombia": "CONMEBOL",
+    "Ecuador": "CONMEBOL", "Paraguay": "CONMEBOL", "Uruguay": "CONMEBOL",
+    # UEFA (Europa)
+    "Austria": "UEFA", "Belgium": "UEFA", "Bosnia & Herzegovina": "UEFA",
+    "Croatia": "UEFA", "Czechia": "UEFA", "England": "UEFA", "France": "UEFA",
+    "Germany": "UEFA", "Netherlands": "UEFA", "Norway": "UEFA", "Portugal": "UEFA",
+    "Scotland": "UEFA", "Spain": "UEFA", "Sweden": "UEFA", "Switzerland": "UEFA",
+    "Türkiye": "UEFA",
+    # CONCACAF (Norte/Centroamérica y Caribe)
+    "Canada": "CONCACAF", "Curaçao": "CONCACAF", "Haiti": "CONCACAF",
+    "Mexico": "CONCACAF", "Panama": "CONCACAF", "USA": "CONCACAF",
+    # CAF (África)
+    "Algeria": "CAF", "Cape Verde Islands": "CAF", "Congo DR": "CAF", "Egypt": "CAF",
+    "Ghana": "CAF", "Ivory Coast": "CAF", "Morocco": "CAF", "Senegal": "CAF",
+    "South Africa": "CAF", "Tunisia": "CAF",
+    # AFC (Asia)
+    "Australia": "AFC", "Iran": "AFC", "Iraq": "AFC", "Japan": "AFC", "Jordan": "AFC",
+    "Qatar": "AFC", "Saudi Arabia": "AFC", "South Korea": "AFC", "Uzbekistan": "AFC",
+    # OFC (Oceanía)
+    "New Zealand": "OFC",
+}
+
+# Nombre largo en español de cada confederación (para la UI).
+CONFEDERACIONES = {
+    "CONMEBOL": "Sudamérica",
+    "UEFA": "Europa",
+    "CONCACAF": "Norte y Centroamérica",
+    "CAF": "África",
+    "AFC": "Asia",
+    "OFC": "Oceanía",
+}
+
+
+def confederacion(nombre_api: str) -> str:
+    """Confederación de una selección (UEFA/CONMEBOL/…) o '' si no se conoce."""
+    return TEAM_CONFEDERATION.get(nombre_api, "")

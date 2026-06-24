@@ -625,6 +625,10 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
   </a>
 </div>
 
+<!-- Sección "Estadísticas" oculta del inicio a propósito: la página existe en
+     /estadisticas.html (acceso por link directo). Se reactivará el acceso acá
+     cuando esté terminada. -->
+
 <div class="divider"></div>
 <div class="sec" id="sec-goleadores" data-nav="Goleadores">
   <div class="sec-hdr" onclick="toggleSec('goleadores')">
@@ -1540,6 +1544,7 @@ function closeH2H() {{ document.getElementById('h2hModal').classList.remove('ope
     <div id="h2hBody"></div>
   </div>
 </div>
+<script src="/announce.js" defer></script>
 </body>
 </html>"""
 

@@ -113,6 +113,16 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
                ("simulador.html", render_simulador_shell(matchups)),
                ("bracket.css", BRACKET_CSS), ("bracket.js", BRACKET_JS)]
 
+    # Sección de estadísticas (OPCIONAL: solo si los módulos están en el deploy).
+    # Permite publicar el resto (incluido posts.json) sin commitear ese trabajo aún.
+    try:
+        from stats import render_stats_json
+        from estadisticas import render_estadisticas_shell
+        outputs.append(("estadisticas.json", render_stats_json(standings, matchups)))
+        outputs.append(("estadisticas.html", render_estadisticas_shell()))
+    except ImportError:
+        pass
+
     # Páginas de plantel (solo si API-Football está activo y hay planteles cacheados)
     squads = standings.get("_squads", {})
     if squads:
@@ -218,6 +228,12 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
                                                   thirds_adv, group_fixtures=gfix, venue_img=vimg)
         outputs.append(("partidos.json", json.dumps(partidos, ensure_ascii=False)))
         outputs.append(("partido.html", render_partido_shell()))
+
+        # Datos estructurados para el armador de posts de Instagram (panel admin)
+        from posts_data import build_posts, build_team_statuses
+        _posts = build_posts(all_matches, details)
+        _posts["teams"] = build_team_statuses(standings)   # estados de clasificación
+        outputs.append(("posts.json", json.dumps(_posts, ensure_ascii=False)))
 
     # SEO/GEO — sitemap.xml con todas las URLs (home + partidos + selecciones + planteles)
     import urllib.parse as _up
