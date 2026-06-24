@@ -126,28 +126,14 @@
     #po-match{border:1px solid #e8ddd0;background:#fff;padding:10px 12px;font-size:.9rem;font-family:inherit;color:#211c14;max-width:520px;width:100%}
     #po-match:focus{outline:1px solid #c2410c}
     .po-canvases{display:flex;flex-direction:column;gap:14px}
-    #po-canvas,#po-canvas2{max-width:300px;max-height:62vh;width:auto;height:auto;display:block;border:1px solid #e8ddd0;background:#fff}
+    #po-canvas,#po-canvas2,#cr-canvas{max-width:300px;max-height:62vh;width:auto;height:auto;display:block;border:1px solid #e8ddd0;background:#fff}
     @media(max-width:600px){
-      #po-canvas,#po-canvas2{max-width:100%;max-height:none}
+      #po-canvas,#po-canvas2,#cr-canvas{max-width:100%;max-height:none}
     }
 
     /* ── Avisos ── */
     .av-wrap{display:flex;gap:28px;align-items:flex-start}
     .av-form{flex:1;min-width:0;max-width:480px}
-    .cr32-box{background:#fff;border:1px solid #e8ddd0;border-left:3px solid #16a34a;border-radius:8px;padding:13px 16px;margin-bottom:20px}
-    .cr32-head{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
-    .cr32-title{font-size:.85rem;font-weight:800;color:#211c14}
-    .cr32-sub{font-size:.72rem;color:#7c6a58}
-    .cr32-list{display:flex;flex-direction:column;gap:0}
-    .cr32-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:9px 0;border-top:1px solid #f0ebe4}
-    .cr32-row:first-child{border-top:none}
-    .cr32-match{display:flex;align-items:center;gap:7px;font-size:.85rem;font-weight:600;color:#211c14;flex-wrap:wrap}
-    .cr32-match img{width:20px;height:15px;border-radius:2px}
-    .cr32-match b{color:#7c6a58;font-weight:700}
-    .cr32-meta{font-size:.72rem;color:#b09880;font-weight:500}
-    .cr32-use{background:#16a34a;color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:.74rem;font-weight:700;padding:7px 14px;cursor:pointer;white-space:nowrap}
-    .cr32-use:hover{opacity:.9}
-    .cr32-empty{font-size:.8rem;color:#b09880;padding:2px 0}
     .av-status{font-size:.78rem;font-weight:700;padding:8px 12px;margin-bottom:16px;border:1px solid #e8ddd0;background:#fff}
     .av-status.on{border-left:3px solid #16a34a;color:#16a34a}
     .av-status.off{border-left:3px solid #b09880;color:#7c6a58}
@@ -201,6 +187,7 @@
     <button class="tab"        onclick="switchTab('posts')">Posts de partido</button>
     <button class="tab"        onclick="switchTab('previa')">Previa</button>
     <button class="tab"        onclick="switchTab('clasif')">Clasificación</button>
+    <button class="tab"        onclick="switchTab('cruces')">16avos</button>
     <button class="tab"        onclick="switchTab('avisos')">Avisos</button>
   </div>
 
@@ -461,14 +448,39 @@
   </div>
 
   <!-- ── Avisos (mensajes emergentes) ── -->
-  <div id="tab-avisos" class="tab-pane">
-    <div class="cr32-box" id="cr32-box">
-      <div class="cr32-head">
-        <span class="cr32-title">16avos confirmados</span>
-        <span class="cr32-sub">Cruces con los 2 equipos asegurados (candado) — tocá "Usar" para armar el aviso.</span>
+  <!-- ── 16avos confirmados → imagen del cruce para Instagram ── -->
+  <div id="tab-cruces" class="tab-pane">
+    <div id="cr-load" class="loading">Cargando…</div>
+    <div id="cr-empty" class="sug-empty" style="display:none">Todavía no hay 16avos con los 2 equipos confirmados (candado). Aparecen acá solos cuando se aseguran las posiciones.</div>
+    <div id="cr-main" style="display:none">
+      <div class="po-pick">
+        <label class="ig-grp-lbl" for="cr-match">Cruce confirmado</label>
+        <select id="cr-match"></select>
       </div>
-      <div class="cr32-list" id="cr32-list"><span class="cr32-empty">Cargando…</span></div>
+      <div class="ig-controls" style="margin-top:16px">
+        <div class="ig-grp">
+          <span class="ig-grp-lbl">Formato</span>
+          <div class="ig-seg" id="cr-fmt">
+            <button class="ig-opt active" data-pf="story">Historia<small>1080×1920</small></button>
+            <button class="ig-opt"        data-pf="post">Publicación<small>1080×1350</small></button>
+            <button class="ig-opt"        data-pf="carousel">Carrusel<small>1080×1080</small></button>
+          </div>
+        </div>
+      </div>
+      <div class="ig-stage">
+        <div class="ig-preview-wrap">
+          <canvas id="cr-canvas"></canvas>
+          <p class="ig-dims" id="cr-dims"></p>
+        </div>
+        <div class="ig-side">
+          <div class="ig-actions" id="cr-actions"></div>
+          <p class="ig-hint">📱 En iPhone: Descargar → <b>"Guardar imagen"</b> (va a Fotos).</p>
+        </div>
+      </div>
     </div>
+  </div>
+
+  <div id="tab-avisos" class="tab-pane">
     <div class="av-wrap">
       <div class="av-form">
         <div class="av-status" id="av-status">Cargando…</div>
@@ -584,7 +596,7 @@ function showPanel() {
 }
 
 function switchTab(name) {
-  const names = ['sugs', 'metrics', 'chat', 'ig', 'posts', 'previa', 'clasif', 'avisos'];
+  const names = ['sugs', 'metrics', 'chat', 'ig', 'posts', 'previa', 'clasif', 'cruces', 'avisos'];
   document.querySelectorAll('.tab').forEach((t, i) =>
     t.classList.toggle('active', names[i] === name));
   names.forEach(n => {
@@ -609,6 +621,10 @@ function switchTab(name) {
   if (name === 'avisos' && !_avLoaded) {
     _avLoaded = true;
     loadAviso();
+  }
+  if (name === 'cruces' && !_crLoaded) {
+    _crLoaded = true;
+    loadCruces();
   }
 }
 
@@ -1878,6 +1894,95 @@ async function pvDownload(mode) {
   igDeliver(files);
 }
 
+// ── 16avos confirmados → imagen del cruce para Instagram ────────────────────────
+let _crLoaded = false, _crData = [], _crMatch = null, _crFmt = 'story', _crWired = false;
+
+async function loadCruces() {
+  const load = document.getElementById('cr-load');
+  try {
+    const d = await (await fetch(`${API}/data`)).json();
+    _crData = (d && d.confirmed_r32) || [];
+  } catch (e) { load.textContent = 'Error al cargar: ' + e.message; return; }
+  load.style.display = 'none';
+  if (!_crData.length) { document.getElementById('cr-empty').style.display = 'block'; return; }
+  document.getElementById('cr-match').innerHTML =
+    _crData.map((m, i) => `<option value="${i}">${esc(m.e1)} vs ${esc(m.e2)}</option>`).join('');
+  document.getElementById('cr-main').style.display = 'block';
+  _crMatch = _crData[0];
+  crWire();
+  crRender();
+}
+
+function crWire() {
+  if (_crWired) return; _crWired = true;
+  document.getElementById('cr-match').addEventListener('change', e => { _crMatch = _crData[+e.target.value]; crRender(); });
+  document.querySelectorAll('#cr-fmt .ig-opt').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#cr-fmt .ig-opt').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); _crFmt = b.dataset.pf; crRender();
+  }));
+}
+
+async function crRender() {
+  if (!_crMatch) return;
+  await crDrawCross(document.getElementById('cr-canvas'), _crMatch, _crFmt);
+  document.getElementById('cr-dims').textContent = `${PO_FMT[_crFmt].w} × ${PO_FMT[_crFmt].h} px · ${PO_FMT[_crFmt].label}`;
+  document.getElementById('cr-actions').innerHTML =
+    `<button class="ig-btn ig-btn-dl"  onclick="crDownload('cur')">⬇ Descargar (${PO_FMT[_crFmt].label})</button>
+     <button class="ig-btn ig-btn-all" onclick="crDownload('all3')">⬇ Las 3 medidas</button>`;
+}
+
+async function crDownload(mode) {
+  const m = _crMatch, files = [];
+  const base = `16avos-${poSlug(m.e1)}-${poSlug(m.e2)}`;
+  async function mk(fmt, name) {
+    const c = document.createElement('canvas');
+    await crDrawCross(c, m, fmt);
+    files.push(await igCanvasToFile(c, `mejortercero-${name}.png`));
+  }
+  if (mode === 'all3') for (const k of ['story', 'post', 'carousel']) await mk(k, `${base}-${k}`);
+  else await mk(_crFmt, `${base}-${_crFmt}`);
+  igDeliver(files);
+}
+
+async function crDrawCross(canvas, m, fmtKey) {
+  const f = PO_FMT[fmtKey], W = f.w, H = f.h;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  poBars(ctx, W, H);
+
+  const [f1, f2] = await Promise.all([poFlag(m.e1_iso), poFlag(m.e2_iso)]);
+  const top0 = Math.round(H * 0.08), footerTop = H - 150;
+
+  poText(ctx, '16AVOS DE FINAL', W / 2, top0, { size: 36, weight: 800, color: PO.T, align: 'center', baseline: 'top' });
+  poText(ctx, '¡CRUCE CONFIRMADO!', W / 2, top0 + 48, { size: 26, weight: 700, color: PO.DIM, align: 'center', baseline: 'top' });
+
+  const flagW = 210, flagH = f1 ? flagW * f1.naturalHeight / f1.naturalWidth : 140;
+  const matchupH = flagH + 90;
+  const when = pvWhen(m.utc);
+  const extraH = (when.d ? 64 : 0) + (m.venue ? 64 : 0);
+  const regionTop = top0 + 116;
+  let y = regionTop + Math.max(0, (footerTop - regionTop - matchupH - extraH - 40) / 2);
+
+  const cy = y + flagH / 2, hx = W * 0.27, ax = W * 0.73;
+  poDrawFlag(ctx, f1, hx, cy, flagW);
+  poDrawFlag(ctx, f2, ax, cy, flagW);
+  poText(ctx, 'VS', W / 2, cy, { size: 92, weight: 800, color: PO.T, align: 'center', baseline: 'middle' });
+  poText(ctx, m.e1.toUpperCase(), hx, cy + flagH / 2 + 16, { size: 40, weight: 800, color: PO.INK, align: 'center', baseline: 'top', maxW: flagW + 120 });
+  poText(ctx, m.e2.toUpperCase(), ax, cy + flagH / 2 + 16, { size: 40, weight: 800, color: PO.INK, align: 'center', baseline: 'top', maxW: flagW + 120 });
+  y += matchupH + 40;
+
+  if (when.d) {
+    poText(ctx, (when.d || '').toUpperCase() + (when.t ? '  ·  ' + when.t + ' h ARG' : ''), W / 2, y,
+      { size: 28, weight: 700, color: PO.T, align: 'center', baseline: 'top', maxW: W - 120 });
+    y += 64;
+  }
+  if (m.venue) {
+    poText(ctx, m.venue, W / 2, y, { size: 26, weight: 600, color: PO.MUT, align: 'center', baseline: 'top', maxW: W - 120 });
+  }
+
+  poFooter(ctx, W, H, { venue: '', referee: '' });
+}
+
 // ── Avisos — editor de mensajes emergentes ──────────────────────────────────────
 
 let _avLoaded = false;
@@ -1913,52 +2018,6 @@ async function loadAviso() {
     document.getElementById('av-status').textContent = 'Error al cargar: ' + e.message;
   }
   avPreview();
-  renderConfirmedR32();
-}
-
-// ── 16avos confirmados (los 2 equipos con candado) → arma el aviso ──────────────
-let _cr32 = [];
-async function renderConfirmedR32() {
-  const box = document.getElementById('cr32-list');
-  try {
-    const res = await fetch(`${API}/data`);
-    const d = await res.json();
-    _cr32 = d.confirmed_r32 || [];
-    if (!_cr32.length) {
-      box.innerHTML = '<span class="cr32-empty">Todavía no hay cruces con los 2 equipos asegurados. Aparecen acá solos cuando se confirman las posiciones.</span>';
-      return;
-    }
-    const fl = iso => iso ? `<img src="/flags/20x15/${iso}.png" alt="">` : '';
-    box.innerHTML = _cr32.map((m, i) =>
-      `<div class="cr32-row">
-        <span class="cr32-match">${fl(m.e1_iso)}${esc(m.e1)} <b>vs</b> ${fl(m.e2_iso)}${esc(m.e2)}` +
-        (m.venue ? ` <span class="cr32-meta">· ${esc(m.venue)}</span>` : '') + `</span>
-        <button class="cr32-use" onclick="avFromMatchup(${i})">Usar de aviso</button>
-      </div>`).join('');
-  } catch (e) {
-    box.innerHTML = '<span class="cr32-empty">No se pudo cargar.</span>';
-  }
-}
-
-function avFromMatchup(i) {
-  const m = _cr32[i];
-  if (!m) return;
-  document.getElementById('av-title').value = '¡Cruce confirmado en 16avos!';
-  let body = `${m.e1} se enfrentará a ${m.e2} en los 16avos de final del Mundial`;
-  if (m.venue) body += `, en ${m.venue}`;
-  if (m.utc) {
-    try {
-      body += ` (${new Date(m.utc).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })})`;
-    } catch (e) {}
-  }
-  body += '.';
-  document.getElementById('av-body').value = body;
-  document.getElementById('av-cta-text').value = 'Ver el bracket';
-  document.getElementById('av-cta-url').value = 'https://mejortercero.online/';
-  _avStyle = 'success';
-  document.querySelectorAll('#av-style .ig-opt').forEach(x => x.classList.toggle('active', x.dataset.style === 'success'));
-  avPreview();
-  document.getElementById('av-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function avSetStatus(active) {
