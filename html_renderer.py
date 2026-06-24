@@ -646,30 +646,10 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
-<div class="sec" id="sec-clasicas" data-nav="Estadísticas clásicas">
-  <div class="sec-hdr" onclick="toggleSec('clasicas')">
-    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Estadísticas clásicas — Mundial 2026</p>
-    <button class="sec-toggle" id="st-clasicas">▲ CERRAR</button>
-  </div>
-  <div class="sec-body" id="sb-clasicas">
-    <div class="cstabs">
-      <button class="cstab active" data-c="scorers" onclick="setClasica('scorers')">Goleadores</button>
-      <button class="cstab"        data-c="assists" onclick="setClasica('assists')">Asistencias</button>
-      <button class="cstab"        data-c="yellows" onclick="setClasica('yellows')">Amarillas</button>
-      <button class="cstab"        data-c="reds"    onclick="setClasica('reds')">Rojas</button>
-    </div>
-    <div class="cspane active" id="cs-scorers"><div id="scorers-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
-    <div class="cspane" id="cs-assists"><div id="assists-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
-    <div class="cspane" id="cs-yellows"><div id="yellows-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
-    <div class="cspane" id="cs-reds"><div id="reds-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
-  </div>
-</div>
-
-<div class="divider"></div>
-<div class="sec" id="sec-profundas" data-nav="Estadísticas profundas">
+<div class="sec" id="sec-profundas" data-nav="Estadísticas" data-href="/estadisticas.html">
   <a href="/estadisticas.html" style="display:flex;align-items:center;justify-content:space-between;gap:18px;background:{WHT};border:1px solid {BDR};border-left:3px solid {T};border-radius:12px;padding:18px 22px;text-decoration:none">
     <span style="min-width:0">
-      <span style="display:block;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:{T};margin-bottom:6px">Estadísticas profundas</span>
+      <span style="display:block;font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:{T};margin-bottom:6px">Estadísticas</span>
       <span style="display:block;font-size:1.06rem;font-weight:800;color:{TXT};letter-spacing:-.02em;margin-bottom:4px">El Mundial en números</span>
       <span style="display:block;font-size:.8rem;color:{MUT};line-height:1.45">Confederaciones, eficiencia (xG), goles, comparador, disciplina y ligas — se actualiza solo.</span>
     </span>
@@ -678,13 +658,24 @@ def render_html(standings: Dict, matchups: List[Dict]) -> str:
 </div>
 
 <div class="divider"></div>
-<div class="sec" id="sec-valoracion" data-nav="Valoración">
-  <div class="sec-hdr" onclick="toggleSec('valoracion')">
-    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Mejor valoración — Mundial 2026</p>
-    <button class="sec-toggle" id="st-valoracion">▲ CERRAR</button>
+<div class="sec" id="sec-clasicas" data-nav="Rankings">
+  <div class="sec-hdr" onclick="toggleSec('clasicas')">
+    <p class="sec-t" style="margin:0;border:none;padding-bottom:0">Rankings — Mundial 2026</p>
+    <button class="sec-toggle" id="st-clasicas">▲ CERRAR</button>
   </div>
-  <div class="sec-body" id="sb-valoracion">
-    <div id="rating-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div>
+  <div class="sec-body" id="sb-clasicas">
+    <div class="cstabs">
+      <button class="cstab active" data-c="scorers" onclick="setClasica('scorers')">Goleadores</button>
+      <button class="cstab"        data-c="assists" onclick="setClasica('assists')">Asistencias</button>
+      <button class="cstab"        data-c="yellows" onclick="setClasica('yellows')">Amarillas</button>
+      <button class="cstab"        data-c="reds"    onclick="setClasica('reds')">Rojas</button>
+      <button class="cstab"        data-c="rating"  onclick="setClasica('rating')">Valoración</button>
+    </div>
+    <div class="cspane active" id="cs-scorers"><div id="scorers-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
+    <div class="cspane" id="cs-assists"><div id="assists-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
+    <div class="cspane" id="cs-yellows"><div id="yellows-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
+    <div class="cspane" id="cs-reds"><div id="reds-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
+    <div class="cspane" id="cs-rating"><div id="rating-inner"><p style="text-align:center;color:{MUT};font-size:.85rem;padding:18px 0">Cargando…</p></div></div>
   </div>
 </div>
 
@@ -1290,7 +1281,12 @@ function buildBar() {{
   document.querySelectorAll('.sec[data-nav]').forEach(function(s) {{
     var key = s.id.replace(/^sec-/, '');
     var label = s.getAttribute('data-nav') || key;
-    html += '<button class="secbar-link" onclick="navGo(\\'' + key + '\\')">' + label + '</button>';
+    var href = s.getAttribute('data-href');
+    if (href) {{
+      html += '<a class="secbar-link" href="' + href + '">' + label + '</a>';
+    }} else {{
+      html += '<button class="secbar-link" onclick="navGo(\\'' + key + '\\')">' + label + '</button>';
+    }}
   }});
   bar.innerHTML = html;
 }}
