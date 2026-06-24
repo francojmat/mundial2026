@@ -31,6 +31,9 @@ posts.json
 _dev_server.py
 _announcement.json
 
+# Guiones/notas de contenido para redes (no van al sitio)
+instagram/
+
 .wrangler/
 _logo_b64.txt
 sim.json

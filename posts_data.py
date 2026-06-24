@@ -96,6 +96,16 @@ def build_team_statuses(standings):
     Permite generar imágenes de "clasificado", "posición asegurada" y "eliminado".
     """
     thirds_adv = {e.get("team") for e in standings.get("_thirds_advancing", [])}
+    # ¿Terminaron TODOS los grupos? Un 3.º solo está clasificado/eliminado como mejor
+    # tercero cuando el cuadro de terceros está cerrado (Anexo C depende de los 12 grupos).
+    # Antes de eso, _thirds_advancing es provisional y afirmar "Clasificado" miente.
+    all_groups_done = True
+    for _gk, _gv in standings.items():
+        if isinstance(_gk, str) and _gk.startswith("GROUP_"):
+            _ms = _gv.get("matches", [])
+            if not (_ms and all(getattr(_m, "played", False) for _m in _ms)):
+                all_groups_done = False
+                break
     out = []
     for gkey, gval in standings.items():
         if not (isinstance(gkey, str) and gkey.startswith("GROUP_")):
@@ -122,10 +132,12 @@ def build_team_statuses(standings):
             elif locked == 4:
                 status = "eliminated"
             elif locked == 3:
-                if t in thirds_adv:
-                    status = "classified"
-                elif done:
-                    status = "eliminated"
+                # Solo afirmar clasificado/eliminado como mejor 3.º cuando TODOS los
+                # grupos terminaron. Si todavía juegan otros grupos, el 3.º "depende".
+                if all_groups_done:
+                    status = "classified" if t in thirds_adv else "eliminated"
+                else:
+                    status = "alive"
             out.append({
                 "name": nombre_es(t),
                 "iso": iso_code(t),
