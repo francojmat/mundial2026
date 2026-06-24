@@ -185,6 +185,7 @@
     <button class="tab"        onclick="switchTab('chat')">Asistente IA</button>
     <button class="tab"        onclick="switchTab('ig')">Instagram</button>
     <button class="tab"        onclick="switchTab('posts')">Posts de partido</button>
+    <button class="tab"        onclick="switchTab('clasif')">Clasificación</button>
     <button class="tab"        onclick="switchTab('avisos')">Avisos</button>
   </div>
 
@@ -372,6 +373,44 @@
     </div>
   </div>
 
+  <!-- ── Clasificación (eliminado / clasificado / posición asegurada) ── -->
+  <div id="tab-clasif" class="tab-pane">
+    <div id="cl-load" class="loading">Cargando…</div>
+    <div id="cl-empty" class="sug-empty" style="display:none">Todavía no hay datos de clasificación.</div>
+    <div id="cl-main" style="display:none">
+      <div class="po-pick">
+        <label class="ig-grp-lbl" for="cl-team">Equipo</label>
+        <select id="cl-team"></select>
+      </div>
+
+      <div class="ig-controls" style="margin-top:16px">
+        <div class="ig-grp">
+          <span class="ig-grp-lbl">Imagen</span>
+          <div class="ig-seg" id="cl-variant"></div>
+        </div>
+        <div class="ig-grp">
+          <span class="ig-grp-lbl">Formato</span>
+          <div class="ig-seg" id="cl-fmt">
+            <button class="ig-opt active" data-pf="story">Historia<small>1080×1920</small></button>
+            <button class="ig-opt"        data-pf="post">Publicación<small>1080×1350</small></button>
+            <button class="ig-opt"        data-pf="carousel">Carrusel<small>1080×1080</small></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ig-stage">
+        <div class="ig-preview-wrap">
+          <canvas id="cl-canvas"></canvas>
+          <p class="ig-dims" id="cl-dims"></p>
+        </div>
+        <div class="ig-side">
+          <div class="ig-actions" id="cl-actions"></div>
+          <p class="ig-hint">📱 En iPhone: tocá Descargar → <b>"Guardar imagen"</b> (va a Fotos).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Avisos (mensajes emergentes) ── -->
   <div id="tab-avisos" class="tab-pane">
     <div class="av-wrap">
@@ -489,7 +528,7 @@ function showPanel() {
 }
 
 function switchTab(name) {
-  const names = ['sugs', 'metrics', 'chat', 'ig', 'posts', 'avisos'];
+  const names = ['sugs', 'metrics', 'chat', 'ig', 'posts', 'clasif', 'avisos'];
   document.querySelectorAll('.tab').forEach((t, i) =>
     t.classList.toggle('active', names[i] === name));
   names.forEach(n => {
@@ -502,6 +541,10 @@ function switchTab(name) {
   if (name === 'posts' && !_poLoaded) {
     _poLoaded = true;
     loadPosts();
+  }
+  if (name === 'clasif' && !_clLoaded) {
+    _clLoaded = true;
+    loadClasif();
   }
   if (name === 'avisos' && !_avLoaded) {
     _avLoaded = true;
@@ -1514,6 +1557,143 @@ async function poDownload(mode) {
     if (mode === 'all3') for (const k of ['story', 'post', 'carousel']) await mk(kind, null, k, `${base}-${kind}-${k}`);
     else await mk(kind, null, _poFmt, `${base}-${kind}-${_poFmt}`);
   }
+  igDeliver(files);
+}
+
+// ── Clasificación — imágenes de eliminado / clasificado / posición asegurada ────
+
+let _clLoaded = false;
+let _clTeams  = [];
+let _clTeam   = null;
+let _clVariant = 'eliminado';
+let _clFmt    = 'story';
+const CL_ORD = n => ({ 1: '1º', 2: '2º', 3: '3º', 4: '4º' })[n] || (n + 'º');
+
+// Imágenes disponibles para un equipo según su estado.
+function clVariantsFor(T) {
+  const v = [];
+  if (T.status === 'eliminated') v.push({ key: 'eliminado', label: 'Eliminado' });
+  if (T.status === 'classified') v.push({ key: 'clasificado', label: 'Clasificado' });
+  if (T.locked) v.push({ key: 'asegurado', label: `${CL_ORD(T.locked)} asegurado` });
+  return v;
+}
+
+async function poDrawStatus(canvas, T, fmtKey, variant) {
+  const f = PO_FMT[fmtKey], W = f.w, H = f.h;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  let accent = PO.T, headline = '', sub = '', headSize = 120;
+  if (variant === 'eliminado') {
+    accent = PO.INK; headline = 'ELIMINADO';
+    sub = `Quedó afuera en fase de grupos · Grupo ${T.group}`;
+  } else if (variant === 'clasificado') {
+    accent = '#16a34a'; headline = 'CLASIFICADO'; headSize = 100;
+    sub = (T.locked && T.locked <= 2)
+      ? `A 16avos · ${CL_ORD(T.locked)} del Grupo ${T.group}`
+      : `A los 16avos de final · Grupo ${T.group}`;
+  } else {
+    accent = PO.T; headline = `${CL_ORD(T.locked)} DEL GRUPO ${T.group}`; headSize = 96;
+    sub = 'Posición asegurada';
+  }
+
+  ctx.fillStyle = PO.CREMA; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = accent; ctx.fillRect(0, 0, W, 16); ctx.fillRect(0, H - 16, W, 16);
+
+  const flag = await poFlag(T.iso);
+
+  // bloque vertical centrado: rótulo · bandera · nombre · titular · subtítulo
+  const flagW = 300, flagH = flag ? flagW * flag.naturalHeight / flag.naturalWidth : 200;
+  const G = 38;
+  const blockH = 46 + G + flagH + G + 70 + G + headSize + G + 44;
+  let y = Math.max(80, (H - 170 - blockH) / 2 + 30);
+
+  poText(ctx, 'MUNDIAL 2026', W / 2, y, { size: 30, weight: 800, color: accent, align: 'center', baseline: 'top' });
+  y += 46 + G;
+  poDrawFlag(ctx, flag, W / 2, y + flagH / 2, flagW);
+  y += flagH + G;
+  poText(ctx, T.name.toUpperCase(), W / 2, y, { size: 64, weight: 800, color: PO.INK, align: 'center', baseline: 'top', maxW: W - 120 });
+  y += 70 + G;
+  poText(ctx, headline, W / 2, y, { size: headSize, weight: 800, color: accent, align: 'center', baseline: 'top', maxW: W - 90 });
+  y += headSize + G;
+  poText(ctx, sub, W / 2, y, { size: 33, weight: 600, color: PO.MUT, align: 'center', baseline: 'top', maxW: W - 120 });
+
+  poFooter(ctx, W, H, { venue: '', referee: '' });   // solo la marca
+}
+
+async function loadClasif() {
+  const load = document.getElementById('cl-load');
+  try {
+    const res = await fetch(`${API}/posts`);
+    const d = await res.json();
+    _clTeams = (d && d.teams) || [];
+  } catch (e) { load.textContent = 'Error al cargar: ' + e.message; return; }
+
+  load.style.display = 'none';
+  // solo equipos con algo para mostrar (eliminado / clasificado / posición asegurada)
+  const shown = _clTeams.filter(t => clVariantsFor(t).length);
+  if (!shown.length) { document.getElementById('cl-empty').style.display = 'block'; return; }
+
+  // agrupar por grupo en el selector
+  const byGroup = {};
+  shown.forEach(t => { (byGroup[t.group] = byGroup[t.group] || []).push(t); });
+  const sel = document.getElementById('cl-team');
+  sel.innerHTML = Object.keys(byGroup).sort().map(g =>
+    `<optgroup label="Grupo ${g}">` + byGroup[g].map(t => {
+      const i = _clTeams.indexOf(t);
+      const tag = t.status === 'eliminated' ? 'Eliminado' : t.status === 'classified' ? 'Clasificado' : (t.locked ? CL_ORD(t.locked) + ' asegurado' : '');
+      return `<option value="${i}">${esc(t.name)}${tag ? ' · ' + tag : ''}</option>`;
+    }).join('') + '</optgroup>').join('');
+
+  document.getElementById('cl-main').style.display = 'block';
+  clWire();
+  _clTeam = _clTeams[+sel.value];
+  clBuildVariants();
+  clRender();
+}
+
+let _clWired = false;
+function clWire() {
+  if (_clWired) return; _clWired = true;
+  document.getElementById('cl-team').addEventListener('change', e => {
+    _clTeam = _clTeams[+e.target.value]; clBuildVariants(); clRender();
+  });
+  document.querySelectorAll('#cl-fmt .ig-opt').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#cl-fmt .ig-opt').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); _clFmt = b.dataset.pf; clRender();
+  }));
+}
+
+function clBuildVariants() {
+  const vs = clVariantsFor(_clTeam);
+  _clVariant = vs[0] ? vs[0].key : 'eliminado';
+  document.getElementById('cl-variant').innerHTML = vs.map((v, i) =>
+    `<button class="ig-opt ${i === 0 ? 'active' : ''}" data-cv="${v.key}">${esc(v.label)}</button>`).join('');
+  document.querySelectorAll('#cl-variant .ig-opt').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#cl-variant .ig-opt').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); _clVariant = b.dataset.cv; clRender();
+  }));
+}
+
+async function clRender() {
+  if (!_clTeam) return;
+  await poDrawStatus(document.getElementById('cl-canvas'), _clTeam, _clFmt, _clVariant);
+  document.getElementById('cl-dims').textContent = `${PO_FMT[_clFmt].w} × ${PO_FMT[_clFmt].h} px · ${PO_FMT[_clFmt].label}`;
+  document.getElementById('cl-actions').innerHTML =
+    `<button class="ig-btn ig-btn-dl"  onclick="clDownload('cur')">⬇ Descargar (${PO_FMT[_clFmt].label})</button>
+     <button class="ig-btn ig-btn-all" onclick="clDownload('all3')">⬇ Las 3 medidas</button>`;
+}
+
+async function clDownload(mode) {
+  const T = _clTeam, files = [];
+  const base = `${_clVariant}-${poSlug(T.name)}`;
+  async function mk(fmt, name) {
+    const c = document.createElement('canvas');
+    await poDrawStatus(c, T, fmt, _clVariant);
+    files.push(await igCanvasToFile(c, `mejortercero-${name}.png`));
+  }
+  if (mode === 'all3') for (const k of ['story', 'post', 'carousel']) await mk(k, `${base}-${k}`);
+  else await mk(_clFmt, `${base}-${_clFmt}`);
   igDeliver(files);
 }
 
