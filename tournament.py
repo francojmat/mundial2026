@@ -257,6 +257,26 @@ def _detail_has_player_ids(cached: dict) -> bool:
     return True  # sin players → no hace falta re-pedir
 
 
+def _detail_complete(cached: dict) -> bool:
+    """True si el detalle TERMINADO ya trae a los suplentes que entraron. Si la
+    alineación tiene banco pero ningún suplente registra minutos, la API mandó datos
+    incompletos (típico justo al pitazo final) y conviene volver a pedir el detalle."""
+    for side in (cached.get("players") or []):
+        for p in (side.get("players") or []):
+            if p.get("sub") and (p.get("minutes") or 0) > 0:
+                return True               # al menos un suplente jugó → completo
+    has_bench = any((ln.get("subs") or []) for ln in (cached.get("lineups") or []))
+    return not has_bench                  # con banco pero sin suplentes con minutos → incompleto
+
+
+def _finished_recently(m: dict, max_hours: int = 6) -> bool:
+    """¿El partido empezó hace poco? (cota para no re-pedir detalles viejos por siempre)."""
+    start = _parse_iso(m.get("utc_date", ""))
+    if not start:
+        return False
+    return 0 <= (_now() - start).total_seconds() <= max_hours * 3600
+
+
 def _enrich_match_details(matches_by_date: dict, details: dict, client) -> bool:
     """Trae alineaciones/stats/jugadores de partidos jugados o en vivo. Cache por partido.
     Prioriza partidos en vivo y los más recientes (que son los que la gente mira).
@@ -270,13 +290,14 @@ def _enrich_match_details(matches_by_date: dict, details: dict, client) -> bool:
             if not m.get("match_id"):
                 continue
             cached = details.get(str(m.get("match_id")))
-            # Auto-reparado: si el detalle cacheado no tiene IDs de jugador (caché viejo,
-            # previo al fix de stats), se vuelve a pedir aunque esté terminado.
+            # Auto-reparado: re-pedir el detalle si le faltan IDs de jugador (caché viejo)
+            # o si quedó TERMINADO pero INCOMPLETO (sin los suplentes que entraron — la API
+            # suele tardar en cargarlos tras el pitazo). Una vez completo, no se vuelve a pedir.
             if cached and _detail_has_player_ids(cached):
-                if cached.get("status") == "FINISHED":
-                    continue  # terminado y cacheado (con ids) → no cambia
+                if cached.get("status") == "FINISHED" and (_detail_complete(cached) or not _finished_recently(m)):
+                    continue  # terminado y completo (o ya viejo) → no cambia
                 if not _stale(cached, MATCH_LIVE_REFRESH):
-                    continue  # en vivo pero refrescado hace poco
+                    continue  # en vivo / incompleto pero refrescado hace < 2 min
             candidates.append(m)
 
     # Prioridad: en vivo primero, luego los más recientes (dos sorts estables)
