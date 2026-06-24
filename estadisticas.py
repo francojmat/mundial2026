@@ -74,8 +74,8 @@ def render_estadisticas_shell() -> str:
     .cmp-v.win{{color:{T}}}
     .cmp-v .wdot{{display:inline-block;width:5px;height:5px;border-radius:50%;background:{T};vertical-align:middle;margin-left:5px}}
     .cmp-mode{{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}}
-    .cmode{{border:1px solid {BDR};background:{WHT};color:{MUT};font-family:inherit;font-size:.78rem;font-weight:700;padding:7px 15px;border-radius:999px;cursor:pointer}}
-    .cmode:hover{{border-color:{T};color:{T}}}
+    .cmode{{border:1px solid {T};background:{WHT};color:{T};font-family:inherit;font-size:.78rem;font-weight:700;padding:7px 15px;border-radius:6px;cursor:pointer}}
+    .cmode:hover{{background:{T};color:#fff}}
     .cmode.active{{background:{T};color:#fff;border-color:{T}}}
     .cmp-verdict{{margin-top:13px;padding:12px 15px;background:{GRY};border-radius:10px;font-size:.85rem;text-align:center;color:{TXT};line-height:1.5}}
     .cmp-verdict b{{color:{T}}}
@@ -100,6 +100,8 @@ def render_estadisticas_shell() -> str:
     .xrow .xvs{{font-size:.66rem;font-weight:800;color:{DIM};text-align:center;letter-spacing:.04em}}
     .xrow .xmeta{{grid-column:1/-1;font-size:.66rem;color:{DIM};text-align:center;margin-top:1px}}
     .xrow img{{vertical-align:middle;border-radius:2px;flex-shrink:0}}
+    .xlink{{color:{T};font-weight:800;text-decoration:none;white-space:nowrap}}
+    .xlink:hover{{text-decoration:underline}}
     /* eficiencia / xG */
     .note{{font-size:.72rem;color:{MUT};margin:-2px 0 13px;line-height:1.5;max-width:620px}}
     .duo{{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:6px}}
@@ -443,15 +445,16 @@ function stShortDate(utc){{
     + ' · ' + d.toLocaleTimeString('es-AR',{{timeZone:tz,hour:'2-digit',minute:'2-digit',hour12:false}}) + 'h';
 }}
 function stStage(m){{ return m.group ? 'Grupo '+m.group.replace('GROUP_','') : 'Eliminación directa'; }}
+function xVer(m){{ return m.id ? ' · <a class="xlink" href="/partido.html?id='+m.id+'">Ver partido →</a>' : ''; }}
 function xrowPlayed(m){{
   return '<div class="xrow"><span class="xh">'+flag(m.home)+es(m.home)+'</span>'
     + '<span class="xsc">'+m.hg+'-'+m.ag+'</span><span class="xa">'+flag(m.away)+es(m.away)+'</span>'
-    + '<span class="xmeta">'+stStage(m)+(m.utc?' · '+stShortDate(m.utc):'')+'</span></div>';
+    + '<span class="xmeta">'+stStage(m)+(m.utc?' · '+stShortDate(m.utc):'')+xVer(m)+'</span></div>';
 }}
 function xrowUpcoming(m){{
   return '<div class="xrow"><span class="xh">'+flag(m.home)+es(m.home)+'</span>'
     + '<span class="xvs">VS</span><span class="xa">'+flag(m.away)+es(m.away)+'</span>'
-    + '<span class="xmeta">'+stStage(m)+(m.utc?' · '+stShortDate(m.utc):'')+(m.venue?' · '+m.venue:'')+'</span></div>';
+    + '<span class="xmeta">'+stStage(m)+(m.utc?' · '+stShortDate(m.utc):'')+(m.venue?' · '+m.venue:'')+xVer(m)+'</span></div>';
 }}
 
 // choques directos entre dos confederaciones: jugados (con detalle) + próximos
@@ -747,6 +750,10 @@ var GRP_METRICS=[
 var JUG_METRICS=[
   {{k:'goals',l:'Goles',dir:1,d:0}}, {{k:'assists',l:'Asistencias',dir:1,d:0}},
   {{k:'ga',l:'Goles + asistencias',dir:1,d:0}}, {{k:'rating',l:'Rating promedio',dir:1,d:2}},
+  {{k:'shots',l:'Tiros',dir:1,d:0}}, {{k:'shots_on',l:'Tiros al arco',dir:1,d:0}},
+  {{k:'key_passes',l:'Pases clave',dir:1,d:0}}, {{k:'dribbles',l:'Gambetas',dir:1,d:0}},
+  {{k:'tackles',l:'Quites',dir:1,d:0}}, {{k:'duels_won',l:'Duelos ganados',dir:1,d:0}},
+  {{k:'fouls_drawn',l:'Faltas recibidas',dir:1,d:0}}, {{k:'fouls_committed',l:'Faltas cometidas',dir:-1,d:0}},
   {{k:'minutes',l:'Minutos',dir:1,d:0}}, {{k:'matches',l:'Partidos',dir:1,d:0}},
 ];
 var LIG_METRICS=[

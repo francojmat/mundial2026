@@ -257,6 +257,15 @@ def _detail_has_player_ids(cached: dict) -> bool:
     return True  # sin players → no hace falta re-pedir
 
 
+def _detail_has_player_stats(cached: dict) -> bool:
+    """True si el detalle ya trae las stats ampliadas por jugador (tiros, pases, etc.).
+    Si falta (caché previo al feature), se vuelve a pedir aunque esté terminado."""
+    for side in (cached.get("players") or []):
+        for p in (side.get("players") or []):
+            return "shots" in p
+    return True  # sin players → no hace falta re-pedir
+
+
 def _detail_complete(cached: dict) -> bool:
     """True si el detalle TERMINADO ya trae a los suplentes que entraron. Si la
     alineación tiene banco pero ningún suplente registra minutos, la API mandó datos
@@ -293,7 +302,7 @@ def _enrich_match_details(matches_by_date: dict, details: dict, client) -> bool:
             # Auto-reparado: re-pedir el detalle si le faltan IDs de jugador (caché viejo)
             # o si quedó TERMINADO pero INCOMPLETO (sin los suplentes que entraron — la API
             # suele tardar en cargarlos tras el pitazo). Una vez completo, no se vuelve a pedir.
-            if cached and _detail_has_player_ids(cached):
+            if cached and _detail_has_player_ids(cached) and _detail_has_player_stats(cached):
                 if cached.get("status") == "FINISHED" and (_detail_complete(cached) or not _finished_recently(m)):
                     continue  # terminado y completo (o ya viejo) → no cambia
                 if not _stale(cached, MATCH_LIVE_REFRESH):

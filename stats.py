@@ -48,6 +48,9 @@ _GOAL_BANDS = ["1-15", "16-30", "31-45", "46-60", "61-75", "76-90+"]
 
 
 _POS_ES = {"G": "Arquero", "D": "Defensor", "M": "Mediocampista", "F": "Delantero"}
+# stats ampliadas por jugador (sumadas a lo largo del torneo) para el comparador
+_PSTAT = ("shots", "shots_on", "passes", "key_passes", "dribbles", "tackles",
+          "duels_won", "fouls_drawn", "fouls_committed", "saves")
 
 
 def _agg_players(match_details: Dict, finished_ids, pid_league: Dict) -> list:
@@ -69,11 +72,15 @@ def _agg_players(match_details: Dict, finished_ids, pid_league: Dict) -> list:
                           "league": pid_league.get(pid, ""),
                           "goals": 0, "assists": 0, "minutes": 0, "matches": 0,
                           "_rs": 0.0, "_rn": 0}
+                    for k in _PSTAT:
+                        pl[k] = 0
                     players[key] = pl
                 pl["goals"] += p.get("goals") or 0
                 pl["assists"] += p.get("assists") or 0
                 pl["minutes"] += p.get("minutes") or 0
                 pl["matches"] += 1
+                for k in _PSTAT:
+                    pl[k] += p.get(k) or 0
                 if p.get("pos"):
                     pl["pos"] = p.get("pos")
                 try:
@@ -101,7 +108,7 @@ def _player_leaderboards(plist: list) -> dict:
               for pos in ("G", "D", "M", "F")}
     # lista completa (los que jugaron) para el comparador jugador vs jugador.
     # Solo los campos que usa el comparador → JSON más liviano.
-    _af = ("name", "team", "pos", "goals", "assists", "ga", "minutes", "rating", "matches")
+    _af = ("name", "team", "pos", "goals", "assists", "ga", "minutes", "rating", "matches") + _PSTAT
     all_players = [{k: p[k] for k in _af}
                    for p in sorted((q for q in plist if q["minutes"] > 0),
                                    key=lambda p: (-p["ga"], -p["minutes"]))]

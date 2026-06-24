@@ -350,6 +350,12 @@ class APIFootballClient:
                 st = (p.get("statistics") or [{}])[0]
                 g  = st.get("games") or {}
                 go = st.get("goals") or {}
+                sh = st.get("shots") or {}
+                pa = st.get("passes") or {}
+                dr = st.get("dribbles") or {}
+                tk = st.get("tackles") or {}
+                du = st.get("duels") or {}
+                fo = st.get("fouls") or {}
                 players.append({
                     "id":      pl.get("id"),
                     "name":    pl.get("name", ""),
@@ -361,6 +367,17 @@ class APIFootballClient:
                     "assists": go.get("assists") or 0,
                     "captain": g.get("captain"),
                     "sub":     g.get("substitute"),
+                    # stats ampliadas por jugador (para el comparador)
+                    "shots":           sh.get("total") or 0,
+                    "shots_on":        sh.get("on") or 0,
+                    "passes":          pa.get("total") or 0,
+                    "key_passes":      pa.get("key") or 0,
+                    "dribbles":        dr.get("success") or 0,
+                    "tackles":         tk.get("total") or 0,
+                    "duels_won":       du.get("won") or 0,
+                    "fouls_drawn":     fo.get("drawn") or 0,
+                    "fouls_committed": fo.get("committed") or 0,
+                    "saves":           go.get("saves") or 0,
                 })
             out.append({"team": (t.get("team") or {}).get("name", ""), "players": players})
         return out
