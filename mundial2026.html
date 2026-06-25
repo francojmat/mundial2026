@@ -1922,6 +1922,7 @@ function navRender() {
   var next = document.getElementById('hoy-next');
   if (prev) prev.disabled = (_navIdx === 0);
   if (next) next.disabled = (_navIdx === _navDates.length - 1);
+  if (typeof applyLiveToday === 'function') applyLiveToday();  // re-aplicar marcadores/estado en vivo sobre el render fresco
 }
 
 // ── Secciones colapsables ─────────────────────────────────────────────────
@@ -2028,36 +2029,74 @@ function navGo(secId) {
 }
 
 // ── Marcadores en vivo (cada 8s, vía el Worker — mucho más rápido que data.json) ──
+// ── Marcadores y estado EN VIVO de las tarjetas "Hoy" ───────────────────────
+// pollData/navRender re-renderiza las tarjetas con HTML del servidor (cron, ~5 min).
+// Eso pisaba el marcador fresco y demoraba la transición a "Finalizado". Solución:
+// re-aplicar el estado en vivo tras cada render, y finalizar la tarjeta apenas el
+// partido desaparece de /api/live (con su último marcador), hasta que el cron la
+// oficialice. Todo en try/catch: si falla, queda el render del servidor.
+var _lastLive = [], _liveScores = {}, _prevLiveIds = {}, _recentFinal = {};
+function _hoyBadge(card) { return card.querySelector('.hoy-badge-live, .hoy-badge-fin'); }
+function _hoyBadgeSlot(card) {
+  var head = card.querySelector('.hoy-head'); if (!head) return null;
+  var b = _hoyBadge(card);
+  if (!b) {
+    b = document.createElement('span');
+    var chev = head.querySelector('.hoy-chev');
+    if (chev) head.insertBefore(b, chev); else head.appendChild(b);
+  }
+  return b;  // transforma el badge existente EN SU LUGAR (sin duplicar)
+}
+function _setHoyScore(card, h, a) {
+  if (h == null) return;
+  var sc = card.querySelector('.hoy-score'), centro = card.querySelector('.hoy-centro');
+  if (sc) sc.textContent = h + ' - ' + a;
+  else if (centro) centro.innerHTML = '<span class="hoy-score">' + h + ' - ' + a + '</span>';
+}
+function _setHoyLive(card, status, elapsed) {
+  var b = _hoyBadgeSlot(card); if (!b) return;
+  b.className = 'hoy-badge-live';
+  b.innerHTML = (status === 'PAUSED' || status === 'HT')
+    ? '<span class="dot"></span>ENT'
+    : '<span class="dot"></span>EN VIVO <span class="hoy-min">' + (elapsed != null ? elapsed + "'" : '') + '</span>';
+}
+function _setHoyFin(card) {
+  var b = _hoyBadgeSlot(card); if (!b) return;
+  b.className = 'hoy-badge-fin'; b.textContent = 'FIN';
+}
+function applyLiveToday() {
+  try {
+    var body = document.getElementById('today-body'); if (!body) return;
+    (_lastLive || []).forEach(function(m) {
+      if (m.id == null) return;
+      var card = body.querySelector('.hoy-fila[data-mid="' + m.id + '"]'); if (!card) return;
+      _setHoyScore(card, m.h, m.a);
+      _setHoyLive(card, m.status, m.elapsed);
+    });
+    Object.keys(_recentFinal).forEach(function(id) {
+      var card = body.querySelector('.hoy-fila[data-mid="' + id + '"]'); if (!card) return;
+      if (card.querySelector('.hoy-badge-fin')) { delete _recentFinal[id]; return; }  // el servidor ya lo oficializó → confiar
+      var s = _recentFinal[id];
+      _setHoyScore(card, s.h, s.a);
+      _setHoyFin(card);
+    });
+  } catch (e) { /* no-op: queda el render del servidor */ }
+}
 function pollLive() {
   fetch('/api/live')
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      (d.matches || []).forEach(function(m) {
-        var card = document.querySelector('.hoy-fila[data-mid="' + m.id + '"]');
-        if (!card) return;
-        // Marcador: si la tarjeta ya está en vivo, actualizar; si estaba por jugarse, pasarla a vivo
-        var sc = card.querySelector('.hoy-score');
-        var centro = card.querySelector('.hoy-centro');
-        if (sc && m.h != null) {
-          sc.textContent = m.h + ' - ' + m.a;
-        } else if (centro && m.h != null) {
-          centro.innerHTML = '<span class="hoy-score">' + m.h + ' - ' + m.a + '</span>';
-        }
-        // Badge EN VIVO: crearlo si no existe (transición rápida sin esperar a /api/data)
-        var head = card.querySelector('.hoy-head');
-        var chev = head ? head.querySelector('.hoy-chev') : null;
-        if (head && chev && !head.querySelector('.hoy-badge-live') && !head.querySelector('.hoy-badge-fin')) {
-          var b = document.createElement('span');
-          b.className = 'hoy-badge-live';
-          b.innerHTML = (m.status === 'HT')
-            ? '<span class="dot"></span>ENT'
-            : '<span class="dot"></span>EN VIVO <span class="hoy-min"></span>';
-          head.insertBefore(b, chev);
-        }
-        var mn = card.querySelector('.hoy-min');
-        if (mn && m.elapsed != null && m.status !== 'HT') mn.textContent = m.elapsed + "'";
+      var live = d.matches || [], curIds = {};
+      live.forEach(function(m) {
+        if (m.id != null) { curIds[m.id] = 1; if (m.h != null) _liveScores[m.id] = { h: m.h, a: m.a }; }
       });
-      _lastLive = d.matches || [];
+      // Partidos que estaban en vivo y ya no están → terminaron: recordar su último marcador.
+      Object.keys(_prevLiveIds).forEach(function(id) {
+        if (!curIds[id] && _liveScores[id]) _recentFinal[id] = _liveScores[id];
+      });
+      _prevLiveIds = curIds;
+      _lastLive = live;
+      applyLiveToday();
       applyLiveStandings();
     })
     .catch(function() {});
@@ -2119,7 +2158,7 @@ function pollData() {
 // (cada 15s) y parchea las filas existentes. Reusa el motor JS del simulador
 // (sim-engine.js, mismos desempates que el Python). Si algo falla, NO toca nada
 // y queda la tabla del servidor (idéntico a antes). Solo toca grupos EN VIVO.
-var _SIMDATA = null, _lastLive = [];
+var _SIMDATA = null;  // _lastLive se declara junto a pollLive (arriba)
 function loadSimData() {
   fetch('/api/sim').then(function(r) { return r.json(); })
     .then(function(d) { if (d && d.groups) { _SIMDATA = d; applyLiveStandings(); } })
