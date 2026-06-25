@@ -397,7 +397,7 @@ def render_seleccion_fragment(team: str, group_label: str, rows: list, matches: 
         toggle = ('<span class="sl-toggle"><span class="sl-toggle-t"></span>'
                   '<span class="sl-chev">&#9662;</span></span>')
         inner = detail + f'<div class="sl-full-wrap">{full_link}</div>'
-        m_html += (f'<div class="sl-m sl-exp" onclick="this.classList.toggle(\'open\')">'
+        m_html += (f'<div class="sl-m sl-exp" data-mid="{mid}" onclick="this.classList.toggle(\'open\')">'
                    f'<div class="sl-m-top"><span class="sl-mh">{hh}</span>{center}'
                    f'<span class="sl-ma">{aa}</span>{live_b}{toggle}</div>'
                    f'<div class="sl-m-detail">{inner}</div></div>')

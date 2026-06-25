@@ -2107,10 +2107,11 @@ function pollData() {
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var gi = document.getElementById('groups-inner');
-      if (gi && d.groups_html !== undefined) { gi.innerHTML = d.groups_html; applyLiveStandings(); }
+      if (gi && d.groups_html !== undefined) gi.innerHTML = d.groups_html;
 
       var ti = document.getElementById('thirds-inner');
       if (ti && d.thirds_html !== undefined) ti.innerHTML = d.thirds_html;
+      applyLiveStandings();  // re-aplicar vivo sobre grupos + terceros recién renderizados
 
       if (d.dates_html !== undefined && d.today_date !== undefined) {
         navInit(d.today_date, d.dates_html);
@@ -2197,8 +2198,9 @@ function applyLiveStandings() {
       var r = GR[g].ranked;
       if (r.length >= 3) thirds.push({ team: r[2], group: g, stats: GR[g].stats[r[2]] });
     });
+    var rankedThirds = thirds.length ? window.SimEngine.rankThirds(thirds) : [];
     var adv = {};
-    if (thirds.length) window.SimEngine.rankThirds(thirds).slice(0, 8).forEach(function(e) { adv[e.team] = 1; });
+    rankedThirds.slice(0, 8).forEach(function(e) { adv[e.team] = 1; });
     // Parchear SOLO los grupos en vivo.
     Object.keys(liveGroups).forEach(function(g) {
       var box = gi.querySelector('.grupo[data-group="' + g + '"]');
@@ -2227,6 +2229,32 @@ function applyLiveStandings() {
         tbody.appendChild(tr);  // reordenar segun el ranking nuevo
       });
     });
+    // Tabla "Mejores terceros": un gol en vivo cambia el top-8 → recalcular, reordenar y
+    // mover la línea de corte. Solo si están las 12 filas (si no, queda la del servidor).
+    var tc = document.getElementById('thirds-inner');
+    var ttb = tc ? tc.querySelector('table tbody') : null;
+    if (ttb && rankedThirds.length) {
+      // Filas de equipo (excluye la línea de corte). Se reescriben POR POSICIÓN desde el
+      // motor → cubre tanto el re-orden entre terceros como el cambio de QUÉ equipo es 3.º
+      // de un grupo. La línea de corte ya está tras la 8.ª fila (no hay que moverla).
+      var trs = Array.prototype.filter.call(ttb.children, function(tr) { return tr.className.indexOf('corte-row') < 0; });
+      if (trs.length === rankedThirds.length) {  // 12 filas ↔ 12 terceros; si no, queda la del servidor
+        var nm = _SIMDATA.name || {};
+        rankedThirds.forEach(function(e, i) {
+          var tr = trs[i], st = e.stats, td = tr.children;
+          if (td.length < 8) return;
+          tr.className = (i < 8) ? 'clasifica' : 'eliminado';
+          tr.setAttribute('data-name', e.team);
+          td[0].textContent = i + 1;
+          td[1].textContent = nm[e.team] || e.team;
+          td[2].textContent = e.group;
+          td[3].textContent = st.pj; td[4].textContent = st.gf; td[5].textContent = st.ga;
+          td[6].innerHTML = st.gd > 0 ? '<span class="dg-p">+' + st.gd + '</span>'
+                          : st.gd < 0 ? '<span class="dg-n">' + st.gd + '</span>' : '0';
+          td[7].innerHTML = '<span class="pts">' + st.pts + '</span>';
+        });
+      }
+    }
   } catch (e) { /* no-op: queda la tabla del servidor */ }
 }
 

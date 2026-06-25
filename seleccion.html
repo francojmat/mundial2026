@@ -101,6 +101,45 @@
       var h = d.toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
       return f + ' · ' + h;
     }
+    // Marcadores en vivo de los partidos del perfil (no había polling: solo cambiaban al
+    // recargar). Cada 15s actualiza marcador + badge EN VIVO, y finaliza apenas el partido
+    // desaparece de /api/live (con su último marcador). Todo guardado: si falla, no toca nada.
+    var _selPrevLive = {}, _selScores = {}, _selFinal = {};
+    function _selSetScore(row, h, a) {
+      var top = row.querySelector('.sl-m-top'); if (!top) return;
+      var sc = top.querySelector('.sl-sc');
+      if (sc) { sc.textContent = h + ' - ' + a; return; }
+      var dt = top.querySelector('.sl-dt');
+      if (dt) { var s = document.createElement('span'); s.className = 'sl-sc'; s.textContent = h + ' - ' + a; dt.parentNode.replaceChild(s, dt); }
+    }
+    function _selSetLive(row, on) {
+      var top = row.querySelector('.sl-m-top'); if (!top) return;
+      var lv = top.querySelector('.sl-live');
+      if (on && !lv) {
+        var s = document.createElement('span'); s.className = 'sl-live'; s.textContent = 'EN VIVO';
+        var tg = top.querySelector('.sl-toggle'); if (tg) top.insertBefore(s, tg); else top.appendChild(s);
+      } else if (!on && lv) { lv.remove(); }
+    }
+    function selPollLive() {
+      fetch('/api/live').then(function(r) { return r.json(); }).then(function(d) {
+        try {
+          var box = document.getElementById('sel'); if (!box) return;
+          var live = d.matches || [], cur = {};
+          live.forEach(function(m) { if (m.id != null) { cur[m.id] = 1; if (m.h != null) _selScores[m.id] = { h: m.h, a: m.a }; } });
+          Object.keys(_selPrevLive).forEach(function(id) { if (!cur[id] && _selScores[id]) _selFinal[id] = _selScores[id]; });
+          _selPrevLive = cur;
+          live.forEach(function(m) {
+            if (m.id == null || m.h == null) return;
+            var row = box.querySelector('.sl-m[data-mid="' + m.id + '"]'); if (!row) return;
+            _selSetScore(row, m.h, m.a); _selSetLive(row, true);
+          });
+          Object.keys(_selFinal).forEach(function(id) {
+            var row = box.querySelector('.sl-m[data-mid="' + id + '"]'); if (!row) return;
+            var s = _selFinal[id]; _selSetScore(row, s.h, s.a); _selSetLive(row, false);
+          });
+        } catch (e) { /* no-op */ }
+      }).catch(function() {});
+    }
     (function() {
       var t = new URLSearchParams(location.search).get('t') || '';
       var box = document.getElementById('sel');
@@ -114,6 +153,8 @@
             box.querySelectorAll('.sl-dt[data-utc]').forEach(function(e) {
               var s = fmtDT(e.dataset.utc); if (s) e.textContent = s;
             });
+            selPollLive();
+            setInterval(selPollLive, 15000);
           } else {
             box.innerHTML = '<p class="loading">Selección no disponible todavía.</p>';
           }

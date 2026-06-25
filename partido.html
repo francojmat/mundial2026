@@ -174,13 +174,25 @@
         .catch(function() { box.innerHTML = '<p class="loading">No se pudo cargar el partido.</p>'; });
     }
 
-    // Actualiza marcador, minuto y badge EN VIVO sin recargar (cada 8s)
+    // Actualiza marcador, minuto y badge EN VIVO sin recargar (cada 15s).
+    // Cuando el partido termina (desaparece de /api/live) y lo veníamos viendo en vivo,
+    // pasamos el badge a "Finalizado" al toque (el marcador ya quedó en el último vivo),
+    // sin recargar el blob pesado de /api/partidos.
+    var _mtWasLive = false;
     function pollMatchLive() {
       fetch('/api/live')
         .then(function(r) { return r.json(); })
         .then(function(d) {
           var m = (d.matches || []).filter(function(x) { return String(x.id) === String(MID); })[0];
-          if (!m) return;
+          if (!m) {
+            if (_mtWasLive) {
+              var b = document.getElementById('mt-badge');
+              if (b) b.innerHTML = '<span class="mt-badge mt-fin">Finalizado</span>';
+              _mtWasLive = false;
+            }
+            return;
+          }
+          _mtWasLive = true;
           var center = document.getElementById('mt-center');
           if (center && m.h != null) {
             center.innerHTML = '<span class="mt-sc">' + m.h + '</span><span class="mt-sep">-</span><span class="mt-sc">' + m.a + '</span>';

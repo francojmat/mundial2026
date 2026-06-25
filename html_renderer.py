@@ -1746,7 +1746,7 @@ def _render_thirds(standings: Dict) -> str:
         dg  = (f'<span class="dg-p">{s.goal_diff:+d}</span>' if s.goal_diff > 0
                else f'<span class="dg-n">{s.goal_diff:+d}</span>' if s.goal_diff < 0 else "0")
         filas += f"""
-    <tr class="{cls}">
+    <tr class="{cls}" data-name="{entry['team']}">
       <td>{i}</td><td>{traducir(entry['team'])}</td>
       <td>{entry['group'].replace('GROUP_','')}</td>
       <td>{s.played}</td><td>{s.goals_for}</td><td>{s.goals_against}</td>
