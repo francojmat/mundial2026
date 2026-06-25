@@ -89,6 +89,18 @@ def main(api_key: str, html_out: str, json_out: str, apifootball_key: str = None
             "matches": [{"h": m.home, "a": m.away, "hg": m.home_goals, "ag": m.away_goals,
                          "played": m.played, "status": m.status} for m in gval.get("matches", [])],
         }
+    # Enriquecer cada partido de grupo con su fixture id, para que el cliente pueda mapear
+    # los marcadores de /api/live (que vienen por id) a la tabla y recalcularla en vivo.
+    # El id no viaja en MatchResult; lo sacamos de _matches_by_date (display), keyeado por
+    # (home, away) — único en fase de grupos. Si no matchea, queda None y el cliente lo ignora.
+    _id_by_pair = {}
+    for _ms in standings.get("_matches_by_date", {}).values():
+        for _m in _ms:
+            if _m.get("match_id"):
+                _id_by_pair[(_m.get("home"), _m.get("away"))] = _m["match_id"]
+    for _g in sim_groups.values():
+        for _mm in _g["matches"]:
+            _mm["id"] = _id_by_pair.get((_mm["h"], _mm["a"]))
     # Estructura estática del bracket + Anexo C, serializadas DESDE el Python (misma fuente
     # que el server) para que el motor JS arme el R32 igual. Clave Anexo C = 8 letras ordenadas.
     from bracket import _ANNEX_C, _BRACKET, _SLOT_TO_PARTIDO, _SCHEDULE

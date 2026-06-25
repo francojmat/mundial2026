@@ -1694,7 +1694,7 @@ def _render_groups(standings: Dict, live_teams: Set[str], thirds_advancing_set: 
             team_q = urllib.parse.quote(team)
             name_html = f'<a class="team-link" href="/seleccion.html?t={team_q}">{name_inner}</a>'
             filas += f"""
-        <tr class="{cls}">
+        <tr class="{cls}" data-name="{team}">
           <td>{pos}</td><td>{name_html}</td>
           <td>{s.played}</td><td>{s.won}</td><td>{s.drawn}</td><td>{s.lost}</td>
           <td>{s.goals_for}</td><td>{s.goals_against}</td>
@@ -1722,7 +1722,7 @@ def _render_groups(standings: Dict, live_teams: Set[str], thirds_advancing_set: 
                 f'<span class="gf-chev">&#9662;</span></span></div>'
                 f'<div class="gf-body">{body_inner}</div></div>') if body_inner else ""
         html += f"""
-  <div class="grupo">
+  <div class="grupo" data-group="{label}">
     <div class="grupo-h"><span class="grupo-t">Grupo {label}</span>{badge}</div>
     <table>
       <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>

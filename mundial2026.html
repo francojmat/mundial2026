@@ -2057,6 +2057,8 @@ function pollLive() {
         var mn = card.querySelector('.hoy-min');
         if (mn && m.elapsed != null && m.status !== 'HT') mn.textContent = m.elapsed + "'";
       });
+      _lastLive = d.matches || [];
+      applyLiveStandings();
     })
     .catch(function() {});
 }
@@ -2066,7 +2068,7 @@ function pollData() {
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var gi = document.getElementById('groups-inner');
-      if (gi && d.groups_html !== undefined) gi.innerHTML = d.groups_html;
+      if (gi && d.groups_html !== undefined) { gi.innerHTML = d.groups_html; applyLiveStandings(); }
 
       var ti = document.getElementById('thirds-inner');
       if (ti && d.thirds_html !== undefined) ti.innerHTML = d.thirds_html;
@@ -2110,6 +2112,83 @@ function pollData() {
       if (upd && d.updated) upd.textContent = d.updated;
     })
     .catch(function(e) { console.warn('[poll]', e); });
+}
+
+// ── Tabla de posiciones EN VIVO ─────────────────────────────────────────────
+// Capa PURAMENTE ADITIVA y blindada: recalcula con los marcadores de /api/live
+// (cada 15s) y parchea las filas existentes. Reusa el motor JS del simulador
+// (sim-engine.js, mismos desempates que el Python). Si algo falla, NO toca nada
+// y queda la tabla del servidor (idéntico a antes). Solo toca grupos EN VIVO.
+var _SIMDATA = null, _lastLive = [];
+function loadSimData() {
+  fetch('/api/sim').then(function(r) { return r.json(); })
+    .then(function(d) { if (d && d.groups) { _SIMDATA = d; applyLiveStandings(); } })
+    .catch(function() {});
+}
+function applyLiveStandings() {
+  try {
+    if (!_SIMDATA || !_SIMDATA.groups || !window.SimEngine) return;
+    var gi = document.getElementById('groups-inner');
+    if (!gi) return;
+    var liveMap = {};
+    (_lastLive || []).forEach(function(m) {
+      if (m && m.id != null && m.h != null && m.a != null) liveMap[m.id] = { hg: m.h, ag: m.a };
+    });
+    if (!Object.keys(liveMap).length) return;  // nada en vivo → dejar tabla del servidor
+    var liveGroups = {}, liveTeams = {};
+    Object.keys(_SIMDATA.groups).forEach(function(g) {
+      (_SIMDATA.groups[g].matches || []).forEach(function(m) {
+        if (m.id != null && liveMap[m.id]) { liveGroups[g] = 1; liveTeams[m.h] = 1; liveTeams[m.a] = 1; }
+      });
+    });
+    if (!Object.keys(liveGroups).length) return;
+    // Recomputar TODOS los grupos con los vivos mezclados (necesario para el best-8 de terceros).
+    var cg = {};
+    Object.keys(_SIMDATA.groups).forEach(function(g) {
+      var src = _SIMDATA.groups[g];
+      cg[g] = { teams: src.teams, matches: (src.matches || []).map(function(m) {
+        var lm = (m.id != null) ? liveMap[m.id] : null;
+        return lm ? { h: m.h, a: m.a, hg: lm.hg, ag: lm.ag, played: true }
+                  : { h: m.h, a: m.a, hg: m.hg, ag: m.ag, played: m.played };
+      }) };
+    });
+    var GR = window.SimEngine.computeGroups(cg);
+    var thirds = [];
+    Object.keys(GR).forEach(function(g) {
+      var r = GR[g].ranked;
+      if (r.length >= 3) thirds.push({ team: r[2], group: g, stats: GR[g].stats[r[2]] });
+    });
+    var adv = {};
+    if (thirds.length) window.SimEngine.rankThirds(thirds).slice(0, 8).forEach(function(e) { adv[e.team] = 1; });
+    // Parchear SOLO los grupos en vivo.
+    Object.keys(liveGroups).forEach(function(g) {
+      var box = gi.querySelector('.grupo[data-group="' + g + '"]');
+      if (!box) return;
+      var tbody = box.querySelector('tbody');
+      if (!tbody) return;
+      var rowByName = {};
+      Array.prototype.forEach.call(tbody.querySelectorAll('tr[data-name]'), function(tr) {
+        rowByName[tr.getAttribute('data-name')] = tr;
+      });
+      var ranked = GR[g].ranked, stats = GR[g].stats;
+      for (var k = 0; k < ranked.length; k++) { if (!rowByName[ranked[k]]) return; }  // falta una fila → no tocar el grupo
+      ranked.forEach(function(team, idx) {
+        var tr = rowByName[team], st = stats[team], tds = tr.children;
+        if (!st || tds.length < 10) return;
+        var pos = idx + 1;
+        var cls = (pos <= 2) ? 'clasifica' : (pos === 3 ? (adv[team] ? 'tercero' : 'eliminado') : 'eliminado');
+        if (liveTeams[team]) cls += ' live-row';
+        tr.className = cls;
+        tds[0].textContent = pos;
+        tds[2].textContent = st.pj; tds[3].textContent = st.w; tds[4].textContent = st.d; tds[5].textContent = st.l;
+        tds[6].textContent = st.gf; tds[7].textContent = st.ga;
+        tds[8].innerHTML = st.gd > 0 ? '<span class="dg-p">+' + st.gd + '</span>'
+                         : st.gd < 0 ? '<span class="dg-n">' + st.gd + '</span>' : '0';
+        tds[9].innerHTML = '<span class="pts">' + st.pts + '</span>';
+        tbody.appendChild(tr);  // reordenar segun el ranking nuevo
+      });
+    });
+  } catch (e) { /* no-op: queda la tabla del servidor */ }
 }
 
 // Rankings (valoración/goleadores/asist/tarjetas) — carga diferida desde /api/data2
@@ -2253,6 +2332,9 @@ document.addEventListener("DOMContentLoaded", function() {
   setInterval(pollData, 30000);
   pollLive();
   setInterval(pollLive, 15000);
+  // Tabla de posiciones en vivo: carga la estructura de grupos y la refresca (capa aditiva).
+  loadSimData();
+  setInterval(loadSimData, 60000);
   // Rankings: diferidos tras el primer pintado + refresco lento (no son data en vivo)
   setTimeout(loadExtra, 60);
   setInterval(loadExtra, 120000);
@@ -2285,6 +2367,7 @@ function closeH2H() { document.getElementById('h2hModal').classList.remove('open
     <div id="h2hBody"></div>
   </div>
 </div>
+<script src="/sim-engine.js" defer></script>
 <script src="/announce.js" defer></script>
 </body>
 </html>
