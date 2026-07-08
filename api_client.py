@@ -113,6 +113,7 @@ class WorldCupClient:
                 "away": away,
                 "home_goals": full.get("home"),
                 "away_goals": full.get("away"),
+                "winner": m.get("winner"),
                 "status": status,
                 "utc_date": utc_str,
                 "stage": m.get("stage", ""),
@@ -151,6 +152,10 @@ def _af_to_match(fx: dict, team_groups: dict) -> dict:
         group = ""
     referee = ((f.get("referee") or "").split(",")[0]).strip()
     venue = f.get("venue") or {}
+    # Ganador (flag de la API: resuelve bien los definidos por PENALES, donde el
+    # marcador de 90'+prórroga queda empatado). None si no está decidido o es empate.
+    winner = (home if (teams.get("home") or {}).get("winner")
+              else away if (teams.get("away") or {}).get("winner") else None)
     return {
         "match_id":   f.get("id"),
         "home": home, "away": away,
@@ -158,6 +163,7 @@ def _af_to_match(fx: dict, team_groups: dict) -> dict:
         "away_id":    (teams.get("away") or {}).get("id"),
         "home_goals": goals.get("home"),
         "away_goals": goals.get("away"),
+        "winner":     winner,
         "status":     status,
         "elapsed":    (f.get("status") or {}).get("elapsed"),
         "utc_date":   f.get("date", ""),

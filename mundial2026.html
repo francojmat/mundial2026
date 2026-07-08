@@ -1742,6 +1742,7 @@ function renderTercer() {
 function pickWinner(el) {
   const card = el.closest(".mc");
   const mid = card.dataset.mid;
+  if (LOCKED[mid]) return;  // partido ya definido por resultado real → fijo, no se toca
   const name = el.dataset.name;
   const html = decodeURIComponent(el.dataset.html);
 
@@ -1762,6 +1763,7 @@ function pickWinner(el) {
 // ── Seleccionar ganador en slots R16/QF/SF/Final ──────────────────────────
 function pickSlotWinner(el) {
   const slotId = el.dataset.slot;
+  if (LOCKED[slotId]) return;  // ronda ya definida por resultado real → fija
   const name   = el.dataset.name;
   const html   = decodeURIComponent(el.dataset.html);
 
@@ -1839,11 +1841,80 @@ function restore() {
 
 function resetBracket() {
   S = {};
+  LOCKED = {};
   save();
   document.querySelectorAll("[data-mid] .team-row").forEach(r =>
     r.classList.remove("winner","loser"));
   SLOT_ORDER.forEach(id => renderSlot(id));
   syncMobile();
+}
+
+// ── Auto-avance del bracket con RESULTADOS REALES (candado) ─────────────────
+// A medida que se juegan los cruces, el ganador real avanza SOLO y queda FIJO con
+// candado (igual que los puestos en fase de grupos). Los partidos por jugar siguen
+// siendo simulables con clic; los ya definidos quedan bloqueados. El ganador real
+// (incluye penales) viene en data.ko_winners = {par de equipos ordenado → ganador}
+// (nombres API). Los ganadores se guardan en S → restore() reconstruye el cuadro solo;
+// acá solo avanzamos lo nuevo + re-aplicamos candados. Todo guardado (try/catch).
+var _koWinners = {}, LOCKED = {};
+var _KO_LOCK = '<svg class="tr-lock" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">'
+  + '<title>Definido</title><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 '
+  + '2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg>';
+function _koLock(id, name) {
+  var sel = /^[0-9]+$/.test(id) ? '[data-mid="' + id + '"] .team-row[data-name]'
+                                : '#' + id + ' .team-row[data-name], #m-' + id + ' .team-row[data-name]';
+  document.querySelectorAll(sel).forEach(function(r) {
+    if (r.getAttribute('data-name') === name && !r.querySelector('.tr-lock')) r.insertAdjacentHTML('beforeend', _KO_LOCK);
+  });
+}
+function autoAdvanceReal(kw) {
+  try {
+    kw = kw || {};
+    function pairWin(rows) {
+      if (rows.length < 2) return null;
+      var n0 = rows[0].getAttribute('data-name'), n1 = rows[1].getAttribute('data-name');
+      if (!n0 || !n1) return null;
+      return kw[[n0, n1].sort().join('|')] || null;
+    }
+    var changed = true, guard = 0;
+    while (changed && guard++ < 25) {
+      changed = false;
+      // 16avos (R32): cards con data-mid
+      document.querySelectorAll('#r32-left .mc[data-mid], #r32-right .mc[data-mid]').forEach(function(card) {
+        var mid = card.dataset.mid;
+        var rows = card.querySelectorAll('.team-row[data-name]');
+        var w = pairWin(rows); if (!w) return;
+        if (LOCKED[mid] && S[mid] && S[mid].winner && S[mid].winner.name === w) return;
+        var winRow = rows[0].getAttribute('data-name') === w ? rows[0] : rows[1];
+        S[mid] = { winner: { name: w, html: decodeURIComponent(winRow.dataset.html) } };
+        document.querySelectorAll('[data-mid="' + mid + '"]').forEach(function(c) {
+          c.querySelectorAll('.team-row').forEach(function(r) { r.classList.remove('winner', 'loser'); r.classList.add(r.dataset.name === w ? 'winner' : 'loser'); });
+        });
+        LOCKED[mid] = 1; propagate(mid); changed = true;
+      });
+      // Octavos → final: slots (renderSlot marca el ganador; propagate llena el siguiente)
+      SLOT_ORDER.forEach(function(slotId) {
+        var el = document.getElementById(slotId); if (!el) return;
+        var rows = el.querySelectorAll('.team-row[data-name]');
+        var w = pairWin(rows); if (!w) return;
+        if (LOCKED[slotId] && S[slotId] && S[slotId].winner && S[slotId].winner.name === w) return;
+        var winRow = rows[0].getAttribute('data-name') === w ? rows[0] : rows[1];
+        S[slotId] = Object.assign({}, S[slotId], { winner: { name: w, html: decodeURIComponent(winRow.dataset.html) } });
+        renderSlot(slotId);
+        if (slotId !== 'slot-final') propagate(slotId);
+        LOCKED[slotId] = 1; changed = true;
+      });
+    }
+    // Re-aplicar TODOS los candados (los re-render los borran) y sincronizar mobile.
+    Object.keys(LOCKED).forEach(function(id) {
+      var win = S[id] && S[id].winner ? S[id].winner.name : null;
+      if (win) _koLock(id, win);
+    });
+    save(); syncMobile();
+    Object.keys(LOCKED).forEach(function(id) {  // candado en mobile tras el syncMobile
+      if (!/^[0-9]+$/.test(id)) { var win = S[id] && S[id].winner ? S[id].winner.name : null; if (win) _koLock(id, win); }
+    });
+  } catch (e) { /* no-op: queda el bracket como estaba */ }
 }
 
 // ── Sincronizar mobile bracket con estado desktop ─────────────────────────
@@ -2132,6 +2203,9 @@ function pollData() {
         applyDataUtc(mbR32);
       }
       if (r32Updated) { restore(); initPath(); }
+      // Auto-avance del bracket con los resultados reales de los cruces (candado).
+      if (d.ko_winners !== undefined) _koWinners = d.ko_winners;
+      autoAdvanceReal(_koWinners);
 
       var si = document.getElementById('scorers-inner');
       if (si && d.scorers_html !== undefined) si.innerHTML = d.scorers_html;

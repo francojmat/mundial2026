@@ -51,6 +51,19 @@ def render_data_json(standings: Dict, matchups: List[Dict]) -> str:
         date_str: _render_today_matches(matches, standings)
         for date_str, matches in matches_by_date.items()
     }
+    # Ganadores REALES de los cruces (16avos→final) para que el bracket del home avance
+    # solo y ponga el candado. Clave = par de equipos ordenado (nombre API), valor = ganador
+    # (nombre API). El front matchea por par porque en single-elimination cada dupla se
+    # enfrenta una sola vez. Solo partidos KO terminados con ganador (incluye penales).
+    _KO_STAGES = {"ROUND_OF_32", "ROUND_OF_16", "QUARTER_FINALS", "SEMI_FINALS", "THIRD_PLACE", "FINAL"}
+    ko_winners = {}
+    for _ms in matches_by_date.values():
+        for _m in _ms:
+            if _m.get("stage") in _KO_STAGES and _m.get("status") == "FINISHED":
+                w, h, a = _m.get("winner"), _m.get("home"), _m.get("away")
+                if w and h and a:
+                    ko_winners["|".join(sorted([h, a]))] = w
+
     data = {
         "updated": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
         "today_date": today_date,
@@ -61,6 +74,7 @@ def render_data_json(standings: Dict, matchups: List[Dict]) -> str:
         "r32_left_html": _r32_inner(matchups[:8]),
         "r32_right_html": _r32_inner(matchups[8:]),
         "confirmed_r32": _confirmed_r32(matchups),
+        "ko_winners": ko_winners,
     }
     return json.dumps(data, ensure_ascii=False)
 
