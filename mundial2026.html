@@ -1959,6 +1959,22 @@ var _navDates = [];
 var _navIdx = 0;
 var _navTodayStr = '';
 
+// Etiqueta hoy/ayer/mañana por diferencia de fecha REAL (no por índice). Si "hoy" no
+// tiene partidos (día de descanso), hoy NO está en la lista de fechas y el cálculo por
+// índice se rompía (mostraba el 1er día del Mundial como "mañana").
+function _navDayDiff(a, b) {
+  return Math.round((new Date(a + 'T00:00:00Z') - new Date(b + 'T00:00:00Z')) / 86400000);
+}
+function _navLabel(dateStr, todayStr) {
+  var diff = _navDayDiff(dateStr, todayStr);
+  if (diff === 0) return 'Partidos de hoy';
+  if (diff === -1) return 'Partidos de ayer';
+  if (diff === 1) return 'Partidos de mañana';
+  var MES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  var d = new Date(dateStr + 'T00:00:00Z');
+  return 'Partidos del ' + d.getUTCDate() + ' ' + MES[d.getUTCMonth()];
+}
+
 function navInit(todayStr, datesHtml) {
   _navDatesHtml = datesHtml;
   _navDates = Object.keys(datesHtml).sort();
@@ -1966,7 +1982,13 @@ function navInit(todayStr, datesHtml) {
   var prevTodayIdx = _navDates.indexOf(_navTodayStr);
   var wasOnToday = (_navTodayStr === '' || _navIdx === prevTodayIdx);
   _navTodayStr = todayStr;
-  if (wasOnToday) _navIdx = ti >= 0 ? ti : 0;
+  if (wasOnToday) {
+    if (ti >= 0) { _navIdx = ti; }
+    else {  // hoy sin partidos: ir al PRÓXIMO día con partidos (o el último si ya no hay)
+      _navIdx = _navDates.length - 1;
+      for (var _i = 0; _i < _navDates.length; _i++) { if (_navDates[_i] >= todayStr) { _navIdx = _i; break; } }
+    }
+  }
   navRender();
 }
 
@@ -1979,12 +2001,7 @@ function navDay(delta) {
 
 function navRender() {
   if (!_navDates.length) return;
-  var todayIdx = _navDates.indexOf(_navTodayStr);
-  var diff = _navIdx - todayIdx;
-  var label = diff === 0 ? 'Partidos de hoy'
-            : diff === -1 ? 'Partidos de ayer'
-            : diff === 1 ? 'Partidos de mañana'
-            : 'Partidos del ' + _navDates[_navIdx];
+  var label = _navLabel(_navDates[_navIdx], _navTodayStr);
   var labelEl = document.getElementById('hoy-nav-label');
   if (labelEl) labelEl.textContent = label;
   var body = document.getElementById('today-body');
